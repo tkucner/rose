@@ -700,7 +700,7 @@ class map_quality_fft:
                     indices = np.logical_and(rows, columns)
                     # print(j, k, np.sum(adj_m[indices]))
                     connect_m[j][k] = np.sum(adj_m[indices])
-            print(connect_m)
+            #print(connect_m)
 
         for s in self.slices_h_dir:
             labels = []
@@ -724,9 +724,9 @@ class map_quality_fft:
                     rows = np.array([labels == j, ] * labels.size)
                     columns = np.array([labels == k, ] * labels.size).transpose()
                     indices = np.logical_and(rows, columns)
-                    print(j, k, np.sum(adj_m[indices]))
+                    #print(j, k, np.sum(adj_m[indices]))
                     connect_m[j][k] = np.sum(adj_m[indices])
-            print(connect_m)
+            #print(connect_m)
 
     def find_walls_floodfiling(self):
         self.labeled_map = np.zeros(self.binary_map.shape)

@@ -25,7 +25,7 @@ if __name__ == "__main__":
     mq.generate_intiail_hypothesis_filtered()
     # mq.hypothesis_clustering()
     mq.find_walls_floodfiling()
-    mq.find_walls_knn()
+    # mq.find_walls_knn()
 
     mq.report()
 
