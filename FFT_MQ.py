@@ -29,20 +29,6 @@ if __name__ == "__main__":
 
     mq.report()
 
-    #     count, ps, isects, G, Q=pc.polygon_count(mq.all_lines)
-    #
-    #     flags = {
-    #     "input": True,
-    #     "graph": False,
-    #     "result": False,
-    #     "verbose": True
-    # }
-    #
-    #     pc.show(mq.all_lines, ps, isects, G, Q, flags,count)
-    ####################################################################################################################
-    # VISUALISATION FFT
-    ####################################################################################################################
-
     visualisation = {"Binary map": False,
                      "FFT Spectrum": False,
                      "Unfolded FFT Spectrum": False,
@@ -65,7 +51,7 @@ if __name__ == "__main__":
                      "Partial Reconstructs": False,
                      "Treshold Setup with Clusters": False,
                      "Cluster Filtered Map": False,
-                     "Map with walls": False,
+                     "Map with walls": True,
                      "Map with slices": True,
                      "Wall lines from mbb": True,
                      "Labels and Raw map": True
