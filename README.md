@@ -1,2 +1,2 @@
-# rose
-(ROSE) RObust frequency-based Structure Extraction
+# RObust frequency-based Structure Extraction (ROSE)
+
