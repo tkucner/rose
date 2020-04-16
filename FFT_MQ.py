@@ -23,7 +23,7 @@ if __name__ == "__main__":
     mq.histogram_filtering()
 
     mq.generate_intiail_hypothesis_filtered()
-    # mq.hypothesis_clustering()
+    mq.find_walls_with_line_segments()
     mq.find_walls_floodfiling()
     # mq.find_walls_knn()
 

@@ -12,12 +12,18 @@ from scipy.signal import find_peaks
 from skimage.filters import threshold_yen
 from skimage.segmentation import flood_fill
 from sklearn import mixture
+from sklearn.cluster import DBSCAN
 from sklearn.metrics import pairwise_distances
 from sklearn.neighbors import KernelDensity
 
 import helpers as he
 from GridMapDecompose import segment_handling as sh
 
+def generate_line_segments_per_direction(slices):
+    slices_lines = []
+    for s in slices:
+        slices_lines.append([s[0][0][0], s[1][0][0], s[0][0][-1], s[1][0][-1]])
+    return slices_lines
 
 class map_quality_fft:
     def __init__(self, grid_map, ang_tr=0.1, amp_tr=0.8, peak_hight=0.5, par=200, smooth=False, sigma=3):
@@ -831,6 +837,40 @@ class map_quality_fft:
                 self.all_lines.append(((X1, Y1), (X2, Y2)))
             self.segments_h_mbb_lines.append(local_mbb_lines)
         self.all_lines = list(dict.fromkeys(self.all_lines))
+
+    def find_walls_with_line_segments(self):
+        eps = 100
+        min_samples = 2
+        if len(self.slices_h) is not 0:
+            self.slice_h_lines = generate_line_segments_per_direction(self.slices_h)
+            clustering_h = DBSCAN(eps=eps, min_samples=min_samples, metric=he.shortest_distance_between_segements).fit(
+                self.slice_h_lines)
+            self.clustering_h_labels = clustering_h.labels_
+
+        if len(self.slices_v) is not 0:
+            self.slice_v_lines = generate_line_segments_per_direction(self.slices_v)
+            clustering_v = DBSCAN(eps=eps, min_samples=min_samples, metric=he.shortest_distance_between_segements).fit(
+                self.slice_v_lines)
+            self.clustering_v_labels = clustering_v.labels_
+
+        id = 2
+        temp_map = np.zeros(self.binary_map.shape)
+
+        last_label = 0
+        for slice, label in zip(self.slices_h, self.clustering_h_labels):
+            if last_label != label:
+                id = id + 1
+            for s in zip(slice[0][0], slice[1][0]):
+                temp_map[s[0]][s[1]] = id
+            last_label = label
+        last_label = 0
+        for slice, label in zip(self.slices_v, self.clustering_v_labels):
+            if last_label != label:
+                id = id + 1
+            for s in zip(slice[0][0], slice[1][0]):
+                temp_map[s[0]][s[1]] = id
+            last_label = label
+        self.labeled_map_line_segment = temp_map
 
     # output
     ###########################
