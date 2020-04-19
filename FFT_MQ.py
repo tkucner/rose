@@ -23,7 +23,7 @@ if __name__ == "__main__":
     mq.histogram_filtering()
 
     mq.generate_intiail_hypothesis_filtered()
-    mq.find_walls_with_line_segments()
+    #mq.find_walls_with_line_segments()
     mq.find_walls_floodfiling()
     # mq.find_walls_knn()
 
@@ -46,12 +46,12 @@ if __name__ == "__main__":
                      "Histogram of scaled pixels quality": False,
                      "Simple Filtered Map": False,
                      "FFT spectrum with directions": False,
-                     "Map with directions": True,
+                     "Map with directions": False,
                      "Partial Scores": False,
                      "Partial Reconstructs": False,
                      "Treshold Setup with Clusters": False,
                      "Cluster Filtered Map": False,
-                     "Map with walls": True,
+                     "Map with walls": False,
                      "Map with slices": True,
                      "Wall lines from mbb": True,
                      "Labels and Raw map": True
