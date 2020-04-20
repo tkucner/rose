@@ -29,9 +29,9 @@ if __name__ == "__main__":
 
     rose.report()
 
-    visualisation = {"Binary map": True,
+    visualisation = {"Binary map": False,
                      "FFT Spectrum": False,
-                     "Unfolded FFT Spectrum": True,
+                     "Unfolded FFT Spectrum": False,
                      "FFT Spectrum Signal": False,
                      "FFT Spectrum Noise": False,
                      "Map Reconstructed Signal": False,
