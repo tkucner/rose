@@ -3,7 +3,22 @@ import numpy as np
 from scipy.ndimage.interpolation import geometric_transform
 from scipy.signal import fftconvolve
 from skimage.draw import polygon
+import math
+import sys
 
+
+def is_between(a, b, c):
+    crossproduct = (c[1] - a[1]) * (b[0] - a[0]) - (c[0] - a[0]) * (b[1] - a[1])
+    # compare versus epsilon for floating point values, or != 0 if using integers
+    if abs(crossproduct) > sys.float_info.epsilon * 100:
+        return False
+    dotproduct = (c[0] - a[0]) * (b[0] - a[0]) + (c[1] - a[1]) * (b[1] - a[1])
+    if dotproduct < 0:
+        return False
+    squaredlengthba = (b[0] - a[0]) * (b[0] - a[0]) + (b[1] - a[1]) * (b[1] - a[1])
+    if dotproduct > squaredlengthba:
+        return False
+    return True
 
 def cart2pol(x, y):
     rho = np.sqrt(x ** 2 + y ** 2)
@@ -256,7 +271,7 @@ def closest_point_on_line(start, end, pnt):
 
 def segment_interesction(segment1, segment2):
     x, y = line_intersection(segment1, segment2)
-    if pol_cou.is_between([segment1[0][0], segment1[0][1]], [segment1[1][0], segment1[1][1]], [x, y]):
+    if is_between([segment1[0][0], segment1[0][1]], [segment1[1][0], segment1[1][1]], [x, y]):
         return x, y
     else:
         return np.nan, np.nan

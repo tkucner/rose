@@ -452,8 +452,9 @@ class map_quality_fft:
 
                             self.cell_hypothesis_v.append((cc[flag], rr[flag]))
                             self.lines_hypothesis_v.append([l[0] + s, l[1], l[2] + s, l[3]])
-                            self.slices_v_ids.append(temp_slice)
                             temp_slice.append((cc_slices, rr_slices))
+                            self.slices_v_ids.append(temp_slice)
+                            #temp_slice.append((cc_slices, rr_slices))
                             self.slices_v.append((cc_slices, rr_slices))
 
             self.slices_v_dir.append(temp_slice)
@@ -515,8 +516,9 @@ class map_quality_fft:
 
                             self.cell_hypothesis_h.append((cc[flag], rr[flag]))
                             self.lines_hypothesis_h.append([l[0], l[1] + s, l[2], l[3] + s])
-                            self.slices_h_ids.append(temp_slice)
                             temp_slice.append((cc_slices, rr_slices))
+                            self.slices_h_ids.append(temp_slice)
+                            # temp_slice.append((cc_slices, rr_slices))
                             self.slices_h.append((cc_slices, rr_slices))
 
             self.slices_h_dir.append(temp_slice)
@@ -586,11 +588,14 @@ class map_quality_fft:
 
                             self.cell_hypothesis_v.append((cc[flag], rr[flag]))
                             self.lines_hypothesis_v.append([l[0] + s, l[1], l[2] + s, l[3]])
-                            self.slices_v_ids.append(temp_slice)
                             temp_slice.append((cc_slices, rr_slices))
+                            self.slices_v_ids.append((cc_slices, rr_slices))
+                            # self.slices_v_ids.append(temp_slice)
+                            #temp_slice.append((cc_slices, rr_slices))
                             self.slices_v.append((cc_slices, rr_slices))
 
             self.slices_v_dir.append(temp_slice)
+            #self.slices_v_dir=temp_slice
 
         # genberate H hypothesis
         for l in self.lines_long_h:
@@ -649,11 +654,14 @@ class map_quality_fft:
 
                             self.cell_hypothesis_h.append((cc[flag], rr[flag]))
                             self.lines_hypothesis_h.append([l[0], l[1] + s, l[2], l[3] + s])
-                            self.slices_h_ids.append(temp_slice)
                             temp_slice.append((cc_slices, rr_slices))
+                            self.slices_h_ids.append((cc_slices, rr_slices))
+                            #self.slices_h_ids.append(temp_slice)
+                            #temp_slice.append((cc_slices, rr_slices))
                             self.slices_h.append((cc_slices, rr_slices))
 
             self.slices_h_dir.append(temp_slice)
+            #self.slices_h_dir=temp_slice
 
     # def hypothesis_clustering(self):
     #     for l,slices in zip(self.lines_hypothesis_v,self.slices_v_ids):
@@ -706,7 +714,7 @@ class map_quality_fft:
                     indices = np.logical_and(rows, columns)
                     # print(j, k, np.sum(adj_m[indices]))
                     connect_m[j][k] = np.sum(adj_m[indices])
-            #print(connect_m)
+            # print(connect_m)
 
         for s in self.slices_h_dir:
             labels = []
@@ -730,9 +738,9 @@ class map_quality_fft:
                     rows = np.array([labels == j, ] * labels.size)
                     columns = np.array([labels == k, ] * labels.size).transpose()
                     indices = np.logical_and(rows, columns)
-                    #print(j, k, np.sum(adj_m[indices]))
+                    # print(j, k, np.sum(adj_m[indices]))
                     connect_m[j][k] = np.sum(adj_m[indices])
-            #print(connect_m)
+            # print(connect_m)
 
     def find_walls_floodfiling(self):
         self.labeled_map = np.zeros(self.binary_map.shape)
@@ -744,6 +752,9 @@ class map_quality_fft:
             for p in s:
                 for q in zip(p[0], p[1]):
                     temp_map[q[0], q[1]] = 1
+            # for q in zip(s[0], s[1]):
+            #     temp_map[q[0], q[1]] = 1
+
             temp_map_fill = temp_map.copy()
             filled = False
             while not filled:
@@ -795,6 +806,8 @@ class map_quality_fft:
             for p in s:
                 for q in zip(p[0], p[1]):
                     temp_map[q[0], q[1]] = 1
+            # for q in zip(s[0], s[1]):
+            #     temp_map[q[0], q[1]] = 1
             temp_map_fill = temp_map.copy()
             filled = False
             while not filled:
@@ -911,17 +924,34 @@ class map_quality_fft:
             plt.show()
 
         if visualisation["Map with walls"]:
+            # fig, ax = plt.subplots(nrows=1, ncols=1)
+            # ax.imshow(self.binary_map, cmap="gray")
+            # for l in zip(self.cell_hypothesis_v, self.slices_v_ids):
+            #     for ind in l[1]:
+            #         for i in ind:
+            #             ax.plot(l[0][1][i], l[0][0][i], 'rx')
+            # for l in zip(self.cell_hypothesis_h, self.slices_h_ids):
+            #     for ind in l[1]:
+            #         for i in ind:
+            #             ax.plot(l[0][1][i], l[0][0][i], 'rx')
+            #
+            # ax.axis("off")
+            # name = "Map with walls"
+            # ax.set_title(name)
+            # fig.canvas.set_window_title(name)
+            # # ax.set_xlim(0, self.binary_map.shape[1])
+            # # ax.set_ylim(self.binary_map.shape[0], 0)
+            # plt.show()
             fig, ax = plt.subplots(nrows=1, ncols=1)
             ax.imshow(self.binary_map, cmap="gray")
-            for l in zip(self.cell_hypothesis_v, self.slices_v_ids):
-                for ind in l[1]:
-                    for i in ind:
-                        ax.plot(l[0][1][i], l[0][0][i], 'rx')
-            for l in zip(self.cell_hypothesis_h, self.slices_h_ids):
-                for ind in l[1]:
-                    for i in ind:
-                        ax.plot(l[0][1][i], l[0][0][i], 'rx')
-
+            for indices_slice in self.slices_v_ids:
+                for indices in zip(indices_slice[0],indices_slice[1]):
+                    for i in zip(indices[0],indices[1]):
+                        ax.plot(i[1],i[0],'rx')
+            for indices_slice in self.slices_h_ids:
+                for indices in zip(indices_slice[0], indices_slice[1]):
+                    for i in zip(indices[0],indices[1]):
+                        ax.plot(i[1], i[0], 'rx')
             ax.axis("off")
             name = "Map with walls"
             ax.set_title(name)
@@ -1061,7 +1091,7 @@ class map_quality_fft:
             ax.set_title(name)
             plt.show()
 
-        if visualisation["Treshold Setup with Clusters"]:
+        if visualisation["Threshold Setup with Clusters"]:
             x = np.arange(np.min(self.pixel_quality_histogram["edges"]), np.max(self.pixel_quality_histogram["edges"]),
                           (np.max(self.pixel_quality_histogram["edges"]) - np.min(
                               self.pixel_quality_histogram["edges"])) / 1000)
