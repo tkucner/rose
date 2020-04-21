@@ -22,16 +22,16 @@ if __name__ == "__main__":
 
     mq.histogram_filtering()
 
-    mq.generate_intiail_hypothesis_filtered()
-    mq.find_walls_with_line_segments()
-    mq.find_walls_floodfiling()
+    mq.generate_initial_hypothesis_filtered()
+    #mq.find_walls_with_line_segments()
+    mq.find_walls_flood_filing()
     # mq.find_walls_knn()
 
     mq.report()
 
-    visualisation = {"Binary map": False,
+    visualisation = {"Binary map": True,
                      "FFT Spectrum": False,
-                     "Unfolded FFT Spectrum": False,
+                     "Unfolded FFT Spectrum": True,
                      "FFT Spectrum Signal": False,
                      "FFT Spectrum Noise": False,
                      "Map Reconstructed Signal": False,
@@ -46,14 +46,14 @@ if __name__ == "__main__":
                      "Histogram of scaled pixels quality": False,
                      "Simple Filtered Map": False,
                      "FFT spectrum with directions": False,
-                     "Map with directions": False,
+                     "Map with directions": True,
                      "Partial Scores": False,
                      "Partial Reconstructs": False,
                      "Threshold Setup with Clusters": False,
                      "Cluster Filtered Map": False,
                      "Map with walls": True,
-                     "Map with slices": False,
-                     "Wall lines from mbb": False,
-                     "Labels and Raw map": False
+                     "Map with slices": True,
+                     "Wall lines from mbb": True,
+                     "Labels and Raw map": True
                      }
     mq.show(visualisation)

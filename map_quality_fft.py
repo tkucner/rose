@@ -123,12 +123,12 @@ class map_quality_fft:
         self.norm_ftigame = self.norm_ftigame.astype(int)
         print("OK ({0:.2f})".format(time.time() - t))
 
-    # def find_domiant_directions(self):
+    # def find_dominant_directions(self):
 
     def process_map(self):
         self.compute_fft()
 
-        print("Find Dominat directions.....", end="", flush=True)
+        print("Find Dominant directions.....", end="", flush=True)
         t = time.time()
         self.pol, (self.rads, self.angs) = he.topolar(self.norm_ftigame, order=3)
         pol_l = self.pol.shape[1]
@@ -387,7 +387,7 @@ class map_quality_fft:
         self.filtered_map_cluster = self.binary_map.copy()
         self.filtered_map_cluster[np.abs(self.map_scored_good) < self.cluster_quality_threshold] = 0.0
 
-    def generate_intiail_hypothesis(self):
+    def generate_initial_hypothesis(self):
         max_len = 5000
         bandwidth = 0.00001
         cutoff_percent = 1
@@ -523,11 +523,11 @@ class map_quality_fft:
 
             self.slices_h_dir.append(temp_slice)
 
-    def generate_intiail_hypothesis_filtered(self):
+    def generate_initial_hypothesis_filtered(self):
         max_len = 5000
         bandwidth = 0.5
         cutoff_percent = 15
-        cell_tr = 5
+        cell_tr = 20#5
         # genberate V hypothesis
         for l in self.lines_long_v:
             temp_slice = []
@@ -536,7 +536,7 @@ class map_quality_fft:
                 rr_flag = (np.logical_or(rr < 0, rr >= self.filtered_map_simple.shape[1]))
                 cc_flag = (np.logical_or(cc < 0, cc >= self.filtered_map_simple.shape[0]))
                 flag = np.logical_not(np.logical_or(rr_flag, cc_flag))
-
+                new_row = True
                 if np.sum(self.filtered_map_simple[cc[flag], rr[flag]] * 1) > 1:
                     # adavnced hypothesisi generation
                     row = self.filtered_map_simple[cc[flag], rr[flag]] * 1
@@ -547,15 +547,16 @@ class map_quality_fft:
                     d_row = d_row.reshape(-1, 1)
                     self.d_row_v.append(d_row)
                     kde = KernelDensity(kernel='gaussian', bandwidth=bandwidth).fit(d_row)
-                    self.kde_hypothesis_v.append(np.exp(kde.score_samples(d_row)))
+                    # self.kde_hypothesis_v.append(np.exp(kde.score_samples(d_row)))
                     # cut the gaps
-                    temp_row = np.exp(kde.score_samples(d_row))
-                    temp_row[temp_row < cutoff_percent * min(np.exp(kde.score_samples(d_row)))] = 0
-                    self.kde_hypothesis_v_cut.append(temp_row)
+                    temp_row_full = np.exp(kde.score_samples(d_row))
+                    temp_row_cut=temp_row_full.copy()
+                    temp_row_cut[temp_row_full < cutoff_percent * min(np.exp(kde.score_samples(d_row)))] = 0
+                    # self.kde_hypothesis_v_cut.append(temp_row)
 
                     l_slice_ids = []
                     pt = 0
-                    for i, t in enumerate(temp_row):
+                    for i, t in enumerate(temp_row_cut):
                         if t == 0 and pt == 0:
                             pt = t
                         elif pt == 0 and t != 0:
@@ -593,6 +594,12 @@ class map_quality_fft:
                             # self.slices_v_ids.append(temp_slice)
                             #temp_slice.append((cc_slices, rr_slices))
                             self.slices_v.append((cc_slices, rr_slices))
+                            if new_row:
+                                self.kde_hypothesis_v.append(temp_row_full)
+                                self.kde_hypothesis_v_cut.append(temp_row_cut)
+                                new_row=False
+
+
 
             self.slices_v_dir.append(temp_slice)
             #self.slices_v_dir=temp_slice
@@ -605,6 +612,7 @@ class map_quality_fft:
                 rr_flag = (np.logical_or(rr < 0, rr >= self.filtered_map_simple.shape[1]))
                 cc_flag = (np.logical_or(cc < 0, cc >= self.filtered_map_simple.shape[0]))
                 flag = np.logical_not(np.logical_or(rr_flag, cc_flag))
+                new_row=True
                 if np.sum(self.filtered_map_simple[cc[flag], rr[flag]] * 1) > 1:
                     row = self.filtered_map_simple[cc[flag], rr[flag]] * 1
                     t_row = np.ones(row.shape) - row
@@ -613,15 +621,16 @@ class map_quality_fft:
                     d_row = d_row.reshape(-1, 1)
                     self.d_row_h.append(d_row)
                     kde = KernelDensity(kernel='gaussian', bandwidth=bandwidth).fit(d_row)
-                    self.kde_hypothesis_h.append(np.exp(kde.score_samples(d_row)))
+                    # self.kde_hypothesis_h.append(np.exp(kde.score_samples(d_row)))
                     # cut the gaps
-                    temp_row = np.exp(kde.score_samples(d_row))
-                    temp_row[temp_row < cutoff_percent * min(np.exp(kde.score_samples(d_row)))] = 0
-                    self.kde_hypothesis_h_cut.append(temp_row)
+                    temp_row_full = np.exp(kde.score_samples(d_row))
+                    temp_row_cut = temp_row_full.copy()
+                    temp_row_cut[temp_row_full < cutoff_percent * min(np.exp(kde.score_samples(d_row)))] = 0
+                    # self.kde_hypothesis_h_cut.append(temp_row)
 
                     l_slice_ids = []
                     pt = 0
-                    for i, t in enumerate(temp_row):
+                    for i, t in enumerate(temp_row_cut):
                         if t == 0 and pt == 0:
                             pt = t
                         elif pt == 0 and t != 0:
@@ -659,6 +668,10 @@ class map_quality_fft:
                             #self.slices_h_ids.append(temp_slice)
                             #temp_slice.append((cc_slices, rr_slices))
                             self.slices_h.append((cc_slices, rr_slices))
+                            if new_row:
+                                self.kde_hypothesis_h.append(temp_row_full)
+                                self.kde_hypothesis_h_cut.append(temp_row_cut)
+                                new_row = False
 
             self.slices_h_dir.append(temp_slice)
             #self.slices_h_dir=temp_slice
@@ -742,7 +755,7 @@ class map_quality_fft:
                     connect_m[j][k] = np.sum(adj_m[indices])
             # print(connect_m)
 
-    def find_walls_floodfiling(self):
+    def find_walls_flood_filing(self):
         self.labeled_map = np.zeros(self.binary_map.shape)
         id = 2
         for s in self.slices_v_dir:
@@ -963,17 +976,29 @@ class map_quality_fft:
         if visualisation["Map with directions"]:
             fig, ax = plt.subplots(nrows=1, ncols=1)
             ax.imshow(self.binary_map, cmap="gray")
-            for l in zip(self.lines_hypothesis_v, self.cell_hypothesis_v, self.kde_hypothesis_v,
-                         self.kde_hypothesis_v_cut):
-                ax.plot([l[0][0], l[0][2]], [l[0][3], l[0][1]], alpha=0.5)
-                ax.scatter(l[1][1], l[1][0], c='r', s=l[2] * 100, alpha=0.5)
-                ax.scatter(l[1][1], l[1][0], c='g', s=l[3] * 100, alpha=0.5)
-
-            for l in zip(self.lines_hypothesis_h, self.cell_hypothesis_h, self.kde_hypothesis_h,
-                         self.kde_hypothesis_h_cut):
-                ax.plot([l[0][0], l[0][2]], [l[0][3], l[0][1]], alpha=0.5)
-                ax.scatter(l[1][1], l[1][0], c='r', s=l[2] * 100, alpha=0.5)
-                ax.scatter(l[1][1], l[1][0], c='g', s=l[3] * 100, alpha=0.5)
+            for line in self.lines_hypothesis_v:
+                ax.plot([line[0], line[2]], [line[3], line[1]], alpha=0.5)
+            for line in self.lines_hypothesis_h:
+                ax.plot([line[0], line[2]], [line[3], line[1]], alpha=0.5)
+            for cells, values in zip(self.cell_hypothesis_v, self.kde_hypothesis_v):
+                ax.scatter(cells[1], cells[0], c='r', s=values * 100, alpha=0.5)
+            for cells, values in zip(self.cell_hypothesis_h, self.kde_hypothesis_h):
+                ax.scatter(cells[1], cells[0], c='r', s=values * 100, alpha=0.5)
+            for cells, values in zip(self.cell_hypothesis_v, self.kde_hypothesis_v_cut):
+                ax.scatter(cells[1], cells[0], c='g', s=values * 100, alpha=0.5)
+            for cells, values in zip(self.cell_hypothesis_h, self.kde_hypothesis_h_cut):
+                ax.scatter(cells[1], cells[0], c='g', s=values * 100, alpha=0.5)
+            # for l in zip(self.lines_hypothesis_v, self.cell_hypothesis_v, self.kde_hypothesis_v,
+            #              self.kde_hypothesis_v_cut):
+            #     #ax.plot([l[0][0], l[0][2]], [l[0][3], l[0][1]], alpha=0.5)
+            #     #ax.scatter(l[1][1], l[1][0], c='r', s=l[2] * 100, alpha=0.5)
+            #     ax.scatter(l[1][1], l[1][0], c='g', s=l[3] * 100, alpha=0.5)
+            #
+            # for l in zip(self.lines_hypothesis_h, self.cell_hypothesis_h, self.kde_hypothesis_h,
+            #              self.kde_hypothesis_h_cut):
+            #     #ax.plot([l[0][0], l[0][2]], [l[0][3], l[0][1]], alpha=0.5)
+            #     #ax.scatter(l[1][1], l[1][0], c='r', s=l[2] * 100, alpha=0.5)
+            #     ax.scatter(l[1][1], l[1][0], c='g', s=l[3] * 100, alpha=0.5)
             ax.axis("off")
             name = "Map with directions"
             ax.set_title(name)
