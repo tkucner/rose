@@ -10,6 +10,7 @@ import skimage.draw as sk_draw
 from scipy import ndimage
 from scipy.signal import find_peaks
 from skimage.filters import threshold_yen
+from scipy.ndimage import convolve
 from skimage.segmentation import flood_fill
 from sklearn import mixture
 from sklearn.cluster import DBSCAN
@@ -121,6 +122,7 @@ class map_quality_fft:
 
         self.norm_ftigame = (np.abs(self.ftimage) / np.max(np.abs(self.ftimage))) * 255.0
         self.norm_ftigame = self.norm_ftigame.astype(int)
+
         print("OK ({0:.2f})".format(time.time() - t))
 
     # def find_dominant_directions(self):
@@ -702,58 +704,6 @@ class map_quality_fft:
     #                 pvl = [-vl[1], vl[0]]
     #                 print(vl, pvl)
 
-    def find_walls_knn(self):
-        for s in self.slices_v_dir:
-            labels = []
-            coords = []
-            i = 0
-            for p in s:
-                for q in zip(p[0], p[1]):
-                    for k in zip(q[0], q[1]):
-                        labels.append(i)
-                        coords.append((k[0], k[1]))
-                    i = 1 + i
-            coords = np.array(coords)
-            dist = pairwise_distances(coords, metric='cityblock')
-
-            adj_m = np.zeros(dist.shape, dtype=np.int16)
-            adj_m[dist == 1] = 1
-            connect_m = np.zeros((i, i))
-            labels = np.array(labels)
-            for j in range(i):
-                for k in range(j + 1, i):
-                    rows = np.array([labels == j, ] * labels.size)
-                    columns = np.array([labels == k, ] * labels.size).transpose()
-                    indices = np.logical_and(rows, columns)
-                    # print(j, k, np.sum(adj_m[indices]))
-                    connect_m[j][k] = np.sum(adj_m[indices])
-            # print(connect_m)
-
-        for s in self.slices_h_dir:
-            labels = []
-            coords = []
-            i = 0
-            for p in s:
-                for q in zip(p[0], p[1]):
-                    for k in zip(q[0], q[1]):
-                        labels.append(i)
-                        coords.append((k[0], k[1]))
-                    i = 1 + i
-            coords = np.array(coords)
-            dist = pairwise_distances(coords, metric='cityblock')
-
-            adj_m = np.zeros(dist.shape, dtype=np.int16)
-            adj_m[dist == 1] = 1
-            connect_m = np.zeros((i, i))
-            labels = np.array(labels)
-            for j in range(i):
-                for k in range(j + 1, i):
-                    rows = np.array([labels == j, ] * labels.size)
-                    columns = np.array([labels == k, ] * labels.size).transpose()
-                    indices = np.logical_and(rows, columns)
-                    # print(j, k, np.sum(adj_m[indices]))
-                    connect_m[j][k] = np.sum(adj_m[indices])
-            # print(connect_m)
 
     def find_walls_flood_filing(self):
         self.labeled_map = np.zeros(self.binary_map.shape)

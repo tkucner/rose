@@ -31,7 +31,7 @@ if __name__ == "__main__":
 
     visualisation = {"Binary map": True,
                      "FFT Spectrum": False,
-                     "Unfolded FFT Spectrum": True,
+                     "Unfolded FFT Spectrum": False,
                      "FFT Spectrum Signal": False,
                      "FFT Spectrum Noise": False,
                      "Map Reconstructed Signal": False,
@@ -51,9 +51,9 @@ if __name__ == "__main__":
                      "Partial Reconstructs": False,
                      "Threshold Setup with Clusters": False,
                      "Cluster Filtered Map": False,
-                     "Map with walls": True,
-                     "Map with slices": True,
+                     "Map with walls": False,
+                     "Map with slices": False,
                      "Wall lines from mbb": True,
-                     "Labels and Raw map": True
+                     "Labels and Raw map": False
                      }
     mq.show(visualisation)
