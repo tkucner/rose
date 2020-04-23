@@ -20,14 +20,22 @@ from sklearn.neighbors import KernelDensity
 import helpers as he
 from GridMapDecompose import segment_handling as sh
 
+
 def generate_line_segments_per_direction(slices):
     slices_lines = []
     for s in slices:
         slices_lines.append([s[0][0][0], s[1][0][0], s[0][0][-1], s[1][0][-1]])
     return slices_lines
 
-class map_quality_fft:
-    def __init__(self, grid_map, ang_tr=0.1, amp_tr=0.8, peak_hight=0.5, par=200, smooth=False, sigma=3):
+
+def save_simple_map(name, map):
+    with open(name, "wb") as out:
+        pngWriter = png.Writer(map.shape[1], map.shape[0], greyscale=True, alpha=False, bitdepth=1)
+        pngWriter.write(out, map)
+
+
+class FFTStructureExtraction:
+    def __init__(self, grid_map, ang_tr=0.1, amp_tr=0.8, peak_height=0.5, par=200, smooth=False, sigma=3):
         self.all_lines = []
         self.segments_h_mbb_lines = []
         self.segments_v_mbb_lines = []
@@ -58,7 +66,7 @@ class map_quality_fft:
 
         self.ang_tr = ang_tr  # rad
         self.amp_tr = amp_tr  # ratio
-        self.peak_hight = peak_hight
+        self.peak_height = peak_height
         self.par = par
         self.smooth = smooth
         self.sigma = sigma
@@ -92,11 +100,6 @@ class map_quality_fft:
 
         self.load_map(grid_map)
 
-    def save_simple_map(self, name, map):
-        with open(name, "wb") as out:
-            pngWriter = png.Writer(map.shape[1], map.shape[0], greyscale=True, alpha=False, bitdepth=1)
-            pngWriter.write(out, map)
-
     def load_map(self, grid_map):
         print("Load Map.....", end="", flush=True)
         ti = time.time()
@@ -125,8 +128,6 @@ class map_quality_fft:
 
         print("OK ({0:.2f})".format(time.time() - t))
 
-    # def find_dominant_directions(self):
-
     def process_map(self):
         self.compute_fft()
 
@@ -145,7 +146,8 @@ class map_quality_fft:
 
         self.pol_h = np.array([sum(x) for x in zip(*self.pol)])
 
-        self.peakind, _ = find_peaks(self.pol_h, prominence=(np.max(self.pol_h) - np.min(self.pol_h)) * self.peak_hight)
+        self.peakind, _ = find_peaks(self.pol_h,
+                                     prominence=(np.max(self.pol_h) - np.min(self.pol_h)) * self.peak_height)
 
         self.pol = self.pol[:, 0:pol_l]
         self.angs = self.angs[0:pol_l]
@@ -342,7 +344,7 @@ class map_quality_fft:
             self.map_split_good_t = np.zeros(self.binary_map.shape)
             self.map_split_good_t[self.map_scored_good > self.map_scored_bad] = 1
             self.map_split_good = np.zeros(self.binary_map.shape)
-            self.map_split_good[self.binary_map] = self.map_split_good_t[self.binary_map]
+            self.map_split_good[self.binary_map] = self.map_split_good_t[self.binary_map]    # def find_dominant_directions(self):
 
             self.ftimage_split = np.fft.fftshift(np.fft.fft2(self.map_split_good))
             print("OK ({0:.2f})".format(time.time() - t))
@@ -456,7 +458,7 @@ class map_quality_fft:
                             self.lines_hypothesis_v.append([l[0] + s, l[1], l[2] + s, l[3]])
                             temp_slice.append((cc_slices, rr_slices))
                             self.slices_v_ids.append(temp_slice)
-                            #temp_slice.append((cc_slices, rr_slices))
+                            # temp_slice.append((cc_slices, rr_slices))
                             self.slices_v.append((cc_slices, rr_slices))
 
             self.slices_v_dir.append(temp_slice)
@@ -529,7 +531,7 @@ class map_quality_fft:
         max_len = 5000
         bandwidth = 0.5
         cutoff_percent = 15
-        cell_tr = 20#5
+        cell_tr = 20  # 5
         # genberate V hypothesis
         for l in self.lines_long_v:
             temp_slice = []
@@ -552,7 +554,7 @@ class map_quality_fft:
                     # self.kde_hypothesis_v.append(np.exp(kde.score_samples(d_row)))
                     # cut the gaps
                     temp_row_full = np.exp(kde.score_samples(d_row))
-                    temp_row_cut=temp_row_full.copy()
+                    temp_row_cut = temp_row_full.copy()
                     temp_row_cut[temp_row_full < cutoff_percent * min(np.exp(kde.score_samples(d_row)))] = 0
                     # self.kde_hypothesis_v_cut.append(temp_row)
 
@@ -594,17 +596,15 @@ class map_quality_fft:
                             temp_slice.append((cc_slices, rr_slices))
                             self.slices_v_ids.append((cc_slices, rr_slices))
                             # self.slices_v_ids.append(temp_slice)
-                            #temp_slice.append((cc_slices, rr_slices))
+                            # temp_slice.append((cc_slices, rr_slices))
                             self.slices_v.append((cc_slices, rr_slices))
                             if new_row:
                                 self.kde_hypothesis_v.append(temp_row_full)
                                 self.kde_hypothesis_v_cut.append(temp_row_cut)
-                                new_row=False
-
-
+                                new_row = False
 
             self.slices_v_dir.append(temp_slice)
-            #self.slices_v_dir=temp_slice
+            # self.slices_v_dir=temp_slice
 
         # genberate H hypothesis
         for l in self.lines_long_h:
@@ -614,7 +614,7 @@ class map_quality_fft:
                 rr_flag = (np.logical_or(rr < 0, rr >= self.filtered_map_simple.shape[1]))
                 cc_flag = (np.logical_or(cc < 0, cc >= self.filtered_map_simple.shape[0]))
                 flag = np.logical_not(np.logical_or(rr_flag, cc_flag))
-                new_row=True
+                new_row = True
                 if np.sum(self.filtered_map_simple[cc[flag], rr[flag]] * 1) > 1:
                     row = self.filtered_map_simple[cc[flag], rr[flag]] * 1
                     t_row = np.ones(row.shape) - row
@@ -667,8 +667,8 @@ class map_quality_fft:
                             self.lines_hypothesis_h.append([l[0], l[1] + s, l[2], l[3] + s])
                             temp_slice.append((cc_slices, rr_slices))
                             self.slices_h_ids.append((cc_slices, rr_slices))
-                            #self.slices_h_ids.append(temp_slice)
-                            #temp_slice.append((cc_slices, rr_slices))
+                            # self.slices_h_ids.append(temp_slice)
+                            # temp_slice.append((cc_slices, rr_slices))
                             self.slices_h.append((cc_slices, rr_slices))
                             if new_row:
                                 self.kde_hypothesis_h.append(temp_row_full)
@@ -676,33 +676,7 @@ class map_quality_fft:
                                 new_row = False
 
             self.slices_h_dir.append(temp_slice)
-            #self.slices_h_dir=temp_slice
-
-    # def hypothesis_clustering(self):
-    #     for l,slices in zip(self.lines_hypothesis_v,self.slices_v_ids):
-    #         for s in slices:
-    #             print(s)
-    #             # take first and last cell
-    #             segment_start = np.array([s[0][0][0], s[1][0][0]])
-    #             segment_end = np.array([s[0][0][-1], s[1][0][-1]])
-    #             line_start = np.array([l[0],l[1]])
-    #             line_end= np.array([l[2],l[3]])
-    #             print(line_start)
-    #             print(line_end)
-    #             print(segment_start)
-    #             if pc.is_between(line_start,line_end,segment_start):
-    #                segment_start_on_line= segment_start
-    #             else:
-    #                 vl=(line_end-line_start)/np.linalg.norm(line_end-line_start)
-    #                 pvl=[-vl[1],vl[0]]
-    #                 print(vl,pvl)
-    #
-    #             if pc.is_between(line_start, line_end, segment_end):
-    #                 segment_end_on_line = segment_end
-    #             else:
-    #                 vl = (line_end - line_start) / np.linalg.norm(line_end - line_start)
-    #                 pvl = [-vl[1], vl[0]]
-    #                 print(vl, pvl)
+            # self.slices_h_dir=temp_slice
 
 
     def find_walls_flood_filing(self):
@@ -815,7 +789,7 @@ class map_quality_fft:
         self.all_lines = list(dict.fromkeys(self.all_lines))
 
     def find_walls_with_line_segments(self):
-        eps = 100
+        eps = 10
         min_samples = 2
         if len(self.slices_h) is not 0:
             self.slice_h_lines = generate_line_segments_per_direction(self.slices_h)
@@ -887,33 +861,15 @@ class map_quality_fft:
             plt.show()
 
         if visualisation["Map with walls"]:
-            # fig, ax = plt.subplots(nrows=1, ncols=1)
-            # ax.imshow(self.binary_map, cmap="gray")
-            # for l in zip(self.cell_hypothesis_v, self.slices_v_ids):
-            #     for ind in l[1]:
-            #         for i in ind:
-            #             ax.plot(l[0][1][i], l[0][0][i], 'rx')
-            # for l in zip(self.cell_hypothesis_h, self.slices_h_ids):
-            #     for ind in l[1]:
-            #         for i in ind:
-            #             ax.plot(l[0][1][i], l[0][0][i], 'rx')
-            #
-            # ax.axis("off")
-            # name = "Map with walls"
-            # ax.set_title(name)
-            # fig.canvas.set_window_title(name)
-            # # ax.set_xlim(0, self.binary_map.shape[1])
-            # # ax.set_ylim(self.binary_map.shape[0], 0)
-            # plt.show()
             fig, ax = plt.subplots(nrows=1, ncols=1)
             ax.imshow(self.binary_map, cmap="gray")
             for indices_slice in self.slices_v_ids:
-                for indices in zip(indices_slice[0],indices_slice[1]):
-                    for i in zip(indices[0],indices[1]):
-                        ax.plot(i[1],i[0],'rx')
+                for indices in zip(indices_slice[0], indices_slice[1]):
+                    for i in zip(indices[0], indices[1]):
+                        ax.plot(i[1], i[0], 'rx')
             for indices_slice in self.slices_h_ids:
                 for indices in zip(indices_slice[0], indices_slice[1]):
-                    for i in zip(indices[0],indices[1]):
+                    for i in zip(indices[0], indices[1]):
                         ax.plot(i[1], i[0], 'rx')
             ax.axis("off")
             name = "Map with walls"
@@ -1243,3 +1199,18 @@ class map_quality_fft:
             name = "Labels and Raw map"
             fig.canvas.set_window_title(name)
             plt.show()
+
+        if visualisation["Raw line segments"]:
+            fig, ax = plt.subplots(nrows=1, ncols=1, sharey=True, sharex=True)
+            ax.imshow(self.binary_map, cmap="gray")
+            for segment in self.slice_v_lines:
+                ax.plot([segment[1],segment[3]],[segment[0],segment[2]])
+
+            for segment in self.slice_h_lines:
+                ax.plot([segment[1], segment[3]], [segment[0], segment[2]])
+
+            name = "Raw line segments"
+            fig.canvas.set_window_title(name)
+
+            plt.show()
+

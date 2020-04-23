@@ -295,5 +295,5 @@ def shortest_distance_between_segements(s1, s2):
             dist = dist_n
 
     else:
-        dist = -1
+        dist = 0
     return dist
