@@ -23,14 +23,14 @@ if __name__ == "__main__":
     rose.histogram_filtering()
 
     rose.generate_initial_hypothesis_filtered()
-    rose.find_walls_with_line_segments()
+#    rose.find_walls_with_line_segments()
     rose.find_walls_flood_filing()
 
     rose.report()
 
     visualisation = {"Binary map": True,
                      "FFT Spectrum": False,
-                     "Unfolded FFT Spectrum": False,
+                     "Unfolded FFT Spectrum": True,
                      "FFT Spectrum Signal": False,
                      "FFT Spectrum Noise": False,
                      "Map Reconstructed Signal": False,
@@ -54,8 +54,8 @@ if __name__ == "__main__":
                      "Map with slices": False,
                      "Wall lines from mbb": True,
                      "Labels and Raw map": False,
-                     "Raw line segments": True,
-                     "Clustered line segments": True
+                     "Raw line segments": False,
+                     "Clustered line segments": False
 
                      }
     rose.show(visualisation)

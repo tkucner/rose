@@ -36,6 +36,10 @@ def save_simple_map(name, map):
 
 class FFTStructureExtraction:
     def __init__(self, grid_map, ang_tr=0.1, amp_tr=0.8, peak_height=0.5, par=200, smooth=False, sigma=3):
+        self.clustering_v_labels = []
+        self.slice_v_lines = []
+        self.slice_h_lines = []
+        self.clustering_h_labels = []
         self.all_lines = []
         self.segments_h_mbb_lines = []
         self.segments_v_mbb_lines = []
@@ -116,6 +120,10 @@ class FFTStructureExtraction:
             t = np.zeros((self.binary_map.shape[0], self.binary_map.shape[1] + 1), dtype=bool)
             t[:, :-1] = self.binary_map
             self.binary_map = t
+        ####### pad with zeros to square
+        square_map=np.zeros((np.max(self.binary_map.shape),np.max(self.binary_map.shape)),dtype=bool)
+        square_map[:self.binary_map.shape[0],:self.binary_map.shape[1]] = self.binary_map
+        self.binary_map=square_map
         print("OK ({0:.2f})".format(time.time() - ti))
 
     def compute_fft(self):
@@ -459,7 +467,7 @@ class FFTStructureExtraction:
                             temp_slice.append((cc_slices, rr_slices))
                             self.slices_v_ids.append(temp_slice)
                             # temp_slice.append((cc_slices, rr_slices))
-                            self.slices_v.append((cc_slices, rr_slices))
+            self.slices_v.append(temp_slice)
 
             self.slices_v_dir.append(temp_slice)
 
@@ -523,7 +531,7 @@ class FFTStructureExtraction:
                             temp_slice.append((cc_slices, rr_slices))
                             self.slices_h_ids.append(temp_slice)
                             # temp_slice.append((cc_slices, rr_slices))
-                            self.slices_h.append((cc_slices, rr_slices))
+            self.slices_h.append(temp_slice)
 
             self.slices_h_dir.append(temp_slice)
 
@@ -591,14 +599,16 @@ class FFTStructureExtraction:
                             cc_slices.append(cc_s)
                             rr_slices.append(rr_s)
 
-                            self.cell_hypothesis_v.append((cc[flag], rr[flag]))
-                            self.lines_hypothesis_v.append([l[0] + s, l[1], l[2] + s, l[3]])
+                            # self.cell_hypothesis_v.append((cc[flag], rr[flag]))
+                            # self.lines_hypothesis_v.append([l[0] + s, l[1], l[2] + s, l[3]])
                             temp_slice.append((cc_slices, rr_slices))
                             self.slices_v_ids.append((cc_slices, rr_slices))
                             # self.slices_v_ids.append(temp_slice)
                             # temp_slice.append((cc_slices, rr_slices))
                             self.slices_v.append((cc_slices, rr_slices))
                             if new_row:
+                                self.cell_hypothesis_v.append((cc[flag], rr[flag]))
+                                self.lines_hypothesis_v.append([l[0] + s, l[1], l[2] + s, l[3]])
                                 self.kde_hypothesis_v.append(temp_row_full)
                                 self.kde_hypothesis_v_cut.append(temp_row_cut)
                                 new_row = False
@@ -663,14 +673,16 @@ class FFTStructureExtraction:
                             cc_slices.append(cc_s)
                             rr_slices.append(rr_s)
 
-                            self.cell_hypothesis_h.append((cc[flag], rr[flag]))
-                            self.lines_hypothesis_h.append([l[0], l[1] + s, l[2], l[3] + s])
+                            # self.cell_hypothesis_h.append((cc[flag], rr[flag]))
+                            # self.lines_hypothesis_h.append([l[0], l[1] + s, l[2], l[3] + s])
                             temp_slice.append((cc_slices, rr_slices))
                             self.slices_h_ids.append((cc_slices, rr_slices))
                             # self.slices_h_ids.append(temp_slice)
                             # temp_slice.append((cc_slices, rr_slices))
                             self.slices_h.append((cc_slices, rr_slices))
                             if new_row:
+                                self.cell_hypothesis_h.append((cc[flag], rr[flag]))
+                                self.lines_hypothesis_h.append([l[0], l[1] + s, l[2], l[3] + s])
                                 self.kde_hypothesis_h.append(temp_row_full)
                                 self.kde_hypothesis_h_cut.append(temp_row_cut)
                                 new_row = False
@@ -721,11 +733,12 @@ class FFTStructureExtraction:
                 a = y2 - y1
                 b = x1 - x2
                 c = a * (x1) + b * (y1)
-                X1 = 0
-                Y1 = (c - a * X1) / b
-                X2 = self.binary_map.shape[0]
-                Y2 = (c - a * X2) / b
-                if np.abs(Y1) > 3 * np.max(self.binary_map.shape):
+                if not b == 0:
+                    X1 = 0
+                    Y1 = (c - a * X1) / b
+                    X2 = self.binary_map.shape[0]
+                    Y2 = (c - a * X2) / b
+                if np.abs(Y1) > 3 * np.max(self.binary_map.shape) or b == 0:
                     ###
                     Y1 = 0
                     X1 = (c - b * Y1) / a
@@ -772,11 +785,12 @@ class FFTStructureExtraction:
                 a = y2 - y1
                 b = x1 - x2
                 c = a * (x1) + b * (y1)
-                X1 = 0
-                Y1 = (c - a * X1) / b
-                X2 = self.binary_map.shape[0]
-                Y2 = (c - a * X2) / b
-                if np.abs(Y1) > 3 * np.max(self.binary_map.shape):
+                if not b == 0:
+                    X1 = 0
+                    Y1 = (c - a * X1) / b
+                    X2 = self.binary_map.shape[0]
+                    Y2 = (c - a * X2) / b
+                if np.abs(Y1) > 3 * np.max(self.binary_map.shape) or b == 0:
                     ###
                     Y1 = 0
                     X1 = (c - b * Y1) / a
@@ -791,30 +805,36 @@ class FFTStructureExtraction:
     def find_walls_with_line_segments(self):
         eps = 10
         min_samples = 2
-        if len(self.slices_h) is not 0:
-            self.slice_h_lines = generate_line_segments_per_direction(self.slices_h)
-            clustering_h = DBSCAN(eps=eps, min_samples=min_samples, metric=he.shortest_distance_between_segements).fit(
-                self.slice_h_lines)
-            self.clustering_h_labels = clustering_h.labels_
+        if len(self.slices_h_dir) is not 0:
+            for direction in self.slices_h_dir:
+                slice_lines = generate_line_segments_per_direction(direction)
+                clustering_h = DBSCAN(eps=eps, min_samples=min_samples, metric=he.shortest_distance_between_segements).fit(
+                slice_lines)
+                self.slice_h_lines.append(slice_lines)
+                self.clustering_h_labels.append(clustering_h.labels_)
 
-        if len(self.slices_v) is not 0:
-            self.slice_v_lines = generate_line_segments_per_direction(self.slices_v)
-            clustering_v = DBSCAN(eps=eps, min_samples=min_samples, metric=he.shortest_distance_between_segements).fit(
-                self.slice_v_lines)
-            self.clustering_v_labels = clustering_v.labels_
+        if len(self.slices_v_dir) is not 0:
+            for direction in self.slices_v_dir:
+                slice_lines = generate_line_segments_per_direction(direction)
+                clustering_v = DBSCAN(eps=eps, min_samples=min_samples,
+                                      metric=he.shortest_distance_between_segements).fit(
+                    slice_lines)
+                self.slice_v_lines.append(slice_lines)
+                self.clustering_v_labels.append(clustering_v.labels_)
+
 
         id = 2
         temp_map = np.zeros(self.binary_map.shape)
 
         last_label = 0
-        for slice, label in zip(self.slices_h, self.clustering_h_labels):
+        for slice, label in zip(self.slices_h_dir, self.clustering_h_labels):
             if last_label != label:
                 id = id + 1
             for s in zip(slice[0][0], slice[1][0]):
                 temp_map[s[0]][s[1]] = id
             last_label = label
         last_label = 0
-        for slice, label in zip(self.slices_v, self.clustering_v_labels):
+        for slice, label in zip(self.slices_v_dir, self.clustering_v_labels):
             if last_label != label:
                 id = id + 1
             for s in zip(slice[0][0], slice[1][0]):
@@ -826,7 +846,8 @@ class FFTStructureExtraction:
     ###########################
     def report(self):
         for p in self.comp:
-            print("dir:", self.angs[p[0]], self.angs[p[1]])
+            #print("dir:", self.angs[p[0]], self.angs[p[1]])
+            print("dir:", self.angs[p[0]]*180.0/np.pi, self.angs[p[1]]*180.0/np.pi)
 
     def show(self, visualisation):
         if visualisation["Binary map"]:
