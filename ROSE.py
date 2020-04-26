@@ -20,7 +20,7 @@ if __name__ == "__main__":
     filter_level = 0.18
     rose.simple_filter_map(filter_level)
 
-    rose.histogram_filtering()
+    # rose.histogram_filtering()
 
     rose.generate_initial_hypothesis_filtered()
 #    rose.find_walls_with_line_segments()

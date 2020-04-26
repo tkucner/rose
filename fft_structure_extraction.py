@@ -76,13 +76,12 @@ class FFTStructureExtraction:
         self.sigma = sigma
         self.grid_map = []
         self.binary_map = []
-
+        self.analysed_map = None
         self.smooth = smooth
 
         self.pixel_quality_histogram = []
         self.pixel_quality_gmm = []
         self.cluster_quality_threshold = []
-        self.filtered_map_cluster = []
 
         self.line_parameters = []
         self.norm_ftigame = []
@@ -124,6 +123,7 @@ class FFTStructureExtraction:
         square_map=np.zeros((np.max(self.binary_map.shape),np.max(self.binary_map.shape)),dtype=bool)
         square_map[:self.binary_map.shape[0],:self.binary_map.shape[1]] = self.binary_map
         self.binary_map=square_map
+        self.analysed_map=self.binary_map.copy()
         print("OK ({0:.2f})".format(time.time() - ti))
 
     def compute_fft(self):
@@ -360,8 +360,8 @@ class FFTStructureExtraction:
     def simple_filter_map(self, tr):
         l_map = np.array(np.abs(self.map_scored_good) / np.max(np.abs(self.map_scored_good)))
         self.quality_threshold = tr
-        self.filtered_map_simple = self.binary_map.copy()
-        self.filtered_map_simple[l_map < self.quality_threshold] = 0.0
+        self.analysed_map = self.binary_map.copy()
+        self.analysed_map[l_map < self.quality_threshold] = 0.0
 
     def histogram_filtering(self):
         pixels = np.abs(self.map_scored_good[self.binary_map > 0])
@@ -396,142 +396,9 @@ class FFTStructureExtraction:
         ind = np.argmax(y_g > y_b)
         self.cluster_quality_threshold = x[ind]
 
-        self.filtered_map_cluster = self.binary_map.copy()
-        self.filtered_map_cluster[np.abs(self.map_scored_good) < self.cluster_quality_threshold] = 0.0
+        self.analysed_map = self.binary_map.copy()
+        self.analysed_map[np.abs(self.map_scored_good) < self.cluster_quality_threshold] = 0.0
 
-    def generate_initial_hypothesis(self):
-        max_len = 5000
-        bandwidth = 0.00001
-        cutoff_percent = 1
-        cell_tr = 1
-        # genberate V hypothesis
-        for l in self.lines_long_v:
-            temp_slice = []
-            for s in np.arange(-1 * max_len, max_len, 1):
-                rr, cc = sk_draw.line(int(round(l[0] + s)), int(round(l[3])), int(round(l[2] + s)), int(round(l[1])))
-                rr_flag = (np.logical_or(rr < 0, rr >= self.binary_map.shape[1]))
-                cc_flag = (np.logical_or(cc < 0, cc >= self.binary_map.shape[0]))
-                flag = np.logical_not(np.logical_or(rr_flag, cc_flag))
-
-                if np.sum(self.binary_map[cc[flag], rr[flag]] * 1) > 1:
-                    # adavnced hypothesisi generation
-                    row = self.binary_map[cc[flag], rr[flag]] * 1
-
-                    t_row = np.ones(row.shape) - row
-                    d_row = ndimage.distance_transform_cdt(t_row)
-                    d_row = max_len - d_row
-                    d_row = d_row.reshape(-1, 1)
-                    self.d_row_v.append(d_row)
-                    kde = KernelDensity(kernel='gaussian', bandwidth=bandwidth).fit(d_row)
-                    self.kde_hypothesis_v.append(np.exp(kde.score_samples(d_row)))
-                    # cut the gaps
-                    temp_row = np.exp(kde.score_samples(d_row))
-                    temp_row[temp_row < cutoff_percent * min(np.exp(kde.score_samples(d_row)))] = 0
-                    self.kde_hypothesis_v_cut.append(temp_row)
-
-                    l_slice_ids = []
-                    pt = 0
-                    for i, t in enumerate(temp_row):
-                        if t == 0 and pt == 0:
-                            pt = t
-                        elif pt == 0 and t != 0:
-                            ts = []
-                            ts.append(i)
-                            pt = t
-                        elif pt != 0 and t != 0:
-                            ts.append(i)
-                            pt = t
-                        elif t == 0 and pt != 0:
-                            l_slice_ids.append(ts)
-                            ts = []
-                            pt = t
-
-                    cc_f = cc[flag]
-                    rr_f = rr[flag]
-
-                    cc_slices = []
-                    rr_slices = []
-
-                    for tslice in l_slice_ids:
-                        if len(tslice) > cell_tr:
-                            cc_s = []
-                            rr_s = []
-                            for i in tslice:
-                                cc_s.append(cc_f[i])
-                                rr_s.append(rr_f[i])
-                            cc_slices.append(cc_s)
-                            rr_slices.append(rr_s)
-
-                            self.cell_hypothesis_v.append((cc[flag], rr[flag]))
-                            self.lines_hypothesis_v.append([l[0] + s, l[1], l[2] + s, l[3]])
-                            temp_slice.append((cc_slices, rr_slices))
-                            self.slices_v_ids.append(temp_slice)
-            self.slices_v.append(temp_slice)
-
-            self.slices_v_dir.append(temp_slice)
-
-        # genberate H hypothesis
-        for l in self.lines_long_h:
-            temp_slice = []
-            for s in np.arange(-1 * max_len, max_len, 1):
-                rr, cc = sk_draw.line(int(round(l[0])), int(round(l[3] + s)), int(round(l[2])), int(round(l[1] + s)))
-                rr_flag = (np.logical_or(rr < 0, rr >= self.binary_map.shape[1]))
-                cc_flag = (np.logical_or(cc < 0, cc >= self.binary_map.shape[0]))
-                flag = np.logical_not(np.logical_or(rr_flag, cc_flag))
-                if np.sum(self.binary_map[cc[flag], rr[flag]] * 1) > 1:
-                    row = self.binary_map[cc[flag], rr[flag]] * 1
-                    t_row = np.ones(row.shape) - row
-                    d_row = ndimage.distance_transform_cdt(t_row)
-                    d_row = max_len - d_row
-                    d_row = d_row.reshape(-1, 1)
-                    self.d_row_h.append(d_row)
-                    kde = KernelDensity(kernel='gaussian', bandwidth=bandwidth).fit(d_row)
-                    self.kde_hypothesis_h.append(np.exp(kde.score_samples(d_row)))
-                    # cut the gaps
-                    temp_row = np.exp(kde.score_samples(d_row))
-                    temp_row[temp_row < cutoff_percent * min(np.exp(kde.score_samples(d_row)))] = 0
-                    self.kde_hypothesis_h_cut.append(temp_row)
-
-                    l_slice_ids = []
-                    pt = 0
-                    for i, t in enumerate(temp_row):
-                        if t == 0 and pt == 0:
-                            pt = t
-                        elif pt == 0 and t != 0:
-                            ts = []
-                            ts.append(i)
-                            pt = t
-                        elif pt != 0 and t != 0:
-                            ts.append(i)
-                            pt = t
-                        elif t == 0 and pt != 0:
-                            l_slice_ids.append(ts)
-                            ts = []
-                            pt = t
-
-                    cc_f = cc[flag]
-                    rr_f = rr[flag]
-
-                    cc_slices = []
-                    rr_slices = []
-
-                    for tslice in l_slice_ids:
-                        if len(tslice) > cell_tr:
-                            cc_s = []
-                            rr_s = []
-                            for i in tslice:
-                                cc_s.append(cc_f[i])
-                                rr_s.append(rr_f[i])
-                            cc_slices.append(cc_s)
-                            rr_slices.append(rr_s)
-
-                            self.cell_hypothesis_h.append((cc[flag], rr[flag]))
-                            self.lines_hypothesis_h.append([l[0], l[1] + s, l[2], l[3] + s])
-                            temp_slice.append((cc_slices, rr_slices))
-                            self.slices_h_ids.append(temp_slice)
-            self.slices_h.append(temp_slice)
-
-            self.slices_h_dir.append(temp_slice)
 
     def generate_initial_hypothesis_filtered(self):
         max_len = 5000
@@ -543,13 +410,13 @@ class FFTStructureExtraction:
             temp_slice = []
             for s in np.arange(-1 * max_len, max_len, 1):
                 rr, cc = sk_draw.line(int(round(l[0] + s)), int(round(l[3])), int(round(l[2] + s)), int(round(l[1])))
-                rr_flag = (np.logical_or(rr < 0, rr >= self.filtered_map_simple.shape[1]))
-                cc_flag = (np.logical_or(cc < 0, cc >= self.filtered_map_simple.shape[0]))
+                rr_flag = (np.logical_or(rr < 0, rr >= self.analysed_map.shape[1]))
+                cc_flag = (np.logical_or(cc < 0, cc >= self.analysed_map.shape[0]))
                 flag = np.logical_not(np.logical_or(rr_flag, cc_flag))
                 new_row = True
-                if np.sum(self.filtered_map_simple[cc[flag], rr[flag]] * 1) > 1:
+                if np.sum(self.analysed_map[cc[flag], rr[flag]] * 1) > 1:
                     # adavnced hypothesisi generation
-                    row = self.filtered_map_simple[cc[flag], rr[flag]] * 1
+                    row = self.analysed_map[cc[flag], rr[flag]] * 1
 
                     t_row = np.ones(row.shape) - row
                     d_row = ndimage.distance_transform_cdt(t_row)
@@ -613,12 +480,12 @@ class FFTStructureExtraction:
             temp_slice = []
             for s in np.arange(-1 * max_len, max_len, 1):
                 rr, cc = sk_draw.line(int(round(l[0])), int(round(l[3] + s)), int(round(l[2])), int(round(l[1] + s)))
-                rr_flag = (np.logical_or(rr < 0, rr >= self.filtered_map_simple.shape[1]))
-                cc_flag = (np.logical_or(cc < 0, cc >= self.filtered_map_simple.shape[0]))
+                rr_flag = (np.logical_or(rr < 0, rr >= self.analysed_map.shape[1]))
+                cc_flag = (np.logical_or(cc < 0, cc >= self.analysed_map.shape[0]))
                 flag = np.logical_not(np.logical_or(rr_flag, cc_flag))
                 new_row = True
-                if np.sum(self.filtered_map_simple[cc[flag], rr[flag]] * 1) > 1:
-                    row = self.filtered_map_simple[cc[flag], rr[flag]] * 1
+                if np.sum(self.analysed_map[cc[flag], rr[flag]] * 1) > 1:
+                    row = self.analysed_map[cc[flag], rr[flag]] * 1
                     t_row = np.ones(row.shape) - row
                     d_row = ndimage.distance_transform_cdt(t_row)
                     d_row = max_len - d_row
@@ -999,7 +866,7 @@ class FFTStructureExtraction:
         if visualisation["Simple Filtered Map"]:
             fig, ax = plt.subplots(nrows=1, ncols=1)
             ax.imshow(self.binary_map, cmap="gray")
-            non_zero_ind = np.nonzero(self.filtered_map_simple)
+            non_zero_ind = np.nonzero(self.analysed_map)
             for ind in zip(non_zero_ind[0], non_zero_ind[1]):
                 square = patches.Rectangle((ind[1], ind[0]), 1, 1, color='green')
                 ax.add_patch(square)
@@ -1043,7 +910,7 @@ class FFTStructureExtraction:
         if visualisation["Cluster Filtered Map"]:
             fig, ax = plt.subplots(nrows=1, ncols=1)
             ax.imshow(self.binary_map, cmap="gray")
-            non_zero_ind = np.nonzero(self.filtered_map_cluster)
+            non_zero_ind = np.nonzero(self.analysed_map)
             for ind in zip(non_zero_ind[0], non_zero_ind[1]):
                 square = patches.Rectangle((ind[1], ind[0]), 1, 1, color='green')
                 ax.add_patch(square)
