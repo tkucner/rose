@@ -134,26 +134,26 @@ class FFTStructureExtraction:
 
         print("OK ({0:.2f})".format(time.time() - t))
 
-    def generate_mask(self,X1_1, Y1_1, X2_1, Y2_1, X1_2, Y1_2, X2_2, Y2_2, Y_org):
+    def generate_mask(self, x1_1, y1_1, x2_1, y2_1, x1_2, y1_2, x2_2, y2_2, y_org):
         mask_1 = np.zeros(self.norm_ft_image.shape, dtype=np.uint8)
         # c_1 = np.array([Y1_1, Y2_1, self.norm_ft_image.shape[1], self.norm_ft_image.shape[1]])
-        c_1 = np.array([Y1_1, Y2_1, self.norm_ft_image.shape[0], self.norm_ft_image.shape[0]])
-        r_1 = np.array([X1_1, X2_1, self.norm_ft_image.shape[0], 0])
-        if np.abs(Y_org) > 3 * np.max(self.binary_map.shape):
+        c_1 = np.array([y1_1, y2_1, self.norm_ft_image.shape[0], self.norm_ft_image.shape[0]])
+        r_1 = np.array([x1_1, x2_1, self.norm_ft_image.shape[0], 0])
+        if np.abs(y_org) > 3 * np.max(self.binary_map.shape):
             # c_1 = np.array([Y1_1, Y2_1, self.norm_ft_image.shape[1], 0])
-            c_1 = np.array([Y1_1, Y2_1, self.norm_ft_image.shape[0], 0])
-            r_1 = np.array([X1_1, X2_1, 0, 0])
+            c_1 = np.array([y1_1, y2_1, self.norm_ft_image.shape[0], 0])
+            r_1 = np.array([x1_1, x2_1, 0, 0])
         rr, cc = he.generate_mask(r_1, c_1, self.norm_ft_image.shape)
         mask_1[rr, cc] = 1
         mask_1 = np.flipud(mask_1)
 
         mask_2 = np.zeros(self.norm_ft_image.shape, dtype=np.uint8)
-        c_2 = np.array([Y1_2, Y2_2, 0, 0])
-        r_2 = np.array([X1_2, X2_2, self.norm_ft_image.shape[0], 0])
-        if np.abs(Y_org) > 3 * np.max(self.binary_map.shape):
+        c_2 = np.array([y1_2, y2_2, 0, 0])
+        r_2 = np.array([x1_2, x2_2, self.norm_ft_image.shape[0], 0])
+        if np.abs(y_org) > 3 * np.max(self.binary_map.shape):
             # c_2 = np.array([Y1_2, Y2_2, self.norm_ft_image.shape[1], 0])
-            c_2 = np.array([Y1_2, Y2_2, self.norm_ft_image.shape[0], 0])
-            r_2 = np.array([X1_2, X2_2, self.norm_ft_image.shape[0], self.norm_ft_image.shape[0]])
+            c_2 = np.array([y1_2, y2_2, self.norm_ft_image.shape[0], 0])
+            r_2 = np.array([x1_2, x2_2, self.norm_ft_image.shape[0], self.norm_ft_image.shape[0]])
         rr, cc = he.generate_mask(r_2, c_2, self.norm_ft_image.shape)
         mask_2[rr, cc] = 1
         mask_2 = np.flipud(mask_2)
@@ -222,11 +222,11 @@ class FFTStructureExtraction:
 
             min_l = (self.binary_map.shape[0] if self.binary_map.shape[0] < self.binary_map.shape[1] else
                      self.binary_map.shape[1]) / 2 - (self.binary_map.shape[0] if self.binary_map.shape[0] >
-                                                      self.binary_map.shape[1] else
+                                                                                  self.binary_map.shape[1] else
                                                       self.binary_map.shape[1])
             max_l = (self.binary_map.shape[0] if self.binary_map.shape[0] > self.binary_map.shape[1] else
                      self.binary_map.shape[1]) / 2 + (self.binary_map.shape[0] if self.binary_map.shape[0] >
-                                                      self.binary_map.shape[1] else
+                                                                                  self.binary_map.shape[1] else
                                                       self.binary_map.shape[1])
 
             for p in self.comp:
@@ -299,11 +299,10 @@ class FFTStructureExtraction:
 
                 self.lines.append([X1, Y1, X2, Y2])
 
-                mask_l=self.generate_mask(X1_1, Y1_1, X2_1, Y2_1, X1_2, Y1_2, X2_2, Y2_2, Y_org)
+                mask_l = self.generate_mask(X1_1, Y1_1, X2_1, Y2_1, X1_2, Y1_2, X2_2, Y2_2, Y_org)
 
                 if not np.any(mask_l == 1):
                     mask_l = self.generate_mask(X1_2, Y1_2, X2_2, Y2_2, X1_1, Y1_1, X2_1, Y2_1, Y_org)
-
 
                 self.part_mask.append(mask_l)
                 l_mask_ftimage = self.ft_image * mask_l
