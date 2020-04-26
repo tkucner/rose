@@ -3,7 +3,7 @@ import argparse
 from skimage import io
 from skimage.util import img_as_ubyte
 
-from map_quality_fft import map_quality_fft as mq_fft
+from fft_structure_extraction import FFTStructureExtraction as structure_extraction
 
 if __name__ == "__main__":
     # parse input
@@ -14,24 +14,23 @@ if __name__ == "__main__":
     # FFT
 
     grid_map = img_as_ubyte(io.imread(args.img_file))
-    mq = mq_fft(grid_map, peak_hight=0.2, par=50)
-    mq.process_map()
+    rose = structure_extraction(grid_map, peak_height=0.2, par=50)
+    rose.process_map()
 
     filter_level = 0.18
-    mq.simple_filter_map(filter_level)
+    rose.simple_filter_map(filter_level)
 
-    mq.histogram_filtering()
+    rose.histogram_filtering()
 
-    mq.generate_intiail_hypothesis_filtered()
-    # mq.hypothesis_clustering()
-    mq.find_walls_floodfiling()
-    # mq.find_walls_knn()
+    rose.generate_initial_hypothesis_filtered()
+#    rose.find_walls_with_line_segments()
+    rose.find_walls_flood_filing()
 
-    mq.report()
+    rose.report()
 
-    visualisation = {"Binary map": False,
+    visualisation = {"Binary map": True,
                      "FFT Spectrum": False,
-                     "Unfolded FFT Spectrum": False,
+                     "Unfolded FFT Spectrum": True,
                      "FFT Spectrum Signal": False,
                      "FFT Spectrum Noise": False,
                      "Map Reconstructed Signal": False,
@@ -49,11 +48,14 @@ if __name__ == "__main__":
                      "Map with directions": True,
                      "Partial Scores": False,
                      "Partial Reconstructs": False,
-                     "Treshold Setup with Clusters": False,
+                     "Threshold Setup with Clusters": False,
                      "Cluster Filtered Map": False,
-                     "Map with walls": True,
-                     "Map with slices": True,
+                     "Map with walls": False,
+                     "Map with slices": False,
                      "Wall lines from mbb": True,
-                     "Labels and Raw map": True
+                     "Labels and Raw map": False,
+                     "Raw line segments": False,
+                     "Clustered line segments": False
+
                      }
-    mq.show(visualisation)
+    rose.show(visualisation)

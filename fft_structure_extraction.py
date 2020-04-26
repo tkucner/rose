@@ -10,8 +10,10 @@ import skimage.draw as sk_draw
 from scipy import ndimage
 from scipy.signal import find_peaks
 from skimage.filters import threshold_yen
+from scipy.ndimage import convolve
 from skimage.segmentation import flood_fill
 from sklearn import mixture
+from sklearn.cluster import DBSCAN
 from sklearn.metrics import pairwise_distances
 from sklearn.neighbors import KernelDensity
 
@@ -19,8 +21,25 @@ import helpers as he
 from GridMapDecompose import segment_handling as sh
 
 
-class map_quality_fft:
-    def __init__(self, grid_map, ang_tr=0.1, amp_tr=0.8, peak_hight=0.5, par=200, smooth=False, sigma=3):
+def generate_line_segments_per_direction(slices):
+    slices_lines = []
+    for s in slices:
+        slices_lines.append([s[0][0][0], s[1][0][0], s[0][0][-1], s[1][0][-1]])
+    return slices_lines
+
+
+def save_simple_map(name, map):
+    with open(name, "wb") as out:
+        pngWriter = png.Writer(map.shape[1], map.shape[0], greyscale=True, alpha=False, bitdepth=1)
+        pngWriter.write(out, map)
+
+
+class FFTStructureExtraction:
+    def __init__(self, grid_map, ang_tr=0.1, amp_tr=0.8, peak_height=0.5, par=200, smooth=False, sigma=3):
+        self.clustering_v_labels = []
+        self.slice_v_lines = []
+        self.slice_h_lines = []
+        self.clustering_h_labels = []
         self.all_lines = []
         self.segments_h_mbb_lines = []
         self.segments_v_mbb_lines = []
@@ -51,7 +70,7 @@ class map_quality_fft:
 
         self.ang_tr = ang_tr  # rad
         self.amp_tr = amp_tr  # ratio
-        self.peak_hight = peak_hight
+        self.peak_height = peak_height
         self.par = par
         self.smooth = smooth
         self.sigma = sigma
@@ -85,11 +104,6 @@ class map_quality_fft:
 
         self.load_map(grid_map)
 
-    def save_simple_map(self, name, map):
-        with open(name, "wb") as out:
-            pngWriter = png.Writer(map.shape[1], map.shape[0], greyscale=True, alpha=False, bitdepth=1)
-            pngWriter.write(out, map)
-
     def load_map(self, grid_map):
         print("Load Map.....", end="", flush=True)
         ti = time.time()
@@ -106,6 +120,10 @@ class map_quality_fft:
             t = np.zeros((self.binary_map.shape[0], self.binary_map.shape[1] + 1), dtype=bool)
             t[:, :-1] = self.binary_map
             self.binary_map = t
+        ####### pad with zeros to square
+        square_map=np.zeros((np.max(self.binary_map.shape),np.max(self.binary_map.shape)),dtype=bool)
+        square_map[:self.binary_map.shape[0],:self.binary_map.shape[1]] = self.binary_map
+        self.binary_map=square_map
         print("OK ({0:.2f})".format(time.time() - ti))
 
     def compute_fft(self):
@@ -115,14 +133,13 @@ class map_quality_fft:
 
         self.norm_ftigame = (np.abs(self.ftimage) / np.max(np.abs(self.ftimage))) * 255.0
         self.norm_ftigame = self.norm_ftigame.astype(int)
-        print("OK ({0:.2f})".format(time.time() - t))
 
-    # def find_domiant_directions(self):
+        print("OK ({0:.2f})".format(time.time() - t))
 
     def process_map(self):
         self.compute_fft()
 
-        print("Find Dominat directions.....", end="", flush=True)
+        print("Find Dominant directions.....", end="", flush=True)
         t = time.time()
         self.pol, (self.rads, self.angs) = he.topolar(self.norm_ftigame, order=3)
         pol_l = self.pol.shape[1]
@@ -137,7 +154,8 @@ class map_quality_fft:
 
         self.pol_h = np.array([sum(x) for x in zip(*self.pol)])
 
-        self.peakind, _ = find_peaks(self.pol_h, prominence=(np.max(self.pol_h) - np.min(self.pol_h)) * self.peak_hight)
+        self.peakind, _ = find_peaks(self.pol_h,
+                                     prominence=(np.max(self.pol_h) - np.min(self.pol_h)) * self.peak_height)
 
         self.pol = self.pol[:, 0:pol_l]
         self.angs = self.angs[0:pol_l]
@@ -173,7 +191,7 @@ class map_quality_fft:
         if not self.comp:
             pass
         else:
-            diag = 10  # np.sqrt(self.binary_map.shape[0]**2+self.binary_map.shape[1]**2)/4
+            diag = 10
             mask_all = np.zeros(self.norm_ftigame.shape)
 
             min_l = (self.binary_map.shape[0] if self.binary_map.shape[0] < self.binary_map.shape[1] else
@@ -381,7 +399,7 @@ class map_quality_fft:
         self.filtered_map_cluster = self.binary_map.copy()
         self.filtered_map_cluster[np.abs(self.map_scored_good) < self.cluster_quality_threshold] = 0.0
 
-    def generate_intiail_hypothesis(self):
+    def generate_initial_hypothesis(self):
         max_len = 5000
         bandwidth = 0.00001
         cutoff_percent = 1
@@ -446,9 +464,9 @@ class map_quality_fft:
 
                             self.cell_hypothesis_v.append((cc[flag], rr[flag]))
                             self.lines_hypothesis_v.append([l[0] + s, l[1], l[2] + s, l[3]])
-                            self.slices_v_ids.append(temp_slice)
                             temp_slice.append((cc_slices, rr_slices))
-                            self.slices_v.append((cc_slices, rr_slices))
+                            self.slices_v_ids.append(temp_slice)
+            self.slices_v.append(temp_slice)
 
             self.slices_v_dir.append(temp_slice)
 
@@ -509,17 +527,17 @@ class map_quality_fft:
 
                             self.cell_hypothesis_h.append((cc[flag], rr[flag]))
                             self.lines_hypothesis_h.append([l[0], l[1] + s, l[2], l[3] + s])
-                            self.slices_h_ids.append(temp_slice)
                             temp_slice.append((cc_slices, rr_slices))
-                            self.slices_h.append((cc_slices, rr_slices))
+                            self.slices_h_ids.append(temp_slice)
+            self.slices_h.append(temp_slice)
 
             self.slices_h_dir.append(temp_slice)
 
-    def generate_intiail_hypothesis_filtered(self):
+    def generate_initial_hypothesis_filtered(self):
         max_len = 5000
         bandwidth = 0.5
         cutoff_percent = 15
-        cell_tr = 5
+        cell_tr = 20  # 5
         # genberate V hypothesis
         for l in self.lines_long_v:
             temp_slice = []
@@ -528,7 +546,7 @@ class map_quality_fft:
                 rr_flag = (np.logical_or(rr < 0, rr >= self.filtered_map_simple.shape[1]))
                 cc_flag = (np.logical_or(cc < 0, cc >= self.filtered_map_simple.shape[0]))
                 flag = np.logical_not(np.logical_or(rr_flag, cc_flag))
-
+                new_row = True
                 if np.sum(self.filtered_map_simple[cc[flag], rr[flag]] * 1) > 1:
                     # adavnced hypothesisi generation
                     row = self.filtered_map_simple[cc[flag], rr[flag]] * 1
@@ -539,15 +557,14 @@ class map_quality_fft:
                     d_row = d_row.reshape(-1, 1)
                     self.d_row_v.append(d_row)
                     kde = KernelDensity(kernel='gaussian', bandwidth=bandwidth).fit(d_row)
-                    self.kde_hypothesis_v.append(np.exp(kde.score_samples(d_row)))
                     # cut the gaps
-                    temp_row = np.exp(kde.score_samples(d_row))
-                    temp_row[temp_row < cutoff_percent * min(np.exp(kde.score_samples(d_row)))] = 0
-                    self.kde_hypothesis_v_cut.append(temp_row)
+                    temp_row_full = np.exp(kde.score_samples(d_row))
+                    temp_row_cut = temp_row_full.copy()
+                    temp_row_cut[temp_row_full < cutoff_percent * min(np.exp(kde.score_samples(d_row)))] = 0
 
                     l_slice_ids = []
                     pt = 0
-                    for i, t in enumerate(temp_row):
+                    for i, t in enumerate(temp_row_cut):
                         if t == 0 and pt == 0:
                             pt = t
                         elif pt == 0 and t != 0:
@@ -578,11 +595,16 @@ class map_quality_fft:
                             cc_slices.append(cc_s)
                             rr_slices.append(rr_s)
 
-                            self.cell_hypothesis_v.append((cc[flag], rr[flag]))
-                            self.lines_hypothesis_v.append([l[0] + s, l[1], l[2] + s, l[3]])
-                            self.slices_v_ids.append(temp_slice)
                             temp_slice.append((cc_slices, rr_slices))
+                            self.slices_v_ids.append((cc_slices, rr_slices))
+
                             self.slices_v.append((cc_slices, rr_slices))
+                            if new_row:
+                                self.cell_hypothesis_v.append((cc[flag], rr[flag]))
+                                self.lines_hypothesis_v.append([l[0] + s, l[1], l[2] + s, l[3]])
+                                self.kde_hypothesis_v.append(temp_row_full)
+                                self.kde_hypothesis_v_cut.append(temp_row_cut)
+                                new_row = False
 
             self.slices_v_dir.append(temp_slice)
 
@@ -594,6 +616,7 @@ class map_quality_fft:
                 rr_flag = (np.logical_or(rr < 0, rr >= self.filtered_map_simple.shape[1]))
                 cc_flag = (np.logical_or(cc < 0, cc >= self.filtered_map_simple.shape[0]))
                 flag = np.logical_not(np.logical_or(rr_flag, cc_flag))
+                new_row = True
                 if np.sum(self.filtered_map_simple[cc[flag], rr[flag]] * 1) > 1:
                     row = self.filtered_map_simple[cc[flag], rr[flag]] * 1
                     t_row = np.ones(row.shape) - row
@@ -602,15 +625,15 @@ class map_quality_fft:
                     d_row = d_row.reshape(-1, 1)
                     self.d_row_h.append(d_row)
                     kde = KernelDensity(kernel='gaussian', bandwidth=bandwidth).fit(d_row)
-                    self.kde_hypothesis_h.append(np.exp(kde.score_samples(d_row)))
+
                     # cut the gaps
-                    temp_row = np.exp(kde.score_samples(d_row))
-                    temp_row[temp_row < cutoff_percent * min(np.exp(kde.score_samples(d_row)))] = 0
-                    self.kde_hypothesis_h_cut.append(temp_row)
+                    temp_row_full = np.exp(kde.score_samples(d_row))
+                    temp_row_cut = temp_row_full.copy()
+                    temp_row_cut[temp_row_full < cutoff_percent * min(np.exp(kde.score_samples(d_row)))] = 0
 
                     l_slice_ids = []
                     pt = 0
-                    for i, t in enumerate(temp_row):
+                    for i, t in enumerate(temp_row_cut):
                         if t == 0 and pt == 0:
                             pt = t
                         elif pt == 0 and t != 0:
@@ -641,103 +664,29 @@ class map_quality_fft:
                             cc_slices.append(cc_s)
                             rr_slices.append(rr_s)
 
-                            self.cell_hypothesis_h.append((cc[flag], rr[flag]))
-                            self.lines_hypothesis_h.append([l[0], l[1] + s, l[2], l[3] + s])
-                            self.slices_h_ids.append(temp_slice)
                             temp_slice.append((cc_slices, rr_slices))
+                            self.slices_h_ids.append((cc_slices, rr_slices))
+
                             self.slices_h.append((cc_slices, rr_slices))
+                            if new_row:
+                                self.cell_hypothesis_h.append((cc[flag], rr[flag]))
+                                self.lines_hypothesis_h.append([l[0], l[1] + s, l[2], l[3] + s])
+                                self.kde_hypothesis_h.append(temp_row_full)
+                                self.kde_hypothesis_h_cut.append(temp_row_cut)
+                                new_row = False
 
             self.slices_h_dir.append(temp_slice)
 
-    # def hypothesis_clustering(self):
-    #     for l,slices in zip(self.lines_hypothesis_v,self.slices_v_ids):
-    #         for s in slices:
-    #             print(s)
-    #             # take first and last cell
-    #             segment_start = np.array([s[0][0][0], s[1][0][0]])
-    #             segment_end = np.array([s[0][0][-1], s[1][0][-1]])
-    #             line_start = np.array([l[0],l[1]])
-    #             line_end= np.array([l[2],l[3]])
-    #             print(line_start)
-    #             print(line_end)
-    #             print(segment_start)
-    #             if pc.is_between(line_start,line_end,segment_start):
-    #                segment_start_on_line= segment_start
-    #             else:
-    #                 vl=(line_end-line_start)/np.linalg.norm(line_end-line_start)
-    #                 pvl=[-vl[1],vl[0]]
-    #                 print(vl,pvl)
-    #
-    #             if pc.is_between(line_start, line_end, segment_end):
-    #                 segment_end_on_line = segment_end
-    #             else:
-    #                 vl = (line_end - line_start) / np.linalg.norm(line_end - line_start)
-    #                 pvl = [-vl[1], vl[0]]
-    #                 print(vl, pvl)
-
-    def find_walls_knn(self):
-        for s in self.slices_v_dir:
-            labels = []
-            coords = []
-            i = 0
-            for p in s:
-                for q in zip(p[0], p[1]):
-                    for k in zip(q[0], q[1]):
-                        labels.append(i)
-                        coords.append((k[0], k[1]))
-                    i = 1 + i
-            coords = np.array(coords)
-            dist = pairwise_distances(coords, metric='cityblock')
-
-            adj_m = np.zeros(dist.shape, dtype=np.int16)
-            adj_m[dist == 1] = 1
-            connect_m = np.zeros((i, i))
-            labels = np.array(labels)
-            for j in range(i):
-                for k in range(j + 1, i):
-                    rows = np.array([labels == j, ] * labels.size)
-                    columns = np.array([labels == k, ] * labels.size).transpose()
-                    indices = np.logical_and(rows, columns)
-                    # print(j, k, np.sum(adj_m[indices]))
-                    connect_m[j][k] = np.sum(adj_m[indices])
-            #print(connect_m)
-
-        for s in self.slices_h_dir:
-            labels = []
-            coords = []
-            i = 0
-            for p in s:
-                for q in zip(p[0], p[1]):
-                    for k in zip(q[0], q[1]):
-                        labels.append(i)
-                        coords.append((k[0], k[1]))
-                    i = 1 + i
-            coords = np.array(coords)
-            dist = pairwise_distances(coords, metric='cityblock')
-
-            adj_m = np.zeros(dist.shape, dtype=np.int16)
-            adj_m[dist == 1] = 1
-            connect_m = np.zeros((i, i))
-            labels = np.array(labels)
-            for j in range(i):
-                for k in range(j + 1, i):
-                    rows = np.array([labels == j, ] * labels.size)
-                    columns = np.array([labels == k, ] * labels.size).transpose()
-                    indices = np.logical_and(rows, columns)
-                    #print(j, k, np.sum(adj_m[indices]))
-                    connect_m[j][k] = np.sum(adj_m[indices])
-            #print(connect_m)
-
-    def find_walls_floodfiling(self):
+    def find_walls_flood_filing(self):
         self.labeled_map = np.zeros(self.binary_map.shape)
         id = 2
         for s in self.slices_v_dir:
             local_segments = []
-            # s=self.slices_v_dir[0]
             temp_map = np.zeros(self.binary_map.shape)
             for p in s:
                 for q in zip(p[0], p[1]):
                     temp_map[q[0], q[1]] = 1
+
             temp_map_fill = temp_map.copy()
             filled = False
             while not filled:
@@ -767,11 +716,12 @@ class map_quality_fft:
                 a = y2 - y1
                 b = x1 - x2
                 c = a * (x1) + b * (y1)
-                X1 = 0
-                Y1 = (c - a * X1) / b
-                X2 = self.binary_map.shape[0]
-                Y2 = (c - a * X2) / b
-                if np.abs(Y1) > 3 * np.max(self.binary_map.shape):
+                if not b == 0:
+                    X1 = 0
+                    Y1 = (c - a * X1) / b
+                    X2 = self.binary_map.shape[0]
+                    Y2 = (c - a * X2) / b
+                if np.abs(Y1) > 3 * np.max(self.binary_map.shape) or b == 0:
                     ###
                     Y1 = 0
                     X1 = (c - b * Y1) / a
@@ -784,7 +734,6 @@ class map_quality_fft:
 
         for s in self.slices_h_dir:
             local_segments = []
-            # s=self.slices_v_dir[0]
             temp_map = np.zeros(self.binary_map.shape)
             for p in s:
                 for q in zip(p[0], p[1]):
@@ -816,11 +765,12 @@ class map_quality_fft:
                 a = y2 - y1
                 b = x1 - x2
                 c = a * (x1) + b * (y1)
-                X1 = 0
-                Y1 = (c - a * X1) / b
-                X2 = self.binary_map.shape[0]
-                Y2 = (c - a * X2) / b
-                if np.abs(Y1) > 3 * np.max(self.binary_map.shape):
+                if not b == 0:
+                    X1 = 0
+                    Y1 = (c - a * X1) / b
+                    X2 = self.binary_map.shape[0]
+                    Y2 = (c - a * X2) / b
+                if np.abs(Y1) > 3 * np.max(self.binary_map.shape) or b == 0:
                     ###
                     Y1 = 0
                     X1 = (c - b * Y1) / a
@@ -832,11 +782,51 @@ class map_quality_fft:
             self.segments_h_mbb_lines.append(local_mbb_lines)
         self.all_lines = list(dict.fromkeys(self.all_lines))
 
+    def find_walls_with_line_segments(self):
+        eps = 10
+        min_samples = 2
+        if len(self.slices_h_dir) is not 0:
+            for direction in self.slices_h_dir:
+                slice_lines = generate_line_segments_per_direction(direction)
+                clustering_h = DBSCAN(eps=eps, min_samples=min_samples, metric=he.shortest_distance_between_segements).fit(
+                slice_lines)
+                self.slice_h_lines.append(slice_lines)
+                self.clustering_h_labels.append(clustering_h.labels_)
+
+        if len(self.slices_v_dir) is not 0:
+            for direction in self.slices_v_dir:
+                slice_lines = generate_line_segments_per_direction(direction)
+                clustering_v = DBSCAN(eps=eps, min_samples=min_samples,
+                                      metric=he.shortest_distance_between_segements).fit(
+                    slice_lines)
+                self.slice_v_lines.append(slice_lines)
+                self.clustering_v_labels.append(clustering_v.labels_)
+
+
+        id = 2
+        temp_map = np.zeros(self.binary_map.shape)
+
+        last_label = 0
+        for slice, label in zip(self.slices_h_dir, self.clustering_h_labels):
+            if last_label != label:
+                id = id + 1
+            for s in zip(slice[0][0], slice[1][0]):
+                temp_map[s[0]][s[1]] = id
+            last_label = label
+        last_label = 0
+        for slice, label in zip(self.slices_v_dir, self.clustering_v_labels):
+            if last_label != label:
+                id = id + 1
+            for s in zip(slice[0][0], slice[1][0]):
+                temp_map[s[0]][s[1]] = id
+            last_label = label
+        self.labeled_map_line_segment = temp_map
+
     # output
     ###########################
     def report(self):
         for p in self.comp:
-            print("dir:", self.angs[p[0]], self.angs[p[1]])
+            print("dir:", self.angs[p[0]]*180.0/np.pi, self.angs[p[1]]*180.0/np.pi)
 
     def show(self, visualisation):
         if visualisation["Binary map"]:
@@ -873,37 +863,35 @@ class map_quality_fft:
         if visualisation["Map with walls"]:
             fig, ax = plt.subplots(nrows=1, ncols=1)
             ax.imshow(self.binary_map, cmap="gray")
-            for l in zip(self.cell_hypothesis_v, self.slices_v_ids):
-                for ind in l[1]:
-                    for i in ind:
-                        ax.plot(l[0][1][i], l[0][0][i], 'rx')
-            for l in zip(self.cell_hypothesis_h, self.slices_h_ids):
-                for ind in l[1]:
-                    for i in ind:
-                        ax.plot(l[0][1][i], l[0][0][i], 'rx')
-
+            for indices_slice in self.slices_v_ids:
+                for indices in zip(indices_slice[0], indices_slice[1]):
+                    for i in zip(indices[0], indices[1]):
+                        ax.plot(i[1], i[0], 'rx')
+            for indices_slice in self.slices_h_ids:
+                for indices in zip(indices_slice[0], indices_slice[1]):
+                    for i in zip(indices[0], indices[1]):
+                        ax.plot(i[1], i[0], 'rx')
             ax.axis("off")
             name = "Map with walls"
             ax.set_title(name)
             fig.canvas.set_window_title(name)
-            # ax.set_xlim(0, self.binary_map.shape[1])
-            # ax.set_ylim(self.binary_map.shape[0], 0)
             plt.show()
 
         if visualisation["Map with directions"]:
             fig, ax = plt.subplots(nrows=1, ncols=1)
             ax.imshow(self.binary_map, cmap="gray")
-            for l in zip(self.lines_hypothesis_v, self.cell_hypothesis_v, self.kde_hypothesis_v,
-                         self.kde_hypothesis_v_cut):
-                ax.plot([l[0][0], l[0][2]], [l[0][3], l[0][1]], alpha=0.5)
-                ax.scatter(l[1][1], l[1][0], c='r', s=l[2] * 100, alpha=0.5)
-                ax.scatter(l[1][1], l[1][0], c='g', s=l[3] * 100, alpha=0.5)
-
-            for l in zip(self.lines_hypothesis_h, self.cell_hypothesis_h, self.kde_hypothesis_h,
-                         self.kde_hypothesis_h_cut):
-                ax.plot([l[0][0], l[0][2]], [l[0][3], l[0][1]], alpha=0.5)
-                ax.scatter(l[1][1], l[1][0], c='r', s=l[2] * 100, alpha=0.5)
-                ax.scatter(l[1][1], l[1][0], c='g', s=l[3] * 100, alpha=0.5)
+            for line in self.lines_hypothesis_v:
+                ax.plot([line[0], line[2]], [line[3], line[1]], alpha=0.5)
+            for line in self.lines_hypothesis_h:
+                ax.plot([line[0], line[2]], [line[3], line[1]], alpha=0.5)
+            for cells, values in zip(self.cell_hypothesis_v, self.kde_hypothesis_v):
+                ax.scatter(cells[1], cells[0], c='r', s=values * 100, alpha=0.5)
+            for cells, values in zip(self.cell_hypothesis_h, self.kde_hypothesis_h):
+                ax.scatter(cells[1], cells[0], c='r', s=values * 100, alpha=0.5)
+            for cells, values in zip(self.cell_hypothesis_v, self.kde_hypothesis_v_cut):
+                ax.scatter(cells[1], cells[0], c='g', s=values * 100, alpha=0.5)
+            for cells, values in zip(self.cell_hypothesis_h, self.kde_hypothesis_h_cut):
+                ax.scatter(cells[1], cells[0], c='g', s=values * 100, alpha=0.5)
             ax.axis("off")
             name = "Map with directions"
             ax.set_title(name)
@@ -1021,7 +1009,7 @@ class map_quality_fft:
             ax.set_title(name)
             plt.show()
 
-        if visualisation["Treshold Setup with Clusters"]:
+        if visualisation["Threshold Setup with Clusters"]:
             x = np.arange(np.min(self.pixel_quality_histogram["edges"]), np.max(self.pixel_quality_histogram["edges"]),
                           (np.max(self.pixel_quality_histogram["edges"]) - np.min(
                               self.pixel_quality_histogram["edges"])) / 1000)
@@ -1159,7 +1147,6 @@ class map_quality_fft:
             cmap.set_under("black")
             cmap.set_over("yellow")
             fig, ax = plt.subplots(nrows=1, ncols=1, sharey=True, sharex=True)
-            # ax[0].imshow(temp_map)
             ax.imshow(self.labeled_map, cmap=cmap, vmin=1)
             for local_segments, local_mbb_lines in zip(self.segments_h, self.segments_h_mbb_lines):
                 for l_segment, l_mbb_lines in zip(local_segments, local_mbb_lines):
@@ -1183,7 +1170,6 @@ class map_quality_fft:
             cmap.set_under("black")
             cmap.set_over("yellow")
             fig, ax = plt.subplots(nrows=1, ncols=1, sharey=True, sharex=True)
-            # ax[0].imshow(temp_map)
             ax.imshow(self.labeled_map, cmap=cmap, vmin=1)
             ax.imshow(self.binary_map, cmap="gray", alpha=0.5)
             for local_segments, local_mbb_lines in zip(self.segments_h, self.segments_h_mbb_lines):
@@ -1198,3 +1184,18 @@ class map_quality_fft:
             name = "Labels and Raw map"
             fig.canvas.set_window_title(name)
             plt.show()
+
+        if visualisation["Raw line segments"]:
+            fig, ax = plt.subplots(nrows=1, ncols=1, sharey=True, sharex=True)
+            ax.imshow(self.binary_map, cmap="gray")
+            for segment in self.slice_v_lines:
+                ax.plot([segment[1],segment[3]],[segment[0],segment[2]])
+
+            for segment in self.slice_h_lines:
+                ax.plot([segment[1], segment[3]], [segment[0], segment[2]])
+
+            name = "Raw line segments"
+            fig.canvas.set_window_title(name)
+
+            plt.show()
+
