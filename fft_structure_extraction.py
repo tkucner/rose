@@ -30,8 +30,8 @@ def generate_line_segments_per_direction(slices):
 
 def save_simple_map(name, map):
     with open(name, "wb") as out:
-        pngWriter = png.Writer(map.shape[1], map.shape[0], greyscale=True, alpha=False, bitdepth=1)
-        pngWriter.write(out, map)
+        png_writer = png.Writer(map.shape[1], map.shape[0], greyscale=True, alpha=False, bitdepth=1)
+        png_writer.write(out, map)
 
 
 class FFTStructureExtraction:
@@ -53,7 +53,7 @@ class FFTStructureExtraction:
         self.slices_h = []
         self.kde_hypothesis_v_cut = []
         self.kde_hypothesis_h_cut = []
-        self.part_reconstuct = []
+        self.part_reconstruction = []
         self.lines = []
         self.lines_long_h = []
         self.lines_long_v = []
@@ -84,21 +84,21 @@ class FFTStructureExtraction:
         self.cluster_quality_threshold = []
 
         self.line_parameters = []
-        self.norm_ftigame = []
+        self.norm_ft_image = []
         self.pol = []
-        self.angs = []
+        self.angles = []
         self.pol_h = []
-        self.peakind = []
+        self.peak_indices = []
         self.rads = []
         self.comp = []
-        self.mask_ftimage = []
-        self.mask_inv_ftimage = []
+        self.mask_ft_image = []
+        self.mask_inv_ft_image = []
         self.map_scored_good = []
         self.map_scored_bad = []
         self.map_scored_diff = []
         self.map_split_good = []
-        self.ftimage_split = []
-        self.ftimage = []
+        self.ft_image_split = []
+        self.ft_image = []
         self.map_split_good_t = []
 
         self.load_map(grid_map)
@@ -119,7 +119,7 @@ class FFTStructureExtraction:
             t = np.zeros((self.binary_map.shape[0], self.binary_map.shape[1] + 1), dtype=bool)
             t[:, :-1] = self.binary_map
             self.binary_map = t
-        ####### pad with zeros to square
+        # pad with zeros to square
         square_map = np.zeros((np.max(self.binary_map.shape), np.max(self.binary_map.shape)), dtype=bool)
         square_map[:self.binary_map.shape[0], :self.binary_map.shape[1]] = self.binary_map
         self.binary_map = square_map
@@ -129,10 +129,10 @@ class FFTStructureExtraction:
     def compute_fft(self):
         print("Compute FFT.....", end="", flush=True)
         t = time.time()
-        self.ftimage = np.fft.fftshift(np.fft.fft2(self.binary_map * 1))
+        self.ft_image = np.fft.fftshift(np.fft.fft2(self.binary_map * 1))
 
-        self.norm_ftigame = (np.abs(self.ftimage) / np.max(np.abs(self.ftimage))) * 255.0
-        self.norm_ftigame = self.norm_ftigame.astype(int)
+        self.norm_ft_image = (np.abs(self.ft_image) / np.max(np.abs(self.ft_image))) * 255.0
+        self.norm_ft_image = self.norm_ft_image.astype(int)
 
         print("OK ({0:.2f})".format(time.time() - t))
 
@@ -141,34 +141,34 @@ class FFTStructureExtraction:
 
         print("Find Dominant directions.....", end="", flush=True)
         t = time.time()
-        self.pol, (self.rads, self.angs) = he.topolar(self.norm_ftigame, order=3)
+        self.pol, (self.rads, self.angles) = he.topolar(self.norm_ft_image, order=3)
         pol_l = self.pol.shape[1]
         self.pol = np.concatenate((self.pol, self.pol[:, 1:], self.pol[:, 1:]), axis=1)
-        self.angs = np.concatenate(
-            (self.angs, self.angs[1:] + np.max(self.angs), self.angs[1:] + np.max(self.angs[1:] + np.max(self.angs))),
-            axis=0)
+        self.angles = np.concatenate(
+            (self.angles, self.angles[1:] + np.max(self.angles), self.angles[1:] + np.max(self.angles[1:] +
+                                                                                          np.max(self.angles))), axis=0)
 
         if self.smooth:
-            self.angs = ndimage.gaussian_filter1d(self.angs, self.sigm)
+            self.angles = ndimage.gaussian_filter1d(self.angles, self.sigm)
             self.pol = ndimage.gaussian_filter1d(self.pol, self.sigm)
 
         self.pol_h = np.array([sum(x) for x in zip(*self.pol)])
 
-        self.peakind, _ = find_peaks(self.pol_h,
-                                     prominence=(np.max(self.pol_h) - np.min(self.pol_h)) * self.peak_height)
+        self.peak_indices, _ = find_peaks(self.pol_h,
+                                          prominence=(np.max(self.pol_h) - np.min(self.pol_h)) * self.peak_height)
 
         self.pol = self.pol[:, 0:pol_l]
-        self.angs = self.angs[0:pol_l]
+        self.angles = self.angles[0:pol_l]
         self.pol_h = self.pol_h[0:pol_l]
-        self.peakind = self.peakind[np.logical_and(self.peakind >= pol_l - 1, self.peakind < 2 * pol_l - 2)] - pol_l + 1
+        self.peak_indices = self.peak_indices[np.logical_and(self.peak_indices >= pol_l - 1, self.peak_indices < 2 * pol_l - 2)] - pol_l + 1
 
         pairs = list()
-        angle_dist_mat = list()
-        for aind in self.peakind:
-            row = list()
-            for bind in self.peakind:
-                a = self.angs[aind]
-                b = self.angs[bind]
+        # angle_dist_mat = list()
+        for aind in self.peak_indices:
+            # row = list()
+            for bind in self.peak_indices:
+                a = self.angles[aind]
+                b = self.angles[bind]
                 if np.abs(np.pi - he.ang_dist(a, b)) < self.ang_tr:
                     pairs.append([aind, bind])
 
@@ -192,20 +192,18 @@ class FFTStructureExtraction:
             pass
         else:
             diag = 10
-            mask_all = np.zeros(self.norm_ftigame.shape)
+            mask_all = np.zeros(self.norm_ft_image.shape)
 
             min_l = (self.binary_map.shape[0] if self.binary_map.shape[0] < self.binary_map.shape[1] else
-                     self.binary_map.shape[1]) / 2 - (self.binary_map.shape[0] if self.binary_map.shape[0] > \
-                                                                                  self.binary_map.shape[1] else \
-                                                          self.binary_map.shape[1])
+                     self.binary_map.shape[1]) / 2 - (self.binary_map.shape[0] if self.binary_map.shape[0] >
+                                                      self.binary_map.shape[1] else self.binary_map.shape[1])
             max_l = (self.binary_map.shape[0] if self.binary_map.shape[0] > self.binary_map.shape[1] else
-                     self.binary_map.shape[1]) / 2 + (self.binary_map.shape[0] if self.binary_map.shape[0] > \
-                                                                                  self.binary_map.shape[1] else \
-                                                          self.binary_map.shape[1])
+                     self.binary_map.shape[1]) / 2 + (self.binary_map.shape[0] if self.binary_map.shape[0] >
+                                                      self.binary_map.shape[1] else self.binary_map.shape[1])
 
             for p in self.comp:
-                x1, y1 = he.pol2cart(diag, self.angs[p[0]] + np.pi / 2.0)
-                x2, y2 = he.pol2cart(diag, self.angs[p[1]] + np.pi / 2.0)
+                x1, y1 = he.pol2cart(diag, self.angles[p[0]] + np.pi / 2.0)
+                x2, y2 = he.pol2cart(diag, self.angles[p[1]] + np.pi / 2.0)
 
                 x1 = x1 + self.binary_map.shape[0] / 2.0
                 x2 = x2 + self.binary_map.shape[0] / 2.0
@@ -215,7 +213,7 @@ class FFTStructureExtraction:
 
                 a = y2 - y1
                 b = x1 - x2
-                c = a * (x1) + b * (y1)
+                c = a * x1 + b * y1
                 c1 = c + self.par
                 c2 = c - self.par
 
@@ -273,61 +271,61 @@ class FFTStructureExtraction:
 
                 self.lines.append([X1, Y1, X2, Y2])
 
-                c_1 = np.array([Y1_1, Y2_1, self.norm_ftigame.shape[1], self.norm_ftigame.shape[1]])
-                r_1 = np.array([X1_1, X2_1, self.norm_ftigame.shape[0], 0])
+                c_1 = np.array([Y1_1, Y2_1, self.norm_ft_image.shape[1], self.norm_ft_image.shape[1]])
+                r_1 = np.array([X1_1, X2_1, self.norm_ft_image.shape[0], 0])
                 if np.abs(Y_org) > 3 * np.max(self.binary_map.shape):
-                    c_1 = np.array([Y1_1, Y2_1, self.norm_ftigame.shape[1], 0])
+                    c_1 = np.array([Y1_1, Y2_1, self.norm_ft_image.shape[1], 0])
                     r_1 = np.array([X1_1, X2_1, 0, 0])
 
-                mask_1 = np.zeros(self.norm_ftigame.shape, dtype=np.uint8)
-                rr, cc = he.generate_mask(r_1, c_1, self.norm_ftigame.shape)
+                mask_1 = np.zeros(self.norm_ft_image.shape, dtype=np.uint8)
+                rr, cc = he.generate_mask(r_1, c_1, self.norm_ft_image.shape)
                 mask_1[rr, cc] = 1
                 mask_1 = np.flipud(mask_1)
 
                 c_2 = np.array([Y1_2, Y2_2, 0, 0])
-                r_2 = np.array([X1_2, X2_2, self.norm_ftigame.shape[0], 0])
+                r_2 = np.array([X1_2, X2_2, self.norm_ft_image.shape[0], 0])
                 if np.abs(Y_org) > 3 * np.max(self.binary_map.shape):
-                    c_2 = np.array([Y1_2, Y2_2, self.norm_ftigame.shape[1], 0])
-                    r_2 = np.array([X1_2, X2_2, self.norm_ftigame.shape[0], self.norm_ftigame.shape[0]])
+                    c_2 = np.array([Y1_2, Y2_2, self.norm_ft_image.shape[1], 0])
+                    r_2 = np.array([X1_2, X2_2, self.norm_ft_image.shape[0], self.norm_ft_image.shape[0]])
 
-                mask_2 = np.zeros(self.norm_ftigame.shape, dtype=np.uint8)
-                rr, cc = he.generate_mask(r_2, c_2, self.norm_ftigame.shape)
+                mask_2 = np.zeros(self.norm_ft_image.shape, dtype=np.uint8)
+                rr, cc = he.generate_mask(r_2, c_2, self.norm_ft_image.shape)
                 mask_2[rr, cc] = 1
                 mask_2 = np.flipud(mask_2)
 
                 mask_l = np.logical_and(mask_1, mask_2)
 
                 if not np.any(mask_l == 1):
-                    mask_1 = np.zeros(self.norm_ftigame.shape, dtype=np.uint8)
-                    c_1 = np.array([Y1_2, Y2_2, self.norm_ftigame.shape[1], self.norm_ftigame.shape[1]])
-                    r_1 = np.array([X1_2, X2_2, self.norm_ftigame.shape[0], 0])
+                    mask_1 = np.zeros(self.norm_ft_image.shape, dtype=np.uint8)
+                    c_1 = np.array([Y1_2, Y2_2, self.norm_ft_image.shape[1], self.norm_ft_image.shape[1]])
+                    r_1 = np.array([X1_2, X2_2, self.norm_ft_image.shape[0], 0])
                     if np.abs(Y_org) > 3 * np.max(self.binary_map.shape):
-                        c_1 = np.array([Y1_2, Y2_2, self.norm_ftigame.shape[1], 0])
+                        c_1 = np.array([Y1_2, Y2_2, self.norm_ft_image.shape[1], 0])
                         r_1 = np.array([X1_2, X2_2, 0, 0])
-                    rr, cc = he.generate_mask(r_1, c_1, self.norm_ftigame.shape)
+                    rr, cc = he.generate_mask(r_1, c_1, self.norm_ft_image.shape)
                     mask_1[rr, cc] = 1
                     mask_1 = np.flipud(mask_1)
 
-                    mask_2 = np.zeros(self.norm_ftigame.shape, dtype=np.uint8)
+                    mask_2 = np.zeros(self.norm_ft_image.shape, dtype=np.uint8)
                     c_2 = np.array([Y1_1, Y2_1, 0, 0])
-                    r_2 = np.array([X1_1, X2_1, self.norm_ftigame.shape[1], 0])
+                    r_2 = np.array([X1_1, X2_1, self.norm_ft_image.shape[1], 0])
                     if np.abs(Y_org) > 3 * np.max(self.binary_map.shape):
-                        c_2 = np.array([Y1_1, Y2_1, self.norm_ftigame.shape[1], 0])
-                        r_2 = np.array([X1_1, X2_1, self.norm_ftigame.shape[0], self.norm_ftigame.shape[0]])
-                    rr, cc = he.generate_mask(r_2, c_2, self.norm_ftigame.shape)
+                        c_2 = np.array([Y1_1, Y2_1, self.norm_ft_image.shape[1], 0])
+                        r_2 = np.array([X1_1, X2_1, self.norm_ft_image.shape[0], self.norm_ft_image.shape[0]])
+                    rr, cc = he.generate_mask(r_2, c_2, self.norm_ft_image.shape)
                     mask_2[rr, cc] = 1
                     mask_2 = np.flipud(mask_2)
                     mask_l = np.logical_and(mask_1, mask_2)
 
                 self.part_mask.append(mask_l)
-                l_mask_ftimage = self.ftimage * mask_l
+                l_mask_ftimage = self.ft_image * mask_l
                 l_mask_iftimage = np.fft.ifft2(l_mask_ftimage)
-                self.part_reconstuct.append(np.abs(l_mask_iftimage))
+                self.part_reconstruction.append(np.abs(l_mask_iftimage))
                 l_map_scored_good = np.abs(l_mask_iftimage) * (self.binary_map * 1)
                 self.part_score.append(l_map_scored_good)
 
                 mask_all = np.logical_or(mask_all, mask_l)
-                mask_ftimage_l = self.ftimage * mask_l
+                mask_ftimage_l = self.ft_image * mask_l
                 mask_iftimage_l = np.fft.ifft2(mask_ftimage_l)
                 sm_l = np.abs(mask_iftimage_l) * (self.binary_map * 1)
                 sm_l = sm_l / np.max(sm_l)
@@ -338,11 +336,11 @@ class FFTStructureExtraction:
             print("OK ({0:.2f})".format(time.time() - t))
             print("Prepare Visualization.....", end="", flush=True)
             t = time.time()
-            self.mask_ftimage = self.ftimage * mask_all
-            mask_iftimage = np.fft.ifft2(self.mask_ftimage)
+            self.mask_ft_image = self.ft_image * mask_all
+            mask_iftimage = np.fft.ifft2(self.mask_ft_image)
 
-            self.mask_inv_ftimage = self.ftimage * mask_all_inv
-            mask_inv_iftimage = np.fft.ifft2(self.mask_inv_ftimage)
+            self.mask_inv_ft_image = self.ft_image * mask_all_inv
+            mask_inv_iftimage = np.fft.ifft2(self.mask_inv_ft_image)
 
             self.map_scored_good = np.abs(mask_iftimage) * (self.binary_map * 1)
             self.map_scored_bad = np.abs(mask_inv_iftimage) * (self.binary_map * 1)
@@ -354,7 +352,7 @@ class FFTStructureExtraction:
             self.map_split_good = np.zeros(self.binary_map.shape)
             self.map_split_good[self.binary_map] = self.map_split_good_t[self.binary_map]
 
-            self.ftimage_split = np.fft.fftshift(np.fft.fft2(self.map_split_good))
+            self.ft_image_split = np.fft.fftshift(np.fft.fft2(self.map_split_good))
             print("OK ({0:.2f})".format(time.time() - t))
 
     def simple_filter_map(self, tr):
@@ -656,7 +654,7 @@ class FFTStructureExtraction:
     ###########################
     def report(self):
         for p in self.comp:
-            print("dir:", self.angs[p[0]] * 180.0 / np.pi, self.angs[p[1]] * 180.0 / np.pi)
+            print("dir:", self.angles[p[0]] * 180.0 / np.pi, self.angles[p[1]] * 180.0 / np.pi)
 
     def show(self, visualisation):
         if visualisation["Binary map"]:
@@ -670,7 +668,7 @@ class FFTStructureExtraction:
 
         if visualisation["FFT Spectrum"]:
             fig, ax = plt.subplots(nrows=1, ncols=1)
-            ax.imshow((np.abs(self.ftimage)), cmap="nipy_spectral")
+            ax.imshow((np.abs(self.ft_image)), cmap="nipy_spectral")
             ax.axis("off")
             name = "FFT Spectrum"
             ax.set_title(name)
@@ -679,15 +677,15 @@ class FFTStructureExtraction:
 
         if visualisation["FFT spectrum with directions"]:
             fig, ax = plt.subplots(nrows=1, ncols=1)
-            ax.imshow((np.abs(self.ftimage)), cmap="nipy_spectral")
+            ax.imshow((np.abs(self.ft_image)), cmap="nipy_spectral")
             for l in self.lines:
                 ax.plot([l[1], l[3]], [l[0], l[2]])
             ax.axis("off")
             name = "FFT Spectrum with directions"
             ax.set_title(name)
             fig.canvas.set_window_title(name)
-            ax.set_xlim(0, self.ftimage.shape[1])
-            ax.set_ylim(0, self.ftimage.shape[0])
+            ax.set_xlim(0, self.ft_image.shape[1])
+            ax.set_ylim(0, self.ft_image.shape[0])
             plt.show()
 
         if visualisation["Map with walls"]:
@@ -733,15 +731,15 @@ class FFTStructureExtraction:
         if visualisation["Unfolded FFT Spectrum"]:
             fig, ax = plt.subplots(1, 1)
             ax.imshow(np.flipud(self.pol), cmap="nipy_spectral", aspect='auto',
-                      extent=(np.min(self.angs), np.max(self.angs), 0, np.max(self.rads)))
-            ax.set_xlim([np.min(self.angs), np.max(self.angs)])
+                      extent=(np.min(self.angles), np.max(self.angles), 0, np.max(self.rads)))
+            ax.set_xlim([np.min(self.angles), np.max(self.angles)])
             ax.set_xlabel("Orientation [rad]")
             ax.set_ylabel("Radius in pixel")
             ax2 = ax.twinx()
-            ax2.plot(self.angs, self.pol_h)
-            ax2.plot(self.angs[self.peakind], self.pol_h[self.peakind], 'r+')
+            ax2.plot(self.angles, self.pol_h)
+            ax2.plot(self.angles[self.peak_indices], self.pol_h[self.peak_indices], 'r+')
             for p in self.comp:
-                ax2.scatter(self.angs[p], self.pol_h[p], marker='^', s=120)
+                ax2.scatter(self.angles[p], self.pol_h[p], marker='^', s=120)
             ax2.set_ylabel("Orientation score")
             name = "Unfolded FFT Spectrum"
             ax.set_title(name)
@@ -750,7 +748,7 @@ class FFTStructureExtraction:
 
         if visualisation["FFT Spectrum Signal"]:
             fig, ax = plt.subplots(nrows=1, ncols=1)
-            ax.imshow((np.abs(self.mask_ftimage)), cmap="nipy_spectral")
+            ax.imshow((np.abs(self.mask_ft_image)), cmap="nipy_spectral")
             ax.axis("off")
             name = "FFT Spectrum Signal"
             fig.canvas.set_window_title(name)
@@ -759,7 +757,7 @@ class FFTStructureExtraction:
 
         if visualisation["FFT Spectrum Noise"]:
             fig, ax = plt.subplots(nrows=1, ncols=1)
-            ax.imshow((np.abs(self.mask_inv_ftimage)), cmap="nipy_spectral")
+            ax.imshow((np.abs(self.mask_inv_ft_image)), cmap="nipy_spectral")
             ax.axis("off")
             name = "FFT Spectrum Noise"
             fig.canvas.set_window_title(name)
@@ -804,7 +802,7 @@ class FFTStructureExtraction:
 
         if visualisation["FFT Map Split Good"]:
             fig, ax = plt.subplots(nrows=1, ncols=1)
-            ax.imshow((np.abs(self.ftimage_split)), cmap="nipy_spectral")
+            ax.imshow((np.abs(self.ft_image_split)), cmap="nipy_spectral")
             ax.axis("off")
             name = "FFT Map Split Good"
             fig.canvas.set_window_title(name)
@@ -936,7 +934,7 @@ class FFTStructureExtraction:
                 plt.show()
 
         if visualisation["Partial Reconstructs"]:
-            co = len(self.part_reconstuct)
+            co = len(self.part_reconstruction)
             if co > 1:
                 if co > 2:
                     div = he.proper_divs2(int(co))
@@ -957,7 +955,7 @@ class FFTStructureExtraction:
                     ncols = int(co)
                 fig, ax = plt.subplots(nrows=nrows, ncols=ncols, sharex=True, sharey=True)
                 i = 0
-                for p in self.part_reconstuct:
+                for p in self.part_reconstruction:
                     ax[int(i / ncols)][int(i % ncols)].imshow(p)
                     ax[int(i / ncols)][int(i % ncols)].axis('off')
                     i = i + 1
@@ -966,7 +964,7 @@ class FFTStructureExtraction:
                 plt.show()
             elif co == 1:
                 fig, ax = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True)
-                ax.imshow(self.part_reconstuct[0])
+                ax.imshow(self.part_reconstruction[0])
                 ax.axis('off')
                 name = "Partial Reconstruct"
                 fig.canvas.set_window_title(name)
