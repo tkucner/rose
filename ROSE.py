@@ -18,11 +18,11 @@ if __name__ == "__main__":
     rose.process_map()
 
     filter_level = 0.18
-    rose.simple_filter_map(filter_level)
+    #rose.simple_filter_map(filter_level)
 
     # rose.histogram_filtering()
 
-    rose.generate_initial_hypothesis_filtered()
+    rose.generate_initial_hypothesis()
 #    rose.find_walls_with_line_segments()
     rose.find_walls_flood_filing()
 

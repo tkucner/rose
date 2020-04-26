@@ -120,10 +120,10 @@ class FFTStructureExtraction:
             t[:, :-1] = self.binary_map
             self.binary_map = t
         ####### pad with zeros to square
-        square_map=np.zeros((np.max(self.binary_map.shape),np.max(self.binary_map.shape)),dtype=bool)
-        square_map[:self.binary_map.shape[0],:self.binary_map.shape[1]] = self.binary_map
-        self.binary_map=square_map
-        self.analysed_map=self.binary_map.copy()
+        square_map = np.zeros((np.max(self.binary_map.shape), np.max(self.binary_map.shape)), dtype=bool)
+        square_map[:self.binary_map.shape[0], :self.binary_map.shape[1]] = self.binary_map
+        self.binary_map = square_map
+        self.analysed_map = self.binary_map.copy()
         print("OK ({0:.2f})".format(time.time() - ti))
 
     def compute_fft(self):
@@ -399,17 +399,29 @@ class FFTStructureExtraction:
         self.analysed_map = self.binary_map.copy()
         self.analysed_map[np.abs(self.map_scored_good) < self.cluster_quality_threshold] = 0.0
 
+    def generate_initial_hypothesis_direction(self, lines_long, max_len, bandwidth, cutoff_percent, cell_tr, V):
+        d_row_ret = []
+        slices_ids = []
+        slices = []
+        cell_hypothesis = []
+        lines_hypothesis = []
+        kde_hypothesis = []
+        kde_hypothesis_cut = []
+        slices_dir = []
 
-    def generate_initial_hypothesis_filtered(self):
-        max_len = 5000
-        bandwidth = 0.5
-        cutoff_percent = 15
-        cell_tr = 20  # 5
-        # genberate V hypothesis
-        for l in self.lines_long_v:
+        for l in lines_long:
             temp_slice = []
             for s in np.arange(-1 * max_len, max_len, 1):
-                rr, cc = sk_draw.line(int(round(l[0] + s)), int(round(l[3])), int(round(l[2] + s)), int(round(l[1])))
+                if V:
+                    rr, cc = sk_draw.line(int(round(l[0] + s)), int(round(l[3])), int(round(l[2] + s)),
+                                          int(round(l[1])))
+                elif not V:
+                    rr, cc = sk_draw.line(int(round(l[0])), int(round(l[3] + s)), int(round(l[2])),
+                                          int(round(l[1] + s)))
+
+                else:
+                    print("ERROR")
+
                 rr_flag = (np.logical_or(rr < 0, rr >= self.analysed_map.shape[1]))
                 cc_flag = (np.logical_or(cc < 0, cc >= self.analysed_map.shape[0]))
                 flag = np.logical_not(np.logical_or(rr_flag, cc_flag))
@@ -422,7 +434,8 @@ class FFTStructureExtraction:
                     d_row = ndimage.distance_transform_cdt(t_row)
                     d_row = max_len - d_row
                     d_row = d_row.reshape(-1, 1)
-                    self.d_row_v.append(d_row)
+                    # self.d_row_v.append(d_row)
+                    d_row_ret.append(d_row)
                     kde = KernelDensity(kernel='gaussian', bandwidth=bandwidth).fit(d_row)
                     # cut the gaps
                     temp_row_full = np.exp(kde.score_samples(d_row))
@@ -463,86 +476,36 @@ class FFTStructureExtraction:
                             rr_slices.append(rr_s)
 
                             temp_slice.append((cc_slices, rr_slices))
-                            self.slices_v_ids.append((cc_slices, rr_slices))
 
-                            self.slices_v.append((cc_slices, rr_slices))
+                            slices_ids.append((cc_slices, rr_slices))
+
+                            slices.append((cc_slices, rr_slices))
                             if new_row:
-                                self.cell_hypothesis_v.append((cc[flag], rr[flag]))
-                                self.lines_hypothesis_v.append([l[0] + s, l[1], l[2] + s, l[3]])
-                                self.kde_hypothesis_v.append(temp_row_full)
-                                self.kde_hypothesis_v_cut.append(temp_row_cut)
+
+                                cell_hypothesis.append((cc[flag], rr[flag]))
+                                if V:
+                                    lines_hypothesis.append([l[0] + s, l[1], l[2] + s, l[3]])
+                                elif not V:
+                                    lines_hypothesis.append([l[0], l[1] + s, l[2], l[3] + s])
+                                else:
+                                    print("ERROR")
+                                kde_hypothesis.append(temp_row_full)
+                                kde_hypothesis_cut.append(temp_row_cut)
                                 new_row = False
 
-            self.slices_v_dir.append(temp_slice)
+            slices_dir.append(temp_slice)
+        return d_row_ret, slices_ids, slices, cell_hypothesis, lines_hypothesis, kde_hypothesis, kde_hypothesis_cut, slices_dir
 
-        # genberate H hypothesis
-        for l in self.lines_long_h:
-            temp_slice = []
-            for s in np.arange(-1 * max_len, max_len, 1):
-                rr, cc = sk_draw.line(int(round(l[0])), int(round(l[3] + s)), int(round(l[2])), int(round(l[1] + s)))
-                rr_flag = (np.logical_or(rr < 0, rr >= self.analysed_map.shape[1]))
-                cc_flag = (np.logical_or(cc < 0, cc >= self.analysed_map.shape[0]))
-                flag = np.logical_not(np.logical_or(rr_flag, cc_flag))
-                new_row = True
-                if np.sum(self.analysed_map[cc[flag], rr[flag]] * 1) > 1:
-                    row = self.analysed_map[cc[flag], rr[flag]] * 1
-                    t_row = np.ones(row.shape) - row
-                    d_row = ndimage.distance_transform_cdt(t_row)
-                    d_row = max_len - d_row
-                    d_row = d_row.reshape(-1, 1)
-                    self.d_row_h.append(d_row)
-                    kde = KernelDensity(kernel='gaussian', bandwidth=bandwidth).fit(d_row)
+    def generate_initial_hypothesis(self):
+        max_len = 5000
+        bandwidth = 0.5
+        cutoff_percent = 15
+        cell_tr = 20  # 5
+        self.d_row_v, self.slices_v_ids, self.slices_v, self.cell_hypothesis_v, self.lines_hypothesis_v, self.kde_hypothesis_v, self.kde_hypothesis_v_cut, self.slices_v_dir = self.generate_initial_hypothesis_direction(
+            self.lines_long_v, max_len, bandwidth, cutoff_percent, cell_tr,True)
+        self.d_row_h, self.slices_h_ids, self.slices_h, self.cell_hypothesis_h, self.lines_hypothesis_h, self.kde_hypothesis_h, self.kde_hypothesis_h_cut, self.slices_h_dir = self.generate_initial_hypothesis_direction(
+            self.lines_long_h, max_len, bandwidth, cutoff_percent, cell_tr, False)
 
-                    # cut the gaps
-                    temp_row_full = np.exp(kde.score_samples(d_row))
-                    temp_row_cut = temp_row_full.copy()
-                    temp_row_cut[temp_row_full < cutoff_percent * min(np.exp(kde.score_samples(d_row)))] = 0
-
-                    l_slice_ids = []
-                    pt = 0
-                    for i, t in enumerate(temp_row_cut):
-                        if t == 0 and pt == 0:
-                            pt = t
-                        elif pt == 0 and t != 0:
-                            ts = []
-                            ts.append(i)
-                            pt = t
-                        elif pt != 0 and t != 0:
-                            ts.append(i)
-                            pt = t
-                        elif t == 0 and pt != 0:
-                            l_slice_ids.append(ts)
-                            ts = []
-                            pt = t
-
-                    cc_f = cc[flag]
-                    rr_f = rr[flag]
-
-                    cc_slices = []
-                    rr_slices = []
-
-                    for tslice in l_slice_ids:
-                        if len(tslice) > cell_tr:
-                            cc_s = []
-                            rr_s = []
-                            for i in tslice:
-                                cc_s.append(cc_f[i])
-                                rr_s.append(rr_f[i])
-                            cc_slices.append(cc_s)
-                            rr_slices.append(rr_s)
-
-                            temp_slice.append((cc_slices, rr_slices))
-                            self.slices_h_ids.append((cc_slices, rr_slices))
-
-                            self.slices_h.append((cc_slices, rr_slices))
-                            if new_row:
-                                self.cell_hypothesis_h.append((cc[flag], rr[flag]))
-                                self.lines_hypothesis_h.append([l[0], l[1] + s, l[2], l[3] + s])
-                                self.kde_hypothesis_h.append(temp_row_full)
-                                self.kde_hypothesis_h_cut.append(temp_row_cut)
-                                new_row = False
-
-            self.slices_h_dir.append(temp_slice)
 
     def find_walls_flood_filing(self):
         self.labeled_map = np.zeros(self.binary_map.shape)
@@ -655,8 +618,9 @@ class FFTStructureExtraction:
         if len(self.slices_h_dir) is not 0:
             for direction in self.slices_h_dir:
                 slice_lines = generate_line_segments_per_direction(direction)
-                clustering_h = DBSCAN(eps=eps, min_samples=min_samples, metric=he.shortest_distance_between_segements).fit(
-                slice_lines)
+                clustering_h = DBSCAN(eps=eps, min_samples=min_samples,
+                                      metric=he.shortest_distance_between_segements).fit(
+                    slice_lines)
                 self.slice_h_lines.append(slice_lines)
                 self.clustering_h_labels.append(clustering_h.labels_)
 
@@ -668,7 +632,6 @@ class FFTStructureExtraction:
                     slice_lines)
                 self.slice_v_lines.append(slice_lines)
                 self.clustering_v_labels.append(clustering_v.labels_)
-
 
         id = 2
         temp_map = np.zeros(self.binary_map.shape)
@@ -693,7 +656,7 @@ class FFTStructureExtraction:
     ###########################
     def report(self):
         for p in self.comp:
-            print("dir:", self.angs[p[0]]*180.0/np.pi, self.angs[p[1]]*180.0/np.pi)
+            print("dir:", self.angs[p[0]] * 180.0 / np.pi, self.angs[p[1]] * 180.0 / np.pi)
 
     def show(self, visualisation):
         if visualisation["Binary map"]:
@@ -1056,7 +1019,7 @@ class FFTStructureExtraction:
             fig, ax = plt.subplots(nrows=1, ncols=1, sharey=True, sharex=True)
             ax.imshow(self.binary_map, cmap="gray")
             for segment in self.slice_v_lines:
-                ax.plot([segment[1],segment[3]],[segment[0],segment[2]])
+                ax.plot([segment[1], segment[3]], [segment[0], segment[2]])
 
             for segment in self.slice_h_lines:
                 ax.plot([segment[1], segment[3]], [segment[0], segment[2]])
@@ -1065,4 +1028,3 @@ class FFTStructureExtraction:
             fig.canvas.set_window_title(name)
 
             plt.show()
-
