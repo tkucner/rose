@@ -191,7 +191,7 @@ class FFTStructureExtraction:
         if not self.comp:
             pass
         else:
-            diag = 10  # np.sqrt(self.binary_map.shape[0]**2+self.binary_map.shape[1]**2)/4
+            diag = 10
             mask_all = np.zeros(self.norm_ftigame.shape)
 
             min_l = (self.binary_map.shape[0] if self.binary_map.shape[0] < self.binary_map.shape[1] else
@@ -352,7 +352,7 @@ class FFTStructureExtraction:
             self.map_split_good_t = np.zeros(self.binary_map.shape)
             self.map_split_good_t[self.map_scored_good > self.map_scored_bad] = 1
             self.map_split_good = np.zeros(self.binary_map.shape)
-            self.map_split_good[self.binary_map] = self.map_split_good_t[self.binary_map]    # def find_dominant_directions(self):
+            self.map_split_good[self.binary_map] = self.map_split_good_t[self.binary_map]
 
             self.ftimage_split = np.fft.fftshift(np.fft.fft2(self.map_split_good))
             print("OK ({0:.2f})".format(time.time() - t))
@@ -466,7 +466,6 @@ class FFTStructureExtraction:
                             self.lines_hypothesis_v.append([l[0] + s, l[1], l[2] + s, l[3]])
                             temp_slice.append((cc_slices, rr_slices))
                             self.slices_v_ids.append(temp_slice)
-                            # temp_slice.append((cc_slices, rr_slices))
             self.slices_v.append(temp_slice)
 
             self.slices_v_dir.append(temp_slice)
@@ -530,7 +529,6 @@ class FFTStructureExtraction:
                             self.lines_hypothesis_h.append([l[0], l[1] + s, l[2], l[3] + s])
                             temp_slice.append((cc_slices, rr_slices))
                             self.slices_h_ids.append(temp_slice)
-                            # temp_slice.append((cc_slices, rr_slices))
             self.slices_h.append(temp_slice)
 
             self.slices_h_dir.append(temp_slice)
@@ -559,12 +557,10 @@ class FFTStructureExtraction:
                     d_row = d_row.reshape(-1, 1)
                     self.d_row_v.append(d_row)
                     kde = KernelDensity(kernel='gaussian', bandwidth=bandwidth).fit(d_row)
-                    # self.kde_hypothesis_v.append(np.exp(kde.score_samples(d_row)))
                     # cut the gaps
                     temp_row_full = np.exp(kde.score_samples(d_row))
                     temp_row_cut = temp_row_full.copy()
                     temp_row_cut[temp_row_full < cutoff_percent * min(np.exp(kde.score_samples(d_row)))] = 0
-                    # self.kde_hypothesis_v_cut.append(temp_row)
 
                     l_slice_ids = []
                     pt = 0
@@ -599,12 +595,9 @@ class FFTStructureExtraction:
                             cc_slices.append(cc_s)
                             rr_slices.append(rr_s)
 
-                            # self.cell_hypothesis_v.append((cc[flag], rr[flag]))
-                            # self.lines_hypothesis_v.append([l[0] + s, l[1], l[2] + s, l[3]])
                             temp_slice.append((cc_slices, rr_slices))
                             self.slices_v_ids.append((cc_slices, rr_slices))
-                            # self.slices_v_ids.append(temp_slice)
-                            # temp_slice.append((cc_slices, rr_slices))
+
                             self.slices_v.append((cc_slices, rr_slices))
                             if new_row:
                                 self.cell_hypothesis_v.append((cc[flag], rr[flag]))
@@ -614,7 +607,6 @@ class FFTStructureExtraction:
                                 new_row = False
 
             self.slices_v_dir.append(temp_slice)
-            # self.slices_v_dir=temp_slice
 
         # genberate H hypothesis
         for l in self.lines_long_h:
@@ -633,12 +625,11 @@ class FFTStructureExtraction:
                     d_row = d_row.reshape(-1, 1)
                     self.d_row_h.append(d_row)
                     kde = KernelDensity(kernel='gaussian', bandwidth=bandwidth).fit(d_row)
-                    # self.kde_hypothesis_h.append(np.exp(kde.score_samples(d_row)))
+
                     # cut the gaps
                     temp_row_full = np.exp(kde.score_samples(d_row))
                     temp_row_cut = temp_row_full.copy()
                     temp_row_cut[temp_row_full < cutoff_percent * min(np.exp(kde.score_samples(d_row)))] = 0
-                    # self.kde_hypothesis_h_cut.append(temp_row)
 
                     l_slice_ids = []
                     pt = 0
@@ -673,12 +664,9 @@ class FFTStructureExtraction:
                             cc_slices.append(cc_s)
                             rr_slices.append(rr_s)
 
-                            # self.cell_hypothesis_h.append((cc[flag], rr[flag]))
-                            # self.lines_hypothesis_h.append([l[0], l[1] + s, l[2], l[3] + s])
                             temp_slice.append((cc_slices, rr_slices))
                             self.slices_h_ids.append((cc_slices, rr_slices))
-                            # self.slices_h_ids.append(temp_slice)
-                            # temp_slice.append((cc_slices, rr_slices))
+
                             self.slices_h.append((cc_slices, rr_slices))
                             if new_row:
                                 self.cell_hypothesis_h.append((cc[flag], rr[flag]))
@@ -688,21 +676,16 @@ class FFTStructureExtraction:
                                 new_row = False
 
             self.slices_h_dir.append(temp_slice)
-            # self.slices_h_dir=temp_slice
-
 
     def find_walls_flood_filing(self):
         self.labeled_map = np.zeros(self.binary_map.shape)
         id = 2
         for s in self.slices_v_dir:
             local_segments = []
-            # s=self.slices_v_dir[0]
             temp_map = np.zeros(self.binary_map.shape)
             for p in s:
                 for q in zip(p[0], p[1]):
                     temp_map[q[0], q[1]] = 1
-            # for q in zip(s[0], s[1]):
-            #     temp_map[q[0], q[1]] = 1
 
             temp_map_fill = temp_map.copy()
             filled = False
@@ -751,13 +734,10 @@ class FFTStructureExtraction:
 
         for s in self.slices_h_dir:
             local_segments = []
-            # s=self.slices_v_dir[0]
             temp_map = np.zeros(self.binary_map.shape)
             for p in s:
                 for q in zip(p[0], p[1]):
                     temp_map[q[0], q[1]] = 1
-            # for q in zip(s[0], s[1]):
-            #     temp_map[q[0], q[1]] = 1
             temp_map_fill = temp_map.copy()
             filled = False
             while not filled:
@@ -846,7 +826,6 @@ class FFTStructureExtraction:
     ###########################
     def report(self):
         for p in self.comp:
-            #print("dir:", self.angs[p[0]], self.angs[p[1]])
             print("dir:", self.angs[p[0]]*180.0/np.pi, self.angs[p[1]]*180.0/np.pi)
 
     def show(self, visualisation):
@@ -896,8 +875,6 @@ class FFTStructureExtraction:
             name = "Map with walls"
             ax.set_title(name)
             fig.canvas.set_window_title(name)
-            # ax.set_xlim(0, self.binary_map.shape[1])
-            # ax.set_ylim(self.binary_map.shape[0], 0)
             plt.show()
 
         if visualisation["Map with directions"]:
@@ -915,17 +892,6 @@ class FFTStructureExtraction:
                 ax.scatter(cells[1], cells[0], c='g', s=values * 100, alpha=0.5)
             for cells, values in zip(self.cell_hypothesis_h, self.kde_hypothesis_h_cut):
                 ax.scatter(cells[1], cells[0], c='g', s=values * 100, alpha=0.5)
-            # for l in zip(self.lines_hypothesis_v, self.cell_hypothesis_v, self.kde_hypothesis_v,
-            #              self.kde_hypothesis_v_cut):
-            #     #ax.plot([l[0][0], l[0][2]], [l[0][3], l[0][1]], alpha=0.5)
-            #     #ax.scatter(l[1][1], l[1][0], c='r', s=l[2] * 100, alpha=0.5)
-            #     ax.scatter(l[1][1], l[1][0], c='g', s=l[3] * 100, alpha=0.5)
-            #
-            # for l in zip(self.lines_hypothesis_h, self.cell_hypothesis_h, self.kde_hypothesis_h,
-            #              self.kde_hypothesis_h_cut):
-            #     #ax.plot([l[0][0], l[0][2]], [l[0][3], l[0][1]], alpha=0.5)
-            #     #ax.scatter(l[1][1], l[1][0], c='r', s=l[2] * 100, alpha=0.5)
-            #     ax.scatter(l[1][1], l[1][0], c='g', s=l[3] * 100, alpha=0.5)
             ax.axis("off")
             name = "Map with directions"
             ax.set_title(name)
@@ -1181,7 +1147,6 @@ class FFTStructureExtraction:
             cmap.set_under("black")
             cmap.set_over("yellow")
             fig, ax = plt.subplots(nrows=1, ncols=1, sharey=True, sharex=True)
-            # ax[0].imshow(temp_map)
             ax.imshow(self.labeled_map, cmap=cmap, vmin=1)
             for local_segments, local_mbb_lines in zip(self.segments_h, self.segments_h_mbb_lines):
                 for l_segment, l_mbb_lines in zip(local_segments, local_mbb_lines):
@@ -1205,7 +1170,6 @@ class FFTStructureExtraction:
             cmap.set_under("black")
             cmap.set_over("yellow")
             fig, ax = plt.subplots(nrows=1, ncols=1, sharey=True, sharex=True)
-            # ax[0].imshow(temp_map)
             ax.imshow(self.labeled_map, cmap=cmap, vmin=1)
             ax.imshow(self.binary_map, cmap="gray", alpha=0.5)
             for local_segments, local_mbb_lines in zip(self.segments_h, self.segments_h_mbb_lines):
