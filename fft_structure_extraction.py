@@ -10,11 +10,9 @@ import skimage.draw as sk_draw
 from scipy import ndimage
 from scipy.signal import find_peaks
 from skimage.filters import threshold_yen
-from scipy.ndimage import convolve
 from skimage.segmentation import flood_fill
 from sklearn import mixture
 from sklearn.cluster import DBSCAN
-from sklearn.metrics import pairwise_distances
 from sklearn.neighbors import KernelDensity
 
 import helpers as he
@@ -160,7 +158,8 @@ class FFTStructureExtraction:
         self.pol = self.pol[:, 0:pol_l]
         self.angles = self.angles[0:pol_l]
         self.pol_h = self.pol_h[0:pol_l]
-        self.peak_indices = self.peak_indices[np.logical_and(self.peak_indices >= pol_l - 1, self.peak_indices < 2 * pol_l - 2)] - pol_l + 1
+        self.peak_indices = self.peak_indices[np.logical_and(self.peak_indices >= pol_l - 1,
+                                                             self.peak_indices < 2 * pol_l - 2)] - pol_l + 1
 
         pairs = list()
         # angle_dist_mat = list()
@@ -196,10 +195,12 @@ class FFTStructureExtraction:
 
             min_l = (self.binary_map.shape[0] if self.binary_map.shape[0] < self.binary_map.shape[1] else
                      self.binary_map.shape[1]) / 2 - (self.binary_map.shape[0] if self.binary_map.shape[0] >
-                                                      self.binary_map.shape[1] else self.binary_map.shape[1])
+                                                                                  self.binary_map.shape[1] else
+                                                      self.binary_map.shape[1])
             max_l = (self.binary_map.shape[0] if self.binary_map.shape[0] > self.binary_map.shape[1] else
                      self.binary_map.shape[1]) / 2 + (self.binary_map.shape[0] if self.binary_map.shape[0] >
-                                                      self.binary_map.shape[1] else self.binary_map.shape[1])
+                                                                                  self.binary_map.shape[1] else
+                                                      self.binary_map.shape[1])
 
             for p in self.comp:
                 x1, y1 = he.pol2cart(diag, self.angles[p[0]] + np.pi / 2.0)
@@ -334,8 +335,7 @@ class FFTStructureExtraction:
             mask_all_inv = np.ones(mask_all.shape)
             mask_all_inv[mask_all == 1] = 0
             print("OK ({0:.2f})".format(time.time() - t))
-            print("Prepare Visualization.....", end="", flush=True)
-            t = time.time()
+
             self.mask_ft_image = self.ft_image * mask_all
             mask_iftimage = np.fft.ifft2(self.mask_ft_image)
 
@@ -353,15 +353,19 @@ class FFTStructureExtraction:
             self.map_split_good[self.binary_map] = self.map_split_good_t[self.binary_map]
 
             self.ft_image_split = np.fft.fftshift(np.fft.fft2(self.map_split_good))
-            print("OK ({0:.2f})".format(time.time() - t))
 
     def simple_filter_map(self, tr):
+        print("Simple filter map.....", end="", flush=True)
+        t = time.time()
         l_map = np.array(np.abs(self.map_scored_good) / np.max(np.abs(self.map_scored_good)))
         self.quality_threshold = tr
         self.analysed_map = self.binary_map.copy()
         self.analysed_map[l_map < self.quality_threshold] = 0.0
+        print("OK ({0:.2f})".format(time.time() - t))
 
     def histogram_filtering(self):
+        print("Histogram filter map.....", end="", flush=True)
+        t = time.time()
         pixels = np.abs(self.map_scored_good[self.binary_map > 0])
 
         clf = mixture.GaussianMixture(n_components=2)
@@ -396,6 +400,7 @@ class FFTStructureExtraction:
 
         self.analysed_map = self.binary_map.copy()
         self.analysed_map[np.abs(self.map_scored_good) < self.cluster_quality_threshold] = 0.0
+        print("OK ({0:.2f})".format(time.time() - t))
 
     def generate_initial_hypothesis_direction(self, lines_long, max_len, bandwidth, cutoff_percent, cell_tr, V):
         d_row_ret = []
@@ -495,17 +500,21 @@ class FFTStructureExtraction:
         return d_row_ret, slices_ids, slices, cell_hypothesis, lines_hypothesis, kde_hypothesis, kde_hypothesis_cut, slices_dir
 
     def generate_initial_hypothesis(self):
+        print("Generate initial hypothesis.....", end="", flush=True)
+        t = time.time()
         max_len = 5000
         bandwidth = 0.5
         cutoff_percent = 15
         cell_tr = 20  # 5
         self.d_row_v, self.slices_v_ids, self.slices_v, self.cell_hypothesis_v, self.lines_hypothesis_v, self.kde_hypothesis_v, self.kde_hypothesis_v_cut, self.slices_v_dir = self.generate_initial_hypothesis_direction(
-            self.lines_long_v, max_len, bandwidth, cutoff_percent, cell_tr,True)
+            self.lines_long_v, max_len, bandwidth, cutoff_percent, cell_tr, True)
         self.d_row_h, self.slices_h_ids, self.slices_h, self.cell_hypothesis_h, self.lines_hypothesis_h, self.kde_hypothesis_h, self.kde_hypothesis_h_cut, self.slices_h_dir = self.generate_initial_hypothesis_direction(
             self.lines_long_h, max_len, bandwidth, cutoff_percent, cell_tr, False)
-
+        print("OK ({0:.2f})".format(time.time() - t))
 
     def find_walls_flood_filing(self):
+        print("Find Walls with flood filing.....", end="", flush=True)
+        t = time.time()
         self.labeled_map = np.zeros(self.binary_map.shape)
         id = 2
         for s in self.slices_v_dir:
@@ -609,8 +618,11 @@ class FFTStructureExtraction:
                 self.all_lines.append(((X1, Y1), (X2, Y2)))
             self.segments_h_mbb_lines.append(local_mbb_lines)
         self.all_lines = list(dict.fromkeys(self.all_lines))
+        print("OK ({0:.2f})".format(time.time() - t))
 
     def find_walls_with_line_segments(self):
+        print("Find Walls with line segment clustering.....", end="", flush=True)
+        t = time.time()
         eps = 10
         min_samples = 2
         if len(self.slices_h_dir) is not 0:
@@ -649,6 +661,7 @@ class FFTStructureExtraction:
                 temp_map[s[0]][s[1]] = id
             last_label = label
         self.labeled_map_line_segment = temp_map
+        print("OK ({0:.2f})".format(time.time() - t))
 
     # output
     ###########################
@@ -657,6 +670,8 @@ class FFTStructureExtraction:
             print("dir:", self.angles[p[0]] * 180.0 / np.pi, self.angles[p[1]] * 180.0 / np.pi)
 
     def show(self, visualisation):
+        print("Generating visualisation.....", end="", flush=True)
+        t = time.time()
         if visualisation["Binary map"]:
             fig, ax = plt.subplots(nrows=1, ncols=1)
             ax.imshow(self.binary_map * 1, cmap="gray")
@@ -1026,3 +1041,4 @@ class FFTStructureExtraction:
             fig.canvas.set_window_title(name)
 
             plt.show()
+        print("OK ({0:.2f})".format(time.time() - t))
