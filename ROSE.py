@@ -56,7 +56,8 @@ if __name__ == "__main__":
                      "Wall lines from mbb": True,
                      "Labels and Raw map": False,
                      "Raw line segments": False,
-                     "Clustered line segments": False
+                     "Clustered line segments": False,
+                     "Short wall lines from mbb":True
 
                      }
     rose.show(visualisation)
