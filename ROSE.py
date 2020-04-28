@@ -22,7 +22,8 @@ if __name__ == "__main__":
 
     # rose.histogram_filtering()
 
-    rose.generate_initial_hypothesis()
+    #rose.generate_initial_hypothesis_with_kde()
+    rose.generate_initial_hypothesis_simple()
     # rose.find_walls_with_line_segments()
     rose.find_walls_flood_filing()
 

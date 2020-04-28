@@ -11,6 +11,7 @@ from scipy import ndimage
 from scipy.signal import find_peaks
 from skimage.filters import threshold_yen
 from skimage.segmentation import flood_fill
+from skimage.morphology import binary_dilation
 from sklearn import mixture
 from sklearn.cluster import DBSCAN
 from sklearn.neighbors import KernelDensity
@@ -49,8 +50,8 @@ class FFTStructureExtraction:
         self.slices_h_ids = []
         self.slices_v = []
         self.slices_h = []
-        self.kde_hypothesis_v_cut = []
-        self.kde_hypothesis_h_cut = []
+        self.scored_hypothesis_v_cut = []
+        self.scored_hypothesis_h_cut = []
         self.part_reconstruction = []
         self.lines = []
         self.lines_long_h = []
@@ -59,8 +60,8 @@ class FFTStructureExtraction:
         self.cell_hypothesis_v = []
         self.lines_hypothesis_h = []
         self.lines_hypothesis_v = []
-        self.kde_hypothesis_h = []
-        self.kde_hypothesis_v = []
+        self.scored_hypothesis_h = []
+        self.scored_hypothesis_v = []
         self.d_row_h = []
         self.d_row_v = []
         self.part_mask = []
@@ -388,7 +389,7 @@ class FFTStructureExtraction:
         self.analysed_map[np.abs(self.map_scored_good) < self.cluster_quality_threshold] = 0.0
         print("OK ({0:.2f})".format(time.time() - t))
 
-    def generate_initial_hypothesis_direction(self, lines_long, max_len, bandwidth, cutoff_percent, cell_tr, V):
+    def generate_initial_hypothesis_direction_with_kde(self, lines_long, max_len, bandwidth, cutoff_percent, cell_tr, V):
         d_row_ret = []
         slices_ids = []
         slices = []
@@ -485,17 +486,135 @@ class FFTStructureExtraction:
             slices_dir.append(temp_slice)
         return d_row_ret, slices_ids, slices, cell_hypothesis, lines_hypothesis, kde_hypothesis, kde_hypothesis_cut, slices_dir
 
-    def generate_initial_hypothesis(self):
-        print("Generate initial hypothesis.....", end="", flush=True)
+    def generate_initial_hypothesis_direction_simple(self, lines_long, max_len, padding, cell_tr, V):
+        d_row_ret = []
+        slices_ids = []
+        slices = []
+        cell_hypothesis = []
+        lines_hypothesis = []
+        kde_hypothesis = []
+        kde_hypothesis_cut = []
+        slices_dir = []
+
+        for l in lines_long:
+            temp_slice = []
+            for s in np.arange(-1 * max_len, max_len, 1):
+                if V:
+                    rr, cc = sk_draw.line(int(round(l[0] + s)), int(round(l[3])), int(round(l[2] + s)),
+                                          int(round(l[1])))
+                elif not V:
+                    rr, cc = sk_draw.line(int(round(l[0])), int(round(l[3] + s)), int(round(l[2])),
+                                          int(round(l[1] + s)))
+
+                else:
+                    print("ERROR")
+
+                rr_flag = (np.logical_or(rr < 0, rr >= self.analysed_map.shape[1]))
+                cc_flag = (np.logical_or(cc < 0, cc >= self.analysed_map.shape[0]))
+                flag = np.logical_not(np.logical_or(rr_flag, cc_flag))
+                new_row = True
+                if np.sum(self.analysed_map[cc[flag], rr[flag]] * 1) > 1:
+                    # adavnced hypothesisi generation
+
+                    #############################################################
+                    row = self.analysed_map[cc[flag], rr[flag]]
+                    row.shape=(row.shape[0],1)
+                    temp_row_full = binary_dilation(row,selem=np.ones((padding,padding)))
+                    temp_row_full=temp_row_full*1
+                    temp_row_cut = temp_row_full.copy()
+
+
+                    # t_row = np.ones(row.shape) - row
+                    # d_row = ndimage.distance_transform_cdt(t_row)
+                    # d_row = max_len - d_row
+                    # d_row = d_row.reshape(-1, 1)
+                    # # self.d_row_v.append(d_row)
+                    # d_row_ret.append(d_row)
+                    # kde = KernelDensity(kernel='gaussian', bandwidth=bandwidth).fit(d_row)
+                    # # cut the gaps
+                    # temp_row_full = np.exp(kde.score_samples(d_row))
+                    # temp_row_cut = temp_row_full.copy()
+                    # temp_row_cut[temp_row_full < cutoff_percent * min(np.exp(kde.score_samples(d_row)))] = 0
+                    #############################################################
+                    l_slice_ids = []
+                    pt = 0
+                    for i, t in enumerate(temp_row_cut):
+                        if t == 0 and pt == 0:
+                            pt = t
+                        elif pt == 0 and t != 0:
+                            ts = []
+                            ts.append(i)
+                            pt = t
+                        elif pt != 0 and t != 0:
+                            ts.append(i)
+                            pt = t
+                        elif t == 0 and pt != 0:
+                            l_slice_ids.append(ts)
+                            ts = []
+                            pt = t
+
+                    cc_f = cc[flag]
+                    rr_f = rr[flag]
+
+                    cc_slices = []
+                    rr_slices = []
+
+                    for tslice in l_slice_ids:
+                        if len(tslice) > cell_tr:
+                            cc_s = []
+                            rr_s = []
+                            for i in tslice:
+                                cc_s.append(cc_f[i])
+                                rr_s.append(rr_f[i])
+                            cc_slices.append(cc_s)
+                            rr_slices.append(rr_s)
+
+                            temp_slice.append((cc_slices, rr_slices))
+
+                            slices_ids.append((cc_slices, rr_slices))
+
+                            slices.append((cc_slices, rr_slices))
+                            if new_row:
+
+                                cell_hypothesis.append((cc[flag], rr[flag]))
+                                if V:
+                                    lines_hypothesis.append([l[0] + s, l[1], l[2] + s, l[3]])
+                                elif not V:
+                                    lines_hypothesis.append([l[0], l[1] + s, l[2], l[3] + s])
+                                else:
+                                    print("ERROR")
+                                kde_hypothesis.append(temp_row_full)
+                                kde_hypothesis_cut.append(temp_row_cut)
+                                new_row = False
+
+            slices_dir.append(temp_slice)
+        return d_row_ret, slices_ids, slices, cell_hypothesis, lines_hypothesis, kde_hypothesis, kde_hypothesis_cut, slices_dir
+
+    def generate_initial_hypothesis_with_kde(self):
+        print("Generate initial hypothesis with kde.....", end="", flush=True)
         t = time.time()
         max_len = 5000
-        bandwidth = 0.5
+        bandwidth = 0.00005
         cutoff_percent = 15
         cell_tr = 20  # 5
-        self.d_row_v, self.slices_v_ids, self.slices_v, self.cell_hypothesis_v, self.lines_hypothesis_v, self.kde_hypothesis_v, self.kde_hypothesis_v_cut, self.slices_v_dir = self.generate_initial_hypothesis_direction(
+        self.d_row_v, self.slices_v_ids, self.slices_v, self.cell_hypothesis_v, self.lines_hypothesis_v, self.scored_hypothesis_v, self.scored_hypothesis_v_cut, self.slices_v_dir = self.generate_initial_hypothesis_direction_with_kde(
             self.lines_long_v, max_len, bandwidth, cutoff_percent, cell_tr, True)
-        self.d_row_h, self.slices_h_ids, self.slices_h, self.cell_hypothesis_h, self.lines_hypothesis_h, self.kde_hypothesis_h, self.kde_hypothesis_h_cut, self.slices_h_dir = self.generate_initial_hypothesis_direction(
+        self.d_row_h, self.slices_h_ids, self.slices_h, self.cell_hypothesis_h, self.lines_hypothesis_h, self.scored_hypothesis_h, self.scored_hypothesis_h_cut, self.slices_h_dir = self.generate_initial_hypothesis_direction_with_kde(
             self.lines_long_h, max_len, bandwidth, cutoff_percent, cell_tr, False)
+        print("OK ({0:.2f})".format(time.time() - t))
+
+
+    def generate_initial_hypothesis_simple(self):
+        print("Generate initial hypothesis simple.....", end="", flush=True)
+        t = time.time()
+        max_len = 5000
+        padding = 5
+
+        cell_tr = 20  # 5
+        self.d_row_v, self.slices_v_ids, self.slices_v, self.cell_hypothesis_v, self.lines_hypothesis_v, self.scored_hypothesis_v, self.scored_hypothesis_v_cut, self.slices_v_dir = self.generate_initial_hypothesis_direction_simple(
+            self.lines_long_v, max_len, padding,  cell_tr, True)
+        self.d_row_h, self.slices_h_ids, self.slices_h, self.cell_hypothesis_h, self.lines_hypothesis_h, self.scored_hypothesis_h, self.scored_hypothesis_h_cut, self.slices_h_dir = self.generate_initial_hypothesis_direction_simple(
+            self.lines_long_h, max_len, padding, cell_tr, False)
         print("OK ({0:.2f})".format(time.time() - t))
 
     def find_walls_flood_filing(self):
@@ -713,13 +832,13 @@ class FFTStructureExtraction:
                 ax.plot([line[0], line[2]], [line[3], line[1]], alpha=0.5)
             for line in self.lines_hypothesis_h:
                 ax.plot([line[0], line[2]], [line[3], line[1]], alpha=0.5)
-            for cells, values in zip(self.cell_hypothesis_v, self.kde_hypothesis_v):
+            for cells, values in zip(self.cell_hypothesis_v, self.scored_hypothesis_v):
                 ax.scatter(cells[1], cells[0], c='r', s=values * 100, alpha=0.5)
-            for cells, values in zip(self.cell_hypothesis_h, self.kde_hypothesis_h):
+            for cells, values in zip(self.cell_hypothesis_h, self.scored_hypothesis_h):
                 ax.scatter(cells[1], cells[0], c='r', s=values * 100, alpha=0.5)
-            for cells, values in zip(self.cell_hypothesis_v, self.kde_hypothesis_v_cut):
+            for cells, values in zip(self.cell_hypothesis_v, self.scored_hypothesis_v_cut):
                 ax.scatter(cells[1], cells[0], c='g', s=values * 100, alpha=0.5)
-            for cells, values in zip(self.cell_hypothesis_h, self.kde_hypothesis_h_cut):
+            for cells, values in zip(self.cell_hypothesis_h, self.scored_hypothesis_h_cut):
                 ax.scatter(cells[1], cells[0], c='g', s=values * 100, alpha=0.5)
             ax.axis("off")
             name = "Map with directions"
