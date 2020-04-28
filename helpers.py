@@ -5,7 +5,7 @@ from scipy.signal import fftconvolve
 from skimage.draw import polygon
 import math
 import sys
-
+from shapely.geometry import LineString
 
 def is_between(a, b, c):
     crossproduct = (c[1] - a[1]) * (b[0] - a[0]) - (c[0] - a[0]) * (b[1] - a[1])
@@ -298,3 +298,11 @@ def shortest_distance_between_segements(s1, s2):
     else:
         dist = 0
     return dist
+
+def cetral_line(points):
+    edges_1 = [LineString([points[0], points[1]]), LineString([points[2], points[3]])]
+    edges_2 = [LineString([points[1], points[2]]), LineString([points[3], points[4]])]
+    if edges_1[0].length<edges_2[0].length:
+        return (edges_1[0].interpolate(0.5, normalized=True), edges_1[1].interpolate(0.5, normalized=True))
+    else:
+        return (edges_2[0].interpolate(0.5, normalized=True), edges_2[1].interpolate(0.5, normalized=True))
