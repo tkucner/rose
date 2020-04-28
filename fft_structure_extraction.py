@@ -607,9 +607,9 @@ class FFTStructureExtraction:
         print("Generate initial hypothesis simple.....", end="", flush=True)
         t = time.time()
         max_len = 5000
-        padding = 5
+        padding = 1
 
-        cell_tr = 20  # 5
+        cell_tr = 10  # 5
         self.d_row_v, self.slices_v_ids, self.slices_v, self.cell_hypothesis_v, self.lines_hypothesis_v, self.scored_hypothesis_v, self.scored_hypothesis_v_cut, self.slices_v_dir = self.generate_initial_hypothesis_direction_simple(
             self.lines_long_v, max_len, padding, cell_tr, True)
         self.d_row_h, self.slices_h_ids, self.slices_h, self.cell_hypothesis_h, self.lines_hypothesis_h, self.scored_hypothesis_h, self.scored_hypothesis_h_cut, self.slices_h_dir = self.generate_initial_hypothesis_direction_simple(
@@ -1145,32 +1145,6 @@ class FFTStructureExtraction:
             fig.canvas.set_window_title(name)
 
             plt.show()
+
         print("OK ({0:.2f})".format(time.time() - t))
 
-        if visualisation["Short wall lines from mbb"]:
-            cmap = plt.cm.get_cmap("tab10")
-            cmap.set_under("black")
-            cmap.set_over("yellow")
-            fig, ax = plt.subplots(nrows=1, ncols=1, sharey=True, sharex=True)
-            # ax[0].imshow(temp_map)
-            ax.imshow(self.labeled_map, cmap=cmap, vmin=1)
-            for local_segments, local_mbb_lines in zip(self.segments_h, self.segments_h_mbb_lines):
-                for l_segment, l_mbb_lines in zip(local_segments, local_mbb_lines):
-                    ax.plot(l_segment.minimal_bounding_box[:, 1], l_segment.minimal_bounding_box[:, 0], 'r')
-                    wall = he.cetral_line(l_segment.minimal_bounding_box)
-                    ax.plot([wall[0].y, wall[1].y], [wall[0].x, wall[1].x], 'c')
-                    # if l_segment.mbb_area > 10:
-                    # ax.plot([l_mbb_lines["Y1"], l_mbb_lines["Y2"]], [l_mbb_lines["X1"], l_mbb_lines["X2"]], 'g')
-            for local_segments, local_mbb_lines in zip(self.segments_v, self.segments_v_mbb_lines):
-                for l_segment, l_mbb_lines in zip(local_segments, local_mbb_lines):
-                    ax.plot(l_segment.minimal_bounding_box[:, 1], l_segment.minimal_bounding_box[:, 0], 'r')
-                    wall = he.cetral_line(l_segment.minimal_bounding_box)
-                    ax.plot([wall[0].y, wall[1].y], [wall[0].x, wall[1].x], 'c')
-                    # if l_segment.mbb_area > 10:
-                    # ax.plot([l_mbb_lines["Y1"], l_mbb_lines["Y2"]], [l_mbb_lines["X1"], l_mbb_lines["X2"]], 'g')
-            ax.set_xlim(0, self.binary_map.shape[1])
-            ax.set_ylim(self.binary_map.shape[0], 0)
-            ax.axis("off")
-            name = "Short wall lines from mbb"
-            fig.canvas.set_window_title(name)
-            plt.show()

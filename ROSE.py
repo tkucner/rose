@@ -46,18 +46,19 @@ if __name__ == "__main__":
                      "Histogram of scaled pixels quality": False,
                      "Simple Filtered Map": False,
                      "FFT spectrum with directions": False,
-                     "Map with directions": True,
+                     "Map with directions": False,
                      "Partial Scores": False,
                      "Partial Reconstructs": False,
                      "Threshold Setup with Clusters": False,
                      "Cluster Filtered Map": False,
                      "Map with walls": False,
                      "Map with slices": False,
-                     "Wall lines from mbb": True,
+                     "Wall lines from mbb": False,
                      "Labels and Raw map": False,
                      "Raw line segments": False,
                      "Clustered line segments": False,
-                     "Short wall lines from mbb":True
+                     "Short wall lines from mbb": True,
+                     "Short wall lines over original map": True
 
                      }
     rose.show(visualisation)
