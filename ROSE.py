@@ -49,7 +49,7 @@ if __name__ == "__main__":
                      "Map with directions": True,
                      "Partial Scores": False,
                      "Partial Reconstructs": False,
-                     "Treshold Setup with Clusters": False,
+                     "Threshold Setup with Clusters": False,
                      "Cluster Filtered Map": False,
                      "Map with walls": False,
                      "Map with slices": False,
