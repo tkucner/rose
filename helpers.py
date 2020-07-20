@@ -1,10 +1,13 @@
+from __future__ import print_function
+
+import math
+import sys
+
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.ndimage.interpolation import geometric_transform
 from scipy.signal import fftconvolve
 from skimage.draw import polygon
-import math
-import sys
 
 
 def is_between(a, b, c):
@@ -298,3 +301,7 @@ def shortest_distance_between_segements(s1, s2):
     else:
         dist = 0
     return dist
+
+
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)

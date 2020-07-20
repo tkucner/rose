@@ -7,17 +7,17 @@ import numpy as np
 import png
 import scipy.stats as stats
 import skimage.draw as sk_draw
+from GridMapDecompose import segment_handling as sh
 from scipy import ndimage
 from scipy.signal import find_peaks
 from skimage.filters import threshold_yen
-from skimage.segmentation import flood_fill
 from skimage.morphology import binary_dilation
+from skimage.segmentation import flood_fill
 from sklearn import mixture
 from sklearn.cluster import DBSCAN
 from sklearn.neighbors import KernelDensity
 
 import helpers as he
-from GridMapDecompose import segment_handling as sh
 
 
 def generate_line_segments_per_direction(slices):
@@ -34,7 +34,7 @@ def save_simple_map(name, map_to_save):
 
 
 class FFTStructureExtraction:
-    def __init__(self, grid_map, ang_tr=0.1, amp_tr=0.8, peak_height=0.5, par=200, smooth=False, sigma=3):
+    def __init__(self, grid_map, ang_tr=0.1, amp_tr=0.8, peak_height=0.5, par=50, smooth=False, sigma=3):
         self.clustering_v_labels = []
         self.slice_v_lines = []
         self.slice_h_lines = []
