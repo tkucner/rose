@@ -39,7 +39,7 @@ if __name__ == "__main__":
 
     # rose.generate_initial_hypothesis_with_kde()
     # rose.generate_initial_hypothesis_simple()
-    rose.generate_initial_hypothesis_auto_wall_thickness()
+    rose.generate_initial_hypothesis(type='simple')
     # rose.find_walls_with_line_segments()
     rose.find_walls_flood_filing()
 

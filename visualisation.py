@@ -267,7 +267,8 @@ class visualisation:
                    width=self.structure.pixel_quality_histogram["width"])
             ax.plot(x, y_b, 'r')
             ax.plot(x, y_g, 'g')
-            ax.axvline(x=self.structure.cluster_quality_threshold, color='y')
+            # ax.axvline(x=self.structure.cluster_quality_threshold, color='y')
+            ax.axvline(x=self.structure.quality_threshold, color='y')
             name = "Treshold Setup with Clusters"
             fig.canvas.set_window_title(name)
             ax.set_title(name)
@@ -281,7 +282,8 @@ class visualisation:
             # for ind in zip(non_zero_ind[0], non_zero_ind[1]):
             #     square = patches.Rectangle((ind[1], ind[0]), 1, 1, color='green')
             #     ax.add_patch(square)
-            name = "Cluster Filtered Map (" + str(self.structure.cluster_quality_threshold) + ")"
+            # name = "Cluster Filtered Map (" + str(self.structure.cluster_quality_threshold) + ")"
+            name = "Cluster Filtered Map (" + str(self.structure.quality_threshold) + ")"
             ax.axis("off")
             fig.canvas.set_window_title(name)
             ax.set_title(name)
