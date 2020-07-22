@@ -10,11 +10,24 @@
       "type": "string",
       "default": {}
     },
+    "map_description": {
+      "type": "string",
+      "description": "Free text for describing used map",
+      "default": {}
+    },
     "peak_extraction_parameters": {
       "type": "object",
       "description": "parameters used for extraction of strucutre from a mpa",
       "properties": {
         "peak_height": {
+          "type": "number",
+          "default": {}
+        },
+        "smooth_histogram": {
+          "type": "boolean",
+          "default": {}
+        },
+        "sigma": {
           "type": "number",
           "default": {}
         }
@@ -159,5 +172,6 @@
     }
   },
   "additionalProperties": false,
-  "default": {}
+  "default": {
+  }
 }

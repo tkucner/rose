@@ -1,8 +1,6 @@
 import math
 import time
 
-import matplotlib.patches as patches
-import matplotlib.pyplot as plt
 import numpy as np
 import png
 import scipy.stats as stats
@@ -124,6 +122,7 @@ class FFTStructureExtraction:
         self.binary_map = square_map
         self.analysed_map = self.binary_map.copy()
         print("OK ({0:.2f})".format(time.time() - ti))
+        print("map_shape ({:d}x{:d})".format(self.binary_map.shape[0], self.binary_map.shape[1]))
 
     def compute_fft(self):
         print("Compute FFT.....", end="", flush=True)
@@ -418,7 +417,7 @@ class FFTStructureExtraction:
                 flag = np.logical_not(np.logical_or(rr_flag, cc_flag))
                 new_row = True
                 if np.sum(self.analysed_map[cc[flag], rr[flag]] * 1) > 1:
-                    # adavnced hypothesisi generation
+                    # advanced hypothesis generation
                     row = self.analysed_map[cc[flag], rr[flag]] * 1
 
                     t_row = np.ones(row.shape) - row
@@ -486,6 +485,95 @@ class FFTStructureExtraction:
 
             slices_dir.append(temp_slice)
         return d_row_ret, slices_ids, slices, cell_hypothesis, lines_hypothesis, kde_hypothesis, kde_hypothesis_cut, slices_dir
+
+    def estimate_wall_thickness(self):
+        max_len = 5000
+        padding = 1
+        thickness = np.array(self.estimate_wall_thickness_in_direction(self.lines_long_v, max_len, padding, True) +
+                             self.estimate_wall_thickness_in_direction(self.lines_long_h, max_len, padding, False))
+
+        clf = mixture.GaussianMixture(n_components=2)
+        clf.fit(thickness.ravel().reshape(-1, 1))
+        thickness_gmm = {"means": clf.means_, "weights": clf.weights_, "covariances": clf.covariances_}
+        bins, edges = np.histogram(thickness.ravel(), density=True)
+        x = np.arange(min(edges), max(edges), (max(edges) - min(edges)) / 1000)
+
+        import matplotlib.pyplot as plt
+        n, _, patches = plt.hist(thickness, facecolor='g', alpha=0.75, bins=200, density=True)
+
+        plt.grid(True)
+        if thickness_gmm["means"][0] < thickness_gmm["means"][1]:
+            y_b = stats.norm.pdf(x, thickness_gmm["means"][0],
+                                 math.sqrt(thickness_gmm["covariances"][0])) * \
+                  thickness_gmm["weights"][0]
+            y_g = stats.norm.pdf(x, thickness_gmm["means"][1],
+                                 math.sqrt(thickness_gmm["covariances"][1])) * \
+                  thickness_gmm["weights"][1]
+        else:
+            y_g = stats.norm.pdf(x, thickness_gmm["means"][0],
+                                 math.sqrt(thickness_gmm["covariances"][0])) * \
+                  thickness_gmm["weights"][0]
+            y_b = stats.norm.pdf(x, thickness_gmm["means"][1],
+                                 math.sqrt(thickness_gmm["covariances"][1])) * \
+                  thickness_gmm["weights"][1]
+
+        ind = np.argmax(y_g > y_b)
+        thickness_threshold = x[ind]
+
+        print(thickness_threshold)
+        plt.axvline(x=thickness_threshold, color='y')
+        plt.plot(x, y_b, 'r')
+        plt.plot(x, y_g, 'g')
+
+        plt.show()
+        return thickness_threshold
+
+    def estimate_wall_thickness_in_direction(self, lines_long, max_len, padding, V):
+
+        thickness = []
+
+        for l in lines_long:
+            for s in np.arange(-1 * max_len, max_len, 1):
+                if V:
+                    rr, cc = sk_draw.line(int(round(l[0] + s)), int(round(l[3])), int(round(l[2] + s)),
+                                          int(round(l[1])))
+                elif not V:
+                    rr, cc = sk_draw.line(int(round(l[0])), int(round(l[3] + s)), int(round(l[2])),
+                                          int(round(l[1] + s)))
+
+                else:
+                    print("ERROR")
+
+                rr_flag = (np.logical_or(rr < 0, rr >= self.analysed_map.shape[1]))
+                cc_flag = (np.logical_or(cc < 0, cc >= self.analysed_map.shape[0]))
+                flag = np.logical_not(np.logical_or(rr_flag, cc_flag))
+                if np.sum(self.analysed_map[cc[flag], rr[flag]] * 1) > 1:
+                    row = self.analysed_map[cc[flag], rr[flag]]
+                    row.shape = (row.shape[0], 1)
+                    temp_row_full = binary_dilation(row, selem=np.ones((padding, padding)))
+                    temp_row_full = temp_row_full * 1
+                    temp_row_cut = temp_row_full.copy()
+
+                    l_slice_ids = []
+                    pt = 0
+                    for i, t in enumerate(temp_row_cut):
+                        if t == 0 and pt == 0:
+                            pt = t
+                        elif pt == 0 and t != 0:
+                            ts = []
+                            ts.append(i)
+                            pt = t
+                        elif pt != 0 and t != 0:
+                            ts.append(i)
+                            pt = t
+                        elif t == 0 and pt != 0:
+                            l_slice_ids.append(ts)
+                            ts = []
+                            pt = t
+
+                    for tslice in l_slice_ids:
+                        thickness.append(len(tslice))
+        return thickness
 
     def generate_initial_hypothesis_direction_simple(self, lines_long, max_len, padding, cell_tr, V):
         d_row_ret = []
@@ -609,7 +697,22 @@ class FFTStructureExtraction:
         max_len = 5000
         padding = 1
 
-        cell_tr = 10  # 5
+        cell_tr = 15  # 10  # 5
+        self.d_row_v, self.slices_v_ids, self.slices_v, self.cell_hypothesis_v, self.lines_hypothesis_v, self.scored_hypothesis_v, self.scored_hypothesis_v_cut, self.slices_v_dir = self.generate_initial_hypothesis_direction_simple(
+            self.lines_long_v, max_len, padding, cell_tr, True)
+        self.d_row_h, self.slices_h_ids, self.slices_h, self.cell_hypothesis_h, self.lines_hypothesis_h, self.scored_hypothesis_h, self.scored_hypothesis_h_cut, self.slices_h_dir = self.generate_initial_hypothesis_direction_simple(
+            self.lines_long_h, max_len, padding, cell_tr, False)
+        print("OK ({0:.2f})".format(time.time() - t))
+
+    def generate_initial_hypothesis_auto_wall_thickness(self):
+        print("Generate initial hypothesis with auto wall thickness....", end="", flush=True)
+        t = time.time()
+        max_len = 5000
+        padding = 1
+
+        cell_tr = self.estimate_wall_thickness()
+        print(cell_tr)
+
         self.d_row_v, self.slices_v_ids, self.slices_v, self.cell_hypothesis_v, self.lines_hypothesis_v, self.scored_hypothesis_v, self.scored_hypothesis_v_cut, self.slices_v_dir = self.generate_initial_hypothesis_direction_simple(
             self.lines_long_v, max_len, padding, cell_tr, True)
         self.d_row_h, self.slices_h_ids, self.slices_h, self.cell_hypothesis_h, self.lines_hypothesis_h, self.scored_hypothesis_h, self.scored_hypothesis_h_cut, self.slices_h_dir = self.generate_initial_hypothesis_direction_simple(
@@ -765,386 +868,5 @@ class FFTStructureExtraction:
                 temp_map[s[0]][s[1]] = id
             last_label = label
         self.labeled_map_line_segment = temp_map
-        print("OK ({0:.2f})".format(time.time() - t))
-
-    # output
-    ###########################
-    def report(self):
-        for p in self.comp:
-            print("dir:", self.angles[p[0]] * 180.0 / np.pi, self.angles[p[1]] * 180.0 / np.pi)
-
-    def show(self, visualisation):
-        print("Generating visualisation.....", end="", flush=True)
-        t = time.time()
-        if visualisation["Binary map"]:
-            fig, ax = plt.subplots(nrows=1, ncols=1)
-            ax.imshow(self.binary_map * 1, cmap="gray")
-            ax.axis("off")
-            name = "Binary Map"
-            ax.set_title(name)
-            fig.canvas.set_window_title(name)
-            plt.show()
-
-        if visualisation["FFT Spectrum"]:
-            fig, ax = plt.subplots(nrows=1, ncols=1)
-            ax.imshow((np.abs(self.ft_image)), cmap="nipy_spectral")
-            ax.axis("off")
-            name = "FFT Spectrum"
-            ax.set_title(name)
-            fig.canvas.set_window_title(name)
-            plt.show()
-
-        if visualisation["FFT spectrum with directions"]:
-            fig, ax = plt.subplots(nrows=1, ncols=1)
-            ax.imshow((np.abs(self.ft_image)), cmap="nipy_spectral")
-            for l in self.lines:
-                ax.plot([l[1], l[3]], [l[0], l[2]])
-            ax.axis("off")
-            name = "FFT Spectrum with directions"
-            ax.set_title(name)
-            fig.canvas.set_window_title(name)
-            ax.set_xlim(0, self.ft_image.shape[1])
-            ax.set_ylim(0, self.ft_image.shape[0])
-            plt.show()
-
-        if visualisation["Map with walls"]:
-            fig, ax = plt.subplots(nrows=1, ncols=1)
-            ax.imshow(self.binary_map, cmap="gray")
-            for indices_slice in self.slices_v_ids:
-                for indices in zip(indices_slice[0], indices_slice[1]):
-                    for i in zip(indices[0], indices[1]):
-                        ax.plot(i[1], i[0], 'rx')
-            for indices_slice in self.slices_h_ids:
-                for indices in zip(indices_slice[0], indices_slice[1]):
-                    for i in zip(indices[0], indices[1]):
-                        ax.plot(i[1], i[0], 'rx')
-            ax.axis("off")
-            name = "Map with walls"
-            ax.set_title(name)
-            fig.canvas.set_window_title(name)
-            plt.show()
-
-        if visualisation["Map with directions"]:
-            fig, ax = plt.subplots(nrows=1, ncols=1)
-            ax.imshow(self.binary_map, cmap="gray")
-            for line in self.lines_hypothesis_v:
-                ax.plot([line[0], line[2]], [line[3], line[1]], alpha=0.5)
-            for line in self.lines_hypothesis_h:
-                ax.plot([line[0], line[2]], [line[3], line[1]], alpha=0.5)
-            for cells, values in zip(self.cell_hypothesis_v, self.scored_hypothesis_v):
-                ax.scatter(cells[1], cells[0], c='r', s=values * 100, alpha=0.5)
-            for cells, values in zip(self.cell_hypothesis_h, self.scored_hypothesis_h):
-                ax.scatter(cells[1], cells[0], c='r', s=values * 100, alpha=0.5)
-            for cells, values in zip(self.cell_hypothesis_v, self.scored_hypothesis_v_cut):
-                ax.scatter(cells[1], cells[0], c='g', s=values * 100, alpha=0.5)
-            for cells, values in zip(self.cell_hypothesis_h, self.scored_hypothesis_h_cut):
-                ax.scatter(cells[1], cells[0], c='g', s=values * 100, alpha=0.5)
-            ax.axis("off")
-            name = "Map with directions"
-            ax.set_title(name)
-            fig.canvas.set_window_title(name)
-            ax.set_xlim(0, self.binary_map.shape[1])
-            ax.set_ylim(self.binary_map.shape[0], 0)
-            plt.show()
-
-        if visualisation["Unfolded FFT Spectrum"]:
-            fig, ax = plt.subplots(1, 1)
-            ax.imshow(np.flipud(self.pol), cmap="nipy_spectral", aspect='auto',
-                      extent=(np.min(self.angles), np.max(self.angles), 0, np.max(self.rads)))
-            ax.set_xlim([np.min(self.angles), np.max(self.angles)])
-            ax.set_xlabel("Orientation [rad]")
-            ax.set_ylabel("Radius in pixel")
-            ax2 = ax.twinx()
-            ax2.plot(self.angles, self.pol_h)
-            ax2.plot(self.angles[self.peak_indices], self.pol_h[self.peak_indices], 'r+')
-            for p in self.comp:
-                ax2.scatter(self.angles[p], self.pol_h[p], marker='^', s=120)
-            ax2.set_ylabel("Orientation score")
-            name = "Unfolded FFT Spectrum"
-            ax.set_title(name)
-            fig.canvas.set_window_title(name)
-            plt.show()
-
-        if visualisation["FFT Spectrum Signal"]:
-            fig, ax = plt.subplots(nrows=1, ncols=1)
-            ax.imshow((np.abs(self.mask_ft_image)), cmap="nipy_spectral")
-            ax.axis("off")
-            name = "FFT Spectrum Signal"
-            fig.canvas.set_window_title(name)
-            ax.set_title(name)
-            plt.show()
-
-        if visualisation["FFT Spectrum Noise"]:
-            fig, ax = plt.subplots(nrows=1, ncols=1)
-            ax.imshow((np.abs(self.mask_inv_ft_image)), cmap="nipy_spectral")
-            ax.axis("off")
-            name = "FFT Spectrum Noise"
-            fig.canvas.set_window_title(name)
-            ax.set_title(name)
-            plt.show()
-
-        if visualisation["Map Scored Good"]:
-            fig, ax = plt.subplots(nrows=1, ncols=1)
-            ax.imshow(np.abs(self.map_scored_good), cmap="plasma")
-            ax.axis("off")
-            name = "Map Scored Good"
-            fig.canvas.set_window_title(name)
-            ax.set_title(name)
-            plt.show()
-
-        if visualisation["Map Scored Bad"]:
-            fig, ax = plt.subplots(nrows=1, ncols=1)
-            ax.imshow(np.abs(self.map_scored_bad), cmap="plasma")
-            ax.axis("off")
-            name = "Map Scored Bad"
-            fig.canvas.set_window_title(name)
-            ax.set_title(name)
-            plt.show()
-
-        if visualisation["Map Scored Diff"]:
-            fig, ax = plt.subplots(nrows=1, ncols=1)
-            ax.imshow(np.abs(self.map_scored_diff), cmap="plasma")
-            ax.axis("off")
-            name = "Map Scored Diff"
-            fig.canvas.set_window_title(name)
-            ax.set_title(name)
-            plt.show()
-
-        if visualisation["Map Split Good"]:
-            fig, ax = plt.subplots(nrows=1, ncols=1)
-            ax.imshow(self.map_split_good, cmap="plasma")
-            ax.axis("off")
-            name = "Map Split Good"
-            fig.canvas.set_window_title(name)
-            ax.set_title(name)
-            plt.show()
-
-        if visualisation["FFT Map Split Good"]:
-            fig, ax = plt.subplots(nrows=1, ncols=1)
-            ax.imshow((np.abs(self.ft_image_split)), cmap="nipy_spectral")
-            ax.axis("off")
-            name = "FFT Map Split Good"
-            fig.canvas.set_window_title(name)
-            ax.set_title(name)
-            plt.show()
-
-        if visualisation["Side by Side"]:
-            fig, ax = plt.subplots(nrows=1, ncols=2, sharex=True, sharey=True)
-            ax[0].imshow(self.binary_map * 1, cmap="gray")
-            ax[0].axis("off")
-            ax[1].imshow(np.abs(self.map_scored_good), cmap="nipy_spectral")
-            ax[1].axis("off")
-            name1 = "Map"
-            name2 = "Score"
-            fig.canvas.set_window_title("Map Quality assessment")
-            ax[0].set_title(name1)
-            ax[1].set_title(name2)
-            plt.tight_layout()
-            plt.subplots_adjust(left=0.0, right=1.0, top=1.0, bottom=0, wspace=0, hspace=0)
-            plt.show()
-
-        if visualisation["Simple Filtered Map"]:
-            fig, ax = plt.subplots(nrows=1, ncols=1)
-            ax.imshow(self.binary_map, cmap="gray")
-            non_zero_ind = np.nonzero(self.analysed_map)
-            for ind in zip(non_zero_ind[0], non_zero_ind[1]):
-                square = patches.Rectangle((ind[1], ind[0]), 1, 1, color='green')
-                ax.add_patch(square)
-            name = "Simple Filtered Map (" + str(self.quality_threshold) + ")"
-            ax.axis("off")
-            fig.canvas.set_window_title(name)
-            ax.set_title(name)
-            plt.show()
-
-        if visualisation["Threshold Setup with Clusters"]:
-            x = np.arange(np.min(self.pixel_quality_histogram["edges"]), np.max(self.pixel_quality_histogram["edges"]),
-                          (np.max(self.pixel_quality_histogram["edges"]) - np.min(
-                              self.pixel_quality_histogram["edges"])) / 1000)
-
-            if self.pixel_quality_gmm["means"][0] < self.pixel_quality_gmm["means"][1]:
-                y_b = stats.norm.pdf(x, self.pixel_quality_gmm["means"][0],
-                                     math.sqrt(self.pixel_quality_gmm["covariances"][0])) * \
-                      self.pixel_quality_gmm["weights"][0]
-                y_g = stats.norm.pdf(x, self.pixel_quality_gmm["means"][1],
-                                     math.sqrt(self.pixel_quality_gmm["covariances"][1])) * \
-                      self.pixel_quality_gmm["weights"][1]
-            else:
-                y_g = stats.norm.pdf(x, self.pixel_quality_gmm["means"][0],
-                                     math.sqrt(self.pixel_quality_gmm["covariances"][0])) * \
-                      self.pixel_quality_gmm["weights"][0]
-                y_b = stats.norm.pdf(x, self.pixel_quality_gmm["means"][1],
-                                     math.sqrt(self.pixel_quality_gmm["covariances"][1])) * \
-                      self.pixel_quality_gmm["weights"][1]
-
-            fig, ax = plt.subplots(nrows=1, ncols=1)
-            ax.bar(self.pixel_quality_histogram["centers"], self.pixel_quality_histogram["bins"],
-                   width=self.pixel_quality_histogram["width"])
-            ax.plot(x, y_b, 'r')
-            ax.plot(x, y_g, 'g')
-            ax.axvline(x=self.cluster_quality_threshold, color='y')
-            name = "Treshold Setup with Clusters"
-            fig.canvas.set_window_title(name)
-            ax.set_title(name)
-            plt.show()
-
-        if visualisation["Cluster Filtered Map"]:
-            fig, ax = plt.subplots(nrows=1, ncols=1)
-            ax.imshow(self.binary_map, cmap="gray")
-            non_zero_ind = np.nonzero(self.analysed_map)
-            for ind in zip(non_zero_ind[0], non_zero_ind[1]):
-                square = patches.Rectangle((ind[1], ind[0]), 1, 1, color='green')
-                ax.add_patch(square)
-            name = "Cluster Filtered Map (" + str(self.cluster_quality_threshold) + ")"
-            ax.axis("off")
-            fig.canvas.set_window_title(name)
-            ax.set_title(name)
-            plt.show()
-
-        if visualisation["Map with slices"]:
-            fig, ax = plt.subplots(nrows=1, ncols=1)
-            ax.imshow(self.binary_map, cmap="gray")
-            for l in self.slices_v:
-                for s in zip(l[0], l[1]):
-                    ax.plot(s[1], s[0], '.')
-            for l in self.slices_h:
-                for s in zip(l[0], l[1]):
-                    ax.plot(s[1], s[0], '.')
-            ax.axis("off")
-            name = "Map with slices"
-            ax.set_title(name)
-            fig.canvas.set_window_title(name)
-            plt.show()
-
-        if visualisation["Partial Scores"]:
-            co = len(self.part_score)
-            if co > 1:
-                if co > 2:
-                    div = he.proper_divs2(int(co))
-                    if len(div) is 1:
-                        co = co + 1
-                        div = he.proper_divs2(int(co))
-                    div.add(int(co))
-                    div = list(div)
-                    div.sort()
-                    if len(div) % 2 == 0:
-                        nrows = div[int(len(div) / 2) - 1]
-                        ncols = div[int(len(div) / 2)]
-                    else:
-                        nrows = div[int(len(div) / 2)]
-                        ncols = div[int(len(div) / 2)]
-                else:
-                    nrows = 1
-                    ncols = int(co)
-                fig, ax = plt.subplots(nrows=nrows, ncols=ncols, sharex=True, sharey=True)
-                i = 0
-                for p in self.part_score:
-                    ax[int(i / ncols)][int(i % ncols)].imshow(p)
-                    ax[int(i / ncols)][int(i % ncols)].axis('off')
-                    i = i + 1
-                name = "Partial Scores"
-                fig.canvas.set_window_title(name)
-                plt.show()
-            elif co == 1:
-                fig, ax = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True)
-                ax.imshow(self.part_score[0])
-                ax.axis('off')
-                name = "Partial Scores"
-                fig.canvas.set_window_title(name)
-                plt.show()
-
-        if visualisation["Partial Reconstructs"]:
-            co = len(self.part_reconstruction)
-            if co > 1:
-                if co > 2:
-                    div = he.proper_divs2(int(co))
-                    if len(div) is 1:
-                        co = co + 1
-                        div = he.proper_divs2(int(co))
-                    div.add(int(co))
-                    div = list(div)
-                    div.sort()
-                    if len(div) % 2 == 0:
-                        nrows = div[int(len(div) / 2) - 1]
-                        ncols = div[int(len(div) / 2)]
-                    else:
-                        nrows = div[int(len(div) / 2)]
-                        ncols = div[int(len(div) / 2)]
-                else:
-                    nrows = 1
-                    ncols = int(co)
-                fig, ax = plt.subplots(nrows=nrows, ncols=ncols, sharex=True, sharey=True)
-                i = 0
-                for p in self.part_reconstruction:
-                    ax[int(i / ncols)][int(i % ncols)].imshow(p)
-                    ax[int(i / ncols)][int(i % ncols)].axis('off')
-                    i = i + 1
-                name = "Partial Reconstruct"
-                fig.canvas.set_window_title(name)
-                plt.show()
-            elif co == 1:
-                fig, ax = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True)
-                ax.imshow(self.part_reconstruction[0])
-                ax.axis('off')
-                name = "Partial Reconstruct"
-                fig.canvas.set_window_title(name)
-                plt.show()
-
-        if visualisation["Wall lines from mbb"]:
-            cmap = plt.cm.get_cmap("tab10")
-            cmap.set_under("black")
-            cmap.set_over("yellow")
-            fig, ax = plt.subplots(nrows=1, ncols=1, sharey=True, sharex=True)
-            ax.imshow(self.labeled_map, cmap=cmap, vmin=1)
-            for local_segments, local_mbb_lines in zip(self.segments_h, self.segments_h_mbb_lines):
-                for l_segment, l_mbb_lines in zip(local_segments, local_mbb_lines):
-                    ax.plot(l_segment.minimal_bounding_box[:, 1], l_segment.minimal_bounding_box[:, 0], 'r')
-                    if l_segment.mbb_area > 10:
-                        ax.plot([l_mbb_lines["Y1"], l_mbb_lines["Y2"]], [l_mbb_lines["X1"], l_mbb_lines["X2"]], 'g')
-            for local_segments, local_mbb_lines in zip(self.segments_v, self.segments_v_mbb_lines):
-                for l_segment, l_mbb_lines in zip(local_segments, local_mbb_lines):
-                    ax.plot(l_segment.minimal_bounding_box[:, 1], l_segment.minimal_bounding_box[:, 0], 'r')
-                    if l_segment.mbb_area > 10:
-                        ax.plot([l_mbb_lines["Y1"], l_mbb_lines["Y2"]], [l_mbb_lines["X1"], l_mbb_lines["X2"]], 'g')
-            ax.set_xlim(0, self.binary_map.shape[1])
-            ax.set_ylim(self.binary_map.shape[0], 0)
-            ax.axis("off")
-            name = "Wall lines from mbb"
-            fig.canvas.set_window_title(name)
-            plt.show()
-
-        if visualisation["Labels and Raw map"]:
-            cmap = plt.cm.get_cmap("tab10")
-            cmap.set_under("black")
-            cmap.set_over("yellow")
-            fig, ax = plt.subplots(nrows=1, ncols=1, sharey=True, sharex=True)
-            ax.imshow(self.labeled_map, cmap=cmap, vmin=1)
-            ax.imshow(self.binary_map, cmap="gray", alpha=0.5)
-            for local_segments, local_mbb_lines in zip(self.segments_h, self.segments_h_mbb_lines):
-                for l_segment, l_mbb_lines in zip(local_segments, local_mbb_lines):
-                    ax.plot(l_segment.minimal_bounding_box[:, 1], l_segment.minimal_bounding_box[:, 0], 'r')
-            for local_segments, local_mbb_lines in zip(self.segments_v, self.segments_v_mbb_lines):
-                for l_segment, l_mbb_lines in zip(local_segments, local_mbb_lines):
-                    ax.plot(l_segment.minimal_bounding_box[:, 1], l_segment.minimal_bounding_box[:, 0], 'r')
-            ax.set_xlim(0, self.binary_map.shape[1])
-            ax.set_ylim(self.binary_map.shape[0], 0)
-            ax.axis("off")
-            name = "Labels and Raw map"
-            fig.canvas.set_window_title(name)
-            plt.show()
-
-        if visualisation["Raw line segments"]:
-            fig, ax = plt.subplots(nrows=1, ncols=1, sharey=True, sharex=True)
-            ax.imshow(self.binary_map, cmap="gray")
-            for segment in self.slice_v_lines:
-                ax.plot([segment[1], segment[3]], [segment[0], segment[2]])
-
-            for segment in self.slice_h_lines:
-                ax.plot([segment[1], segment[3]], [segment[0], segment[2]])
-
-            name = "Raw line segments"
-            fig.canvas.set_window_title(name)
-
-            plt.show()
 
         print("OK ({0:.2f})".format(time.time() - t))
-

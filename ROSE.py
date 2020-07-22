@@ -6,43 +6,42 @@ from skimage.util import img_as_ubyte
 import helpers as he
 from extended_validator import ExtendedValidator
 from fft_structure_extraction import FFTStructureExtraction as structure_extraction
+from visualisation import visualisation
 
 if __name__ == "__main__":
     # parse input
     parser = argparse.ArgumentParser()
     parser.add_argument('config_file', help='JSON configuration file')
-    parser.add_argument('schema_file', help='JSON schema file', nargs='?', const='input_schema.json', type=str)
+    parser.add_argument('schema_file', help='JSON schema file')
     args = parser.parse_args()
 
-    json_validation = ExtendedValidator(args.json, args.schema)
+    json_validation = ExtendedValidator(args.config_file, args.schema_file)
 
     success, config = json_validation.extended_validator()
 
-    if success:
-        print(config)
-    elif not success:
+    if not success:
         he.eprint(config)
+        exit(-1)
 
     # FFT
 
     grid_map = img_as_ubyte(io.imread(config["input_map"]))
-    # rose = structure_extraction(grid_map, peak_height=0.2)
-    rose = structure_extraction(grid_map, peak_height=config["peak_extraction_parameters"]["peak_height"])
+    rose = structure_extraction(grid_map, peak_height=config["peak_extraction_parameters"]["peak_height"],
+                                smooth=config["peak_extraction_parameters"]["smooth_histogram"],
+                                sigma=config["peak_extraction_parameters"]["sigma"])
     rose.process_map()
 
-    # filter_level = 0.18
     filter_level = config["filtering_parameters"]["filter_level"]
 
-    # rose.simple_filter_map(filter_level)
+    rose.simple_filter_map(filter_level)
 
     # rose.histogram_filtering()
 
     # rose.generate_initial_hypothesis_with_kde()
-    rose.generate_initial_hypothesis_simple()
+    # rose.generate_initial_hypothesis_simple()
+    rose.generate_initial_hypothesis_auto_wall_thickness()
     # rose.find_walls_with_line_segments()
     rose.find_walls_flood_filing()
-
-    rose.report()
 
     # visualisation = {"Binary map": True,
     #                  "FFT Spectrum": False,
@@ -77,4 +76,6 @@ if __name__ == "__main__":
     #
     #                  }
     # rose.show(visualisation)
-    rose.show(config["visualisation_flags"])
+    plots = visualisation(rose)
+    plots.report()
+    plots.show(config["visualisation_flags"])
