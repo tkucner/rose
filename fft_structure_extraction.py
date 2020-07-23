@@ -1,3 +1,4 @@
+import logging
 import math
 import time
 
@@ -18,6 +19,7 @@ from sklearn.neighbors import KernelDensity
 
 import helpers as he
 
+logging.getLogger("PIL.PngImagePlugin").setLevel(logging.WARNING)
 
 def generate_line_segments_per_direction(slices):
     slices_lines = []
@@ -106,7 +108,6 @@ class FFTStructureExtraction:
     # Private methods
 
     def __load_map(self, grid_map):
-        print("Load Map.....", end="", flush=True)
         ti = time.time()
         if len(grid_map.shape) == 3:
             grid_map = grid_map[:, :, 1]
@@ -126,18 +127,16 @@ class FFTStructureExtraction:
         square_map[:self.binary_map.shape[0], :self.binary_map.shape[1]] = self.binary_map
         self.binary_map = square_map
         self.analysed_map = self.binary_map.copy()
-        print("OK ({0:.2f})".format(time.time() - ti))
-        print("map_shape ({:d}x{:d})".format(self.binary_map.shape[0], self.binary_map.shape[1]))
+        logging.debug("Map loaded in %.2f s", time.time() - ti)
+        logging.info("Map Shape: %d x %d", self.binary_map.shape[0], self.binary_map.shape[1])
 
     def __compute_fft(self):
-        print("Compute FFT.....", end="", flush=True)
-        t = time.time()
+        ti = time.time()
         self.ft_image = np.fft.fftshift(np.fft.fft2(self.binary_map * 1))
-
         self.norm_ft_image = (np.abs(self.ft_image) / np.max(np.abs(self.ft_image))) * 255.0
         self.norm_ft_image = self.norm_ft_image.astype(int)
 
-        print("OK ({0:.2f})".format(time.time() - t))
+        logging.debug("FFT computed in: %.2f s", time.time() - ti)
 
     def __generate_mask(self, x1_1, y1_1, x2_1, y2_1, x1_2, y1_2, x2_2, y2_2, y_org):
         mask_1 = np.zeros(self.norm_ft_image.shape, dtype=np.uint8)
@@ -164,9 +163,7 @@ class FFTStructureExtraction:
         return mask_l
 
     def __get_dominant_directions(self):
-
-        print("Find Dominant directions.....", end="", flush=True)
-        t = time.time()
+        ti = time.time()
         self.pol, (self.rads, self.angles) = he.topolar(self.norm_ft_image, order=3)
         pol_l = self.pol.shape[1]
         self.pol = np.concatenate((self.pol, self.pol[:, 1:], self.pol[:, 1:]), axis=1)
@@ -209,16 +206,18 @@ class FFTStructureExtraction:
             b = self.pol_h[p[1]]
             if np.abs(a - b) / amp < self.amp_tr:
                 self.comp.append(p)
-        print("OK ({0:.2f})".format(time.time() - t))
-        print("Found directions.....{}".format(len(self.comp)))
+        logging.debug("Directions computed in : %.2f s", time.time() - ti)
+        logging.info("Number of directions: %d", len(self.comp))
+        for p in self.comp:
+            logging.info("Found direction %.2f, %.2f", self.angles[p[0]] * 180.0 / np.pi,
+                         self.angles[p[1]] * 180.0 / np.pi)
 
     def process_map(self):
 
         self.__compute_fft()
         self.__get_dominant_directions()
 
-        print("Score map.....", end="", flush=True)
-        t = time.time()
+        ti = time.time()
         if not self.comp:
             pass
         else:
@@ -319,7 +318,7 @@ class FFTStructureExtraction:
             mask_all = np.flipud(mask_all)
             mask_all_inv = np.ones(mask_all.shape)
             mask_all_inv[mask_all == 1] = 0
-            print("OK ({0:.2f})".format(time.time() - t))
+            logging.debug("Map scored in : %.2f s", time.time() - ti)
 
             #################
             # legacy experiemntation stuff let us see what we need to keep
@@ -348,18 +347,13 @@ class FFTStructureExtraction:
         clf = mixture.GaussianMixture(n_components=2)
         clf.fit(values.ravel().reshape(-1, 1))
         gmm = {"means": clf.means_, "weights": clf.weights_, "covariances": clf.covariances_}
-        v_range = (np.max(values) - np.min(values))
+        # v_range = (np.max(values) - np.min(values))
 
         bins, edges = np.histogram(values.ravel(), density=True)
         x = np.arange(min(edges), max(edges), (max(edges) - min(edges)) / 1000)
 
-        # x = np.arange(0, np.max(values),
-        #               v_range/ 1000)  # just to not have to do the analytical computation
-
         y1 = stats.norm.pdf(x, gmm["means"][0], math.sqrt(gmm["covariances"][0])) * gmm["weights"][0]
         y2 = stats.norm.pdf(x, gmm["means"][1], math.sqrt(gmm["covariances"][1])) * gmm["weights"][1]
-
-        print()
 
         if gmm["means"][0] < gmm["means"][1]:
             y_b = y1
@@ -367,9 +361,7 @@ class FFTStructureExtraction:
         else:
             y_g = y1
             y_b = y2
-
         ind = np.argmax(y_g > y_b)
-
         return x[ind], gmm
 
     @staticmethod
@@ -381,17 +373,15 @@ class FFTStructureExtraction:
         return histogram
 
     def simple_filter_map(self, tr):
-        print("Simple filter map.....", end="", flush=True)
-        t = time.time()
+        ti = time.time()
         l_map = np.array(np.abs(self.map_scored_good) / np.max(np.abs(self.map_scored_good)))
         self.quality_threshold = tr
         self.analysed_map = self.binary_map.copy()
         self.analysed_map[l_map < self.quality_threshold] = 0.0
-        print("OK ({0:.2f})".format(time.time() - t))
+        logging.debug("Map filtered simple in : %.2f s", time.time() - ti)
 
     def histogram_filtering(self):
-        print("Histogram filter map.....", end="", flush=True)
-        t = time.time()
+        ti = time.time()
         pixels = np.abs(self.map_scored_good[self.binary_map > 0])
 
         self.quality_threshold, self.pixel_quality_gmm = self.__get_gmm_threshold(pixels)
@@ -399,7 +389,7 @@ class FFTStructureExtraction:
 
         self.analysed_map = self.binary_map.copy()
         self.analysed_map[np.abs(self.map_scored_good) < self.quality_threshold] = 0.0
-        print("OK ({0:.2f})".format(time.time() - t))
+        logging.debug("Map filtered with histogram in : %.2f s", time.time() - ti)
 
     def __generate_initial_hypothesis_direction_with_kde(self, lines_long, max_len, bandwidth, cutoff_percent, cell_tr,
                                                          vert):
@@ -423,8 +413,6 @@ class FFTStructureExtraction:
                     rr, cc = sk_draw.line(int(round(line_long[0])), int(round(line_long[3] + s)),
                                           int(round(line_long[2])),
                                           int(round(line_long[1] + s)))
-                else:
-                    print("ERROR")
                 rr_flag = (np.logical_or(rr < 0, rr >= self.analysed_map.shape[1]))
                 cc_flag = (np.logical_or(cc < 0, cc >= self.analysed_map.shape[0]))
                 flag = np.logical_not(np.logical_or(rr_flag, cc_flag))
@@ -490,8 +478,6 @@ class FFTStructureExtraction:
                                 elif not vert:
                                     lines_hypothesis.append(
                                         [line_long[0], line_long[1] + s, line_long[2], line_long[3] + s])
-                                else:
-                                    print("ERROR")
                                 kde_hypothesis.append(temp_row_full)
                                 kde_hypothesis_cut.append(temp_row_cut)
                                 new_row = False
@@ -505,9 +491,7 @@ class FFTStructureExtraction:
         padding = 1
         thickness = np.array(self.__estimate_wall_thickness_in_direction(self.lines_long_v, max_len, padding, True) +
                              self.__estimate_wall_thickness_in_direction(self.lines_long_h, max_len, padding, False))
-
         thickness_threshold, thickness_gmm = self.__get_gmm_threshold(thickness)
-
         return thickness_threshold
 
     def __get_slices_along_the_line(self, ccf, rrf, padding):
@@ -544,8 +528,6 @@ class FFTStructureExtraction:
                 elif not V:
                     rr, cc = sk_draw.line(int(round(l[0])), int(round(l[3] + s)), int(round(l[2])),
                                           int(round(l[1] + s)))
-                else:
-                    print("ERROR")
                 rr_flag = (np.logical_or(rr < 0, rr >= self.analysed_map.shape[1]))
                 cc_flag = (np.logical_or(cc < 0, cc >= self.analysed_map.shape[0]))
                 flag = np.logical_not(np.logical_or(rr_flag, cc_flag))
@@ -577,8 +559,6 @@ class FFTStructureExtraction:
                     rr, cc = sk_draw.line(int(round(line_long[0])), int(round(line_long[3] + s)),
                                           int(round(line_long[2])),
                                           int(round(line_long[1] + s)))
-                else:
-                    print("ERROR")
                 rr_flag = (np.logical_or(rr < 0, rr >= self.analysed_map.shape[1]))
                 cc_flag = (np.logical_or(cc < 0, cc >= self.analysed_map.shape[0]))
                 flag = np.logical_not(np.logical_or(rr_flag, cc_flag))
@@ -616,8 +596,6 @@ class FFTStructureExtraction:
                                 elif not vert:
                                     lines_hypothesis.append(
                                         [line_long[0], line_long[1] + s, line_long[2], line_long[3] + s])
-                                else:
-                                    print("ERROR")
                                 kde_hypothesis.append(temp_row_full)
                                 kde_hypothesis_cut.append(temp_row_cut)
                                 new_row = False
@@ -635,28 +613,26 @@ class FFTStructureExtraction:
             cell_tr = kwargs['min_wall']
         else:
             cell_tr = self.__estimate_wall_thickness()
-        print(cell_tr)
+        logging.info("Min wall thickness: %.2f", cell_tr)
         max_len = 5000
         t = time.time()
         if gen_type is 'kde':
-            print("Generate initial hypothesis with kde.....", end="", flush=True)
             bandwidth = 0.00005
             cutoff_percent = 15
             self.d_row_v, self.slices_v_ids, self.slices_v, self.cell_hypothesis_v, self.lines_hypothesis_v, self.scored_hypothesis_v, self.scored_hypothesis_v_cut, self.slices_v_dir = self.__generate_initial_hypothesis_direction_with_kde(
                 self.lines_long_v, max_len, bandwidth, cutoff_percent, cell_tr, True)
             self.d_row_h, self.slices_h_ids, self.slices_h, self.cell_hypothesis_h, self.lines_hypothesis_h, self.scored_hypothesis_h, self.scored_hypothesis_h_cut, self.slices_h_dir = self.__generate_initial_hypothesis_direction_with_kde(
                 self.lines_long_h, max_len, bandwidth, cutoff_percent, cell_tr, False)
+            logging.debug("Initial hypothesis genrated with kde in %.2f s", time.time() - t)
         if gen_type is 'simple':
-            print("Generate initial hypothesis simple.....", end="", flush=True)
             padding = 1
             self.d_row_v, self.slices_v_ids, self.slices_v, self.cell_hypothesis_v, self.lines_hypothesis_v, self.scored_hypothesis_v, self.scored_hypothesis_v_cut, self.slices_v_dir = self.__generate_initial_hypothesis_direction_simple(
                 self.lines_long_v, max_len, padding, cell_tr, True)
             self.d_row_h, self.slices_h_ids, self.slices_h, self.cell_hypothesis_h, self.lines_hypothesis_h, self.scored_hypothesis_h, self.scored_hypothesis_h_cut, self.slices_h_dir = self.__generate_initial_hypothesis_direction_simple(
                 self.lines_long_h, max_len, padding, cell_tr, False)
-        print("OK ({0:.2f})".format(time.time() - t))
+            logging.debug("Initial hypothesis genrated simple in %.2f", time.time() - t)
 
     def find_walls_flood_filing(self):
-        print("Find Walls with flood filing.....", end="", flush=True)
         t = time.time()
         self.labeled_map = np.zeros(self.binary_map.shape)
         id = 2
@@ -758,10 +734,9 @@ class FFTStructureExtraction:
                 self.all_lines.append(((X1, Y1), (X2, Y2)))
             self.segments_h_mbb_lines.append(local_mbb_lines)
         self.all_lines = list(dict.fromkeys(self.all_lines))
-        print("OK ({0:.2f})".format(time.time() - t))
+        logging.debug("Found walls with flood filling in: %.2f", time.time() - t)
 
     def find_walls_with_line_segments(self):
-        print("Find Walls with line segment clustering.....", end="", flush=True)
         t = time.time()
         eps = 10
         min_samples = 2
@@ -801,5 +776,4 @@ class FFTStructureExtraction:
                 temp_map[s[0]][s[1]] = id
             last_label = label
         self.labeled_map_line_segment = temp_map
-
-        print("OK ({0:.2f})".format(time.time() - t))
+        logging.debug("Found walls with line clustering in: %.2f", time.time() - t)

@@ -1,3 +1,4 @@
+import logging
 import math
 import time
 
@@ -8,16 +9,13 @@ import scipy.stats as stats
 
 import helpers as he
 
+logging.getLogger('matplotlib.font_manager').setLevel(logging.WARNING)
 
 # output
 ###########################
 class visualisation:
     def __init__(self, structure):
         self.structure = structure
-
-    def report(self):
-        for p in self.structure.comp:
-            print("dir:", self.structure.angles[p[0]] * 180.0 / np.pi, self.structure.angles[p[1]] * 180.0 / np.pi)
 
     def __show_patches(self, ax):
         ax.imshow(self.structure.binary_map, cmap="gray")
@@ -56,7 +54,6 @@ class visualisation:
         return ax
 
     def show(self, visualisation_flags):
-        print("Generating visualisation.....", end="", flush=True)
         t = time.time()
         if visualisation_flags["Binary map"]:
             fig, ax = plt.subplots(nrows=1, ncols=1)
@@ -467,5 +464,4 @@ class visualisation:
             name = "Short wall lines over original map"
             fig.canvas.set_window_title(name)
             plt.show()
-
-        print("OK ({0:.2f})".format(time.time() - t))
+        logging.debug("Visualisation generated in : %.2f s", time.time() - t)
