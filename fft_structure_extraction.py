@@ -18,8 +18,10 @@ from sklearn.cluster import DBSCAN
 from sklearn.neighbors import KernelDensity
 
 import helpers as he
+from wall_segment import WallSegment as ws
 
 logging.getLogger("PIL.PngImagePlugin").setLevel(logging.WARNING)
+
 
 def generate_line_segments_per_direction(slices):
     slices_lines = []
@@ -213,7 +215,6 @@ class FFTStructureExtraction:
                          self.angles[p[1]] * 180.0 / np.pi)
 
     def process_map(self):
-
         self.__compute_fft()
         self.__get_dominant_directions()
 
@@ -497,7 +498,11 @@ class FFTStructureExtraction:
     def __get_slices_along_the_line(self, ccf, rrf, padding):
         row = self.analysed_map[ccf, rrf]
         row.shape = (row.shape[0], 1)
-        temp_row_full = binary_dilation(row, selem=np.ones((padding, padding)))
+        if padding == 0:
+            temp_row_full = row
+        else:
+            temp_row_full = binary_dilation(row, selem=np.ones((padding, padding)))
+
         temp_row_full = temp_row_full * 1
         temp_row_cut = temp_row_full.copy()
         l_slice_ids = []
@@ -633,9 +638,119 @@ class FFTStructureExtraction:
             logging.debug("Initial hypothesis genrated simple in %.2f", time.time() - t)
 
     def find_walls_flood_filing(self):
+        ids = 2
+        segments_in_directions = []
+        for s in self.slices_v_dir:
+            l_s = []
+            temp_map = np.zeros(self.binary_map.shape)
+            for p in s:
+                for q in zip(p[0], p[1]):
+                    temp_map[q[0], q[1]] = 1
+            temp_map_fill = temp_map.copy()
+            filled = False
+            while not filled:
+                seed = np.argwhere(temp_map_fill == 1)
+                if seed.size != 0:
+                    temp_map_fill = flood_fill(temp_map_fill, (seed[0][0], seed[0][1]), ids)
+                    ids = ids + 1
+                else:
+                    filled = True
+                cluster = np.where(temp_map_fill == ids - 1)
+                cluster = np.column_stack((cluster[0], cluster[1]))
+                d_cl = {"id": ids, "cells": list(map(tuple, cluster))}
+                l_s.append(d_cl)
+            import matplotlib.pyplot as plt
+            fig, ax = plt.subplots(nrows=1, ncols=1, sharey=True, sharex=True)
+            ax.imshow(temp_map_fill)
+            plt.show()
+            segments_in_directions.append(l_s)
+        for s in self.slices_h_dir:
+            l_s = []
+            temp_map = np.zeros(self.binary_map.shape)
+            for p in s:
+                for q in zip(p[0], p[1]):
+                    temp_map[q[0], q[1]] = 1
+            temp_map_fill = temp_map.copy()
+            filled = False
+            while not filled:
+                seed = np.argwhere(temp_map_fill == 1)
+                if seed.size != 0:
+                    temp_map_fill = flood_fill(temp_map_fill, (seed[0][0], seed[0][1]), ids)
+                    ids = ids + 1
+                else:
+                    filled = True
+                cluster = np.where(temp_map_fill == ids - 1)
+                cluster = np.column_stack((cluster[0], cluster[1]))
+                d_cl = {"id": ids, "cells": list(map(tuple, cluster))}
+                l_s.append(d_cl)
+            import matplotlib.pyplot as plt
+            fig, ax = plt.subplots(nrows=1, ncols=1, sharey=True, sharex=True)
+            ax.imshow(temp_map_fill)
+            plt.show()
+            segments_in_directions.append(l_s)
+        segments = []
+        self.overlap_score = []
+        remove_list = []
+        clusters = []
+        # First attempt to remove overlaping polygons by couting pixels
+        # Not very succesfull
+        # for dir1 in segments_in_directions:
+        #     for c1 in dir1:
+        #         overlaps = False
+        #         for dir2 in segments_in_directions:
+        #             for c2 in dir2:
+        #                 if c1 is not c2:
+        #                     if len(set(c1["cells"]) & set(c2["cells"])) > 0:
+        #                         self.overlap_score.append(
+        #                             [(c1["id"], c2["id"]), len(set(c1["cells"]) & set(c2["cells"])),
+        #                              len(set(c1["cells"]) & set(c2["cells"])) / len(c1["cells"]),
+        #                              len(set(c1["cells"]) & set(c2["cells"])) / len(c2["cells"])])
+        #                         if len(set(c1["cells"]) & set(c2["cells"])) / len(c1["cells"]) > 0.4:
+        #                             remove_list.append(c1["id"])
+        #                         elif len(set(c1["cells"]) & set(c2["cells"])) / len(c2["cells"]) > 0.4:
+        #                             remove_list.append(c2["id"])
+        #                         #overlaps = True
+        #         if not overlaps:
+        #             clusters.append(c1)
+        #
+        # remove_list=list(set(remove_list))
+        #
+        # for rl in remove_list:
+        #     for c in clusters:
+        #         if c["id"]==rl:
+        #             clusters.remove(c)
+        #             break
+        #
+        # overlap_list = [set(x[0]) for x in self.overlap_score]
+        # overlap_list = he.tuple_list_merger(overlap_list)
+        # logging.debug(overlap_list)
+
+        for dir in segments_in_directions:
+            for c in dir:
+                clusters.append(c['cells'])
+
+        for c in clusters:
+            local_segment = ws()
+            local_segment.add_cells(c)
+            local_segment.id = c.ids
+            segments.append(local_segment)
+
+        done_segments = []
+        overlap_list = []
+        for c1 in clusters:
+            c1_disjoint = True
+            for c2 in clusters:
+                if not c1 is c2:
+                    if not c1.envelope.disjoint(c2.envelope):
+                        c1_disjoint = False
+                        overlap_list.append({{c1.ids, c2.ids}})
+            if c1_disjoint:
+                done_segments.append(c1)
+
+    def find_walls_flood_filing_with_overlaps(self):
         t = time.time()
-        self.labeled_map = np.zeros(self.binary_map.shape)
-        id = 2
+        # self.labeled_map = np.zeros(self.binary_map.shape)
+        ids = 2
         for s in self.slices_v_dir:
             local_segments = []
             temp_map = np.zeros(self.binary_map.shape)
@@ -647,20 +762,20 @@ class FFTStructureExtraction:
             while not filled:
                 seed = np.argwhere(temp_map_fill == 1)
                 if seed.size != 0:
-                    temp_map_fill = flood_fill(temp_map_fill, (seed[0][0], seed[0][1]), id)
-                    id = id + 1
+                    temp_map_fill = flood_fill(temp_map_fill, (seed[0][0], seed[0][1]), ids)
+                    ids = ids + 1
                 else:
                     filled = True
                 local_segment = sh.Segment()
-                cluster = np.where(temp_map_fill == id - 1)
+                cluster = np.where(temp_map_fill == ids - 1)
                 cluster = np.column_stack((cluster[0], cluster[1]))
                 local_segment.add_cells(cluster)
                 local_segment.compute_hull()
                 local_segment.compute_mbb()
-                local_segment.id = id
+                local_segment.id = ids
                 local_segments.append(local_segment)
             self.segments_v.append(local_segments)
-            self.labeled_map = self.labeled_map + temp_map_fill
+            # self.labeled_map = self.labeled_map + temp_map_fill
             local_mbb_lines = []
             for l_segment in local_segments:
                 x1, y1 = l_segment.center
@@ -696,20 +811,20 @@ class FFTStructureExtraction:
             while not filled:
                 seed = np.argwhere(temp_map_fill == 1)
                 if seed.size != 0:
-                    temp_map_fill = flood_fill(temp_map_fill, (seed[0][0], seed[0][1]), id)
-                    id = id + 1
+                    temp_map_fill = flood_fill(temp_map_fill, (seed[0][0], seed[0][1]), ids)
+                    ids = ids + 1
                 else:
                     filled = True
                 local_segment = sh.Segment()
-                cluster = np.where(temp_map_fill == id - 1)
+                cluster = np.where(temp_map_fill == ids - 1)
                 cluster = np.column_stack((cluster[0], cluster[1]))
                 local_segment.add_cells(cluster)
                 local_segment.compute_hull()
                 local_segment.compute_mbb()
-                local_segment.id = id
+                local_segment.id = ids
                 local_segments.append(local_segment)
             self.segments_h.append(local_segments)
-            self.labeled_map = self.labeled_map + temp_map_fill
+            # self.labeled_map = self.labeled_map + temp_map_fill
             local_mbb_lines = []
             for l_segment in local_segments:
                 x1, y1 = l_segment.center
@@ -734,6 +849,7 @@ class FFTStructureExtraction:
                 self.all_lines.append(((X1, Y1), (X2, Y2)))
             self.segments_h_mbb_lines.append(local_mbb_lines)
         self.all_lines = list(dict.fromkeys(self.all_lines))
+
         logging.debug("Found walls with flood filling in: %.2f", time.time() - t)
 
     def find_walls_with_line_segments(self):

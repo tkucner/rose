@@ -315,3 +315,16 @@ def cetral_line(points):
         return (edges_1[0].interpolate(0.5, normalized=True), edges_1[1].interpolate(0.5, normalized=True))
     else:
         return (edges_2[0].interpolate(0.5, normalized=True), edges_2[1].interpolate(0.5, normalized=True))
+
+def tuple_list_merger(l):
+    skip_list = []
+    remove_list = []
+    for idl1 in range(len(l)):
+        for idl2 in range(idl1 + 1, len(l)):
+            if (idl1 not in skip_list) and (idl2 not in skip_list) and len(l[idl1] & l[idl2]) > 0:
+                skip_list.append(idl2)
+                remove_list.append(l[idl2])
+                l[idl1] = l[idl1].union(l[idl2])
+    for r in remove_list:
+        l.remove(r)
+    return l

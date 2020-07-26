@@ -25,13 +25,13 @@ class visualisation:
             ax.add_patch(square)
         return ax
 
-    def __show_labels(self, ax):
-        cmap = plt.cm.get_cmap("tab10")
-        cmap.set_under("black")
-        cmap.set_over("yellow")
-
-        ax.imshow(self.structure.labeled_map, cmap=cmap, vmin=1)
-        return ax
+    # def __show_labels(self, ax):
+    #     cmap = plt.cm.get_cmap("tab10")
+    #     cmap.set_under("black")
+    #     cmap.set_over("yellow")
+    #
+    #     ax.imshow(self.structure.labeled_map, cmap=cmap, vmin=1)
+    #     return ax
 
     @staticmethod
     def __show_short_segments(ax, segments, segments_mbb_lines):

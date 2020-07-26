@@ -11,13 +11,13 @@
   },
   "visualisation_flags": {
     "Binary map": false,
-    "Unfolded FFT Spectrum": true,
-    "Map with directions": true,
+    "Unfolded FFT Spectrum": false,
+    "Map with directions": false,
     "Map with walls": false,
     "Wall lines from mbb": false,
     "Short wall lines from mbb": false,
-    "Short wall lines over original map": true,
+    "Short wall lines over original map": false,
     "Map with slices": false,
-    "Map Scored Good": true
+    "Map Scored Good": false
   }
 }

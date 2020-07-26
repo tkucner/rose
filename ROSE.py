@@ -49,10 +49,10 @@ filter_level = config["filtering_parameters"]["filter_level"]
 
 rose.simple_filter_map(filter_level)
 
-# rose.histogram_filtering()
+rose.generate_initial_hypothesis(type='simple', min_wall=10)
 
-rose.generate_initial_hypothesis(type='simple')
 # rose.find_walls_with_line_segments()
+# rose.find_walls_flood_filing_with_overlaps()
 rose.find_walls_flood_filing()
 
 # visualisation = {"Binary map": True,
