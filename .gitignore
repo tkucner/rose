@@ -201,3 +201,4 @@ fabric.properties
 
 #remove local test direcotry
 Tests
+/Maps/

@@ -320,8 +320,8 @@ def tuple_list_merger(l):
     skip_list = []
     remove_list = []
     for idl1 in range(len(l)):
-        for idl2 in range(idl1 + 1, len(l)):
-            if (idl1 not in skip_list) and (idl2 not in skip_list) and len(l[idl1] & l[idl2]) > 0:
+        for idl2 in range(len(l)):
+            if (idl1 != idl2) and (idl1 not in skip_list) and (idl2 not in skip_list) and len(l[idl1] & l[idl2]) > 0:
                 skip_list.append(idl2)
                 remove_list.append(l[idl2])
                 l[idl1] = l[idl1].union(l[idl2])

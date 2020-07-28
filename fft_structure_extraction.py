@@ -628,16 +628,19 @@ class FFTStructureExtraction:
                 self.lines_long_v, max_len, bandwidth, cutoff_percent, cell_tr, True)
             self.d_row_h, self.slices_h_ids, self.slices_h, self.cell_hypothesis_h, self.lines_hypothesis_h, self.scored_hypothesis_h, self.scored_hypothesis_h_cut, self.slices_h_dir = self.__generate_initial_hypothesis_direction_with_kde(
                 self.lines_long_h, max_len, bandwidth, cutoff_percent, cell_tr, False)
-            logging.debug("Initial hypothesis genrated with kde in %.2f s", time.time() - t)
+            logging.debug("Initial hypothesis generated with kde in %.2f s", time.time() - t)
         if gen_type is 'simple':
             padding = 1
             self.d_row_v, self.slices_v_ids, self.slices_v, self.cell_hypothesis_v, self.lines_hypothesis_v, self.scored_hypothesis_v, self.scored_hypothesis_v_cut, self.slices_v_dir = self.__generate_initial_hypothesis_direction_simple(
                 self.lines_long_v, max_len, padding, cell_tr, True)
             self.d_row_h, self.slices_h_ids, self.slices_h, self.cell_hypothesis_h, self.lines_hypothesis_h, self.scored_hypothesis_h, self.scored_hypothesis_h_cut, self.slices_h_dir = self.__generate_initial_hypothesis_direction_simple(
                 self.lines_long_h, max_len, padding, cell_tr, False)
-            logging.debug("Initial hypothesis genrated simple in %.2f", time.time() - t)
+            logging.debug("Initial hypothesis generated simple in %.2f", time.time() - t)
 
     def find_walls_flood_filing(self):
+
+        overlap_ratio = 0.9
+
         ids = 2
         segments_in_directions = []
         for s in self.slices_v_dir:
@@ -653,16 +656,12 @@ class FFTStructureExtraction:
                 if seed.size != 0:
                     temp_map_fill = flood_fill(temp_map_fill, (seed[0][0], seed[0][1]), ids)
                     ids = ids + 1
+                    cluster = np.where(temp_map_fill == ids - 1)
+                    cluster = np.column_stack((cluster[0], cluster[1]))
+                    d_cl = {"id": ids, "cells": list(map(tuple, cluster))}
+                    l_s.append(d_cl)
                 else:
                     filled = True
-                cluster = np.where(temp_map_fill == ids - 1)
-                cluster = np.column_stack((cluster[0], cluster[1]))
-                d_cl = {"id": ids, "cells": list(map(tuple, cluster))}
-                l_s.append(d_cl)
-            import matplotlib.pyplot as plt
-            fig, ax = plt.subplots(nrows=1, ncols=1, sharey=True, sharex=True)
-            ax.imshow(temp_map_fill)
-            plt.show()
             segments_in_directions.append(l_s)
         for s in self.slices_h_dir:
             l_s = []
@@ -677,75 +676,135 @@ class FFTStructureExtraction:
                 if seed.size != 0:
                     temp_map_fill = flood_fill(temp_map_fill, (seed[0][0], seed[0][1]), ids)
                     ids = ids + 1
+                    cluster = np.where(temp_map_fill == ids - 1)
+                    cluster = np.column_stack((cluster[0], cluster[1]))
+                    d_cl = {"id": ids, "cells": list(map(tuple, cluster))}
+                    l_s.append(d_cl)
                 else:
                     filled = True
-                cluster = np.where(temp_map_fill == ids - 1)
-                cluster = np.column_stack((cluster[0], cluster[1]))
-                d_cl = {"id": ids, "cells": list(map(tuple, cluster))}
-                l_s.append(d_cl)
-            import matplotlib.pyplot as plt
-            fig, ax = plt.subplots(nrows=1, ncols=1, sharey=True, sharex=True)
-            ax.imshow(temp_map_fill)
-            plt.show()
             segments_in_directions.append(l_s)
         segments = []
         self.overlap_score = []
-        remove_list = []
-        clusters = []
-        # First attempt to remove overlaping polygons by couting pixels
-        # Not very succesfull
-        # for dir1 in segments_in_directions:
-        #     for c1 in dir1:
-        #         overlaps = False
-        #         for dir2 in segments_in_directions:
-        #             for c2 in dir2:
-        #                 if c1 is not c2:
-        #                     if len(set(c1["cells"]) & set(c2["cells"])) > 0:
-        #                         self.overlap_score.append(
-        #                             [(c1["id"], c2["id"]), len(set(c1["cells"]) & set(c2["cells"])),
-        #                              len(set(c1["cells"]) & set(c2["cells"])) / len(c1["cells"]),
-        #                              len(set(c1["cells"]) & set(c2["cells"])) / len(c2["cells"])])
-        #                         if len(set(c1["cells"]) & set(c2["cells"])) / len(c1["cells"]) > 0.4:
-        #                             remove_list.append(c1["id"])
-        #                         elif len(set(c1["cells"]) & set(c2["cells"])) / len(c2["cells"]) > 0.4:
-        #                             remove_list.append(c2["id"])
-        #                         #overlaps = True
-        #         if not overlaps:
-        #             clusters.append(c1)
-        #
-        # remove_list=list(set(remove_list))
-        #
-        # for rl in remove_list:
-        #     for c in clusters:
-        #         if c["id"]==rl:
-        #             clusters.remove(c)
-        #             break
-        #
-        # overlap_list = [set(x[0]) for x in self.overlap_score]
-        # overlap_list = he.tuple_list_merger(overlap_list)
-        # logging.debug(overlap_list)
 
         for dir in segments_in_directions:
             for c in dir:
-                clusters.append(c['cells'])
-
-        for c in clusters:
-            local_segment = ws()
-            local_segment.add_cells(c)
-            local_segment.id = c.ids
-            segments.append(local_segment)
+                local_segment = ws()
+                local_segment.add_cells(c['cells'])
+                local_segment.id = c['id']
+                segments.append(local_segment)
 
         done_segments = []
         overlap_list = []
-        for c1 in clusters:
+        for c1 in segments:
             c1_disjoint = True
-            for c2 in clusters:
+            for c2 in segments:
                 if not c1 is c2:
-                    if not c1.envelope.disjoint(c2.envelope):
+                    if not c1.minimum_rotated_rectangle.disjoint(c2.minimum_rotated_rectangle):
                         c1_disjoint = False
-                        overlap_list.append({{c1.ids, c2.ids}})
+                        overlap_list.append({c1.id, c2.id})
             if c1_disjoint:
                 done_segments.append(c1)
+        overlap_list = he.tuple_list_merger(overlap_list)
+
+        logging.debug("overlap list:")
+        logging.debug(overlap_list)
+        logging.debug([len(x) for x in overlap_list])
+
+        logging.debug("done segments:")
+        logging.debug([x.id for x in done_segments])
+
+        remove_list = []
+        for overlap in overlap_list:
+            # resolve 2 overlaps
+            if len(overlap) == 2:
+                l = list(overlap)
+                l = [next(item for item in segments if item.id == l[0]),
+                     next(item for item in segments if item.id == l[1])]
+                logging.debug("overlaps %d %d", l[0].id, l[1].id)
+                over = l[0].minimum_rotated_rectangle.intersection(l[1].minimum_rotated_rectangle)
+                logging.debug("overlap area %d", over.area)
+                logging.debug("overlap to segment one ratio: %.2f", over.area / l[0].minimum_rotated_rectangle.area)
+                logging.debug("overlap to segment two ratio: %.2f", over.area / l[1].minimum_rotated_rectangle.area)
+
+                if over.area / l[0].minimum_rotated_rectangle.area > overlap_ratio:
+                    local_segment = ws()
+                    local_segment.add_cells(l[0].cells + l[1].cells)
+                    local_segment.id = l[1].id
+                    done_segments.append(local_segment)
+                    remove_list.append(l[0])
+
+                if over.area / l[1].minimum_rotated_rectangle.area > overlap_ratio:
+                    local_segment = ws()
+                    local_segment.add_cells(l[0].cells + l[1].cells)
+                    local_segment.id = l[0].id
+                    done_segments.append(local_segment)
+                    remove_list.append(l[1])
+
+            if len(overlap) > 2:
+                li = list(overlap)
+                l = []
+                local_done_segments = []
+                for ll in li:
+                    l.append(next(item for item in segments if item.id == ll))
+
+                coincidence = np.zeros((len(l), len(l)), dtype=float)
+                for ll1_id, ll1 in enumerate(l):
+                    for ll2_id, ll2 in enumerate(l):
+                        if ll1 is ll2:
+                            coincidence[ll1_id][ll2_id] = -1
+                        else:
+                            if ll1.disjoint(ll2):
+                                coincidence[ll1_id][ll2_id] = -1
+                            else:
+                                over = ll1.minimum_rotated_rectangle.intersection(ll2.minimum_rotated_rectangle)
+                                coincidence[ll1_id][ll2_id] = over.area / ll1.minimum_rotated_rectangle.area
+
+                logging.debug("multioverlap")
+                logging.debug([x.id for x in l])
+                full_overlaps = np.argwhere(coincidence > overlap_ratio)
+                logging.debug(full_overlaps)
+
+                full_overlaps = [set(x) for x in full_overlaps]
+
+                logging.debug(full_overlaps)
+                full_overlaps = he.tuple_list_merger(full_overlaps)
+                logging.debug(full_overlaps)
+
+                for full_overlap in full_overlaps:
+                    cells_cumulative = []
+                    for f in list(full_overlap):
+                        cells_cumulative.extend(l[f].cells)
+                        remove_list.append(l[f])
+                    local_segment = ws()
+                    local_segment.id = l[list(full_overlap)[0]].id
+                    local_segment.add_cells(cells_cumulative)
+                    local_done_segments.append(local_segment)
+                done_segments.extend(local_done_segments)
+
+                # for f in full_overlaps:
+                #     if l[f[0]].id in li:
+                #         local_segment = ws()
+                #         local_segment.add_cells(l[f[0]].cells + l[f[1]].cells)
+                #         local_segment.id = l[f[1]].id
+                #         local_done_segments.append(local_segment)
+                #         remove_list.append(l[f[0]])
+                #         li.remove(l[f[0]].id)
+                # logging.debug("overlap after pruning")
+                # logging.debug(li)
+                # if len(li) == 1:
+                #     done_segments.extend(local_done_segments)
+
+        import matplotlib.pyplot as plt
+        plt.imshow(self.binary_map, cmap="gray")
+        for seg in segments:
+            y, x = seg.minimum_rotated_rectangle.exterior.xy
+            plt.plot(x, y, 'b')
+
+        for seg in done_segments:
+            y, x = seg.minimum_rotated_rectangle.exterior.xy
+            plt.plot(x, y, 'r')
+
+        plt.show()
 
     def find_walls_flood_filing_with_overlaps(self):
         t = time.time()

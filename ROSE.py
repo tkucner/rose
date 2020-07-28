@@ -15,7 +15,7 @@ from visualisation import visualisation
 # time
 now = datetime.now()
 date_time = now.strftime("%Y_%m_%d_%H_%M_%S")
-logging.basicConfig(filename='rose_' + date_time + '.log', level=logging.DEBUG,
+logging.basicConfig(filename='logs/rose_' + date_time + '.log', level=logging.DEBUG,
                     format='%(levelname)s:%(module)s:%(lineno)d:%(message)s')
 
 #
@@ -49,7 +49,7 @@ filter_level = config["filtering_parameters"]["filter_level"]
 
 rose.simple_filter_map(filter_level)
 
-rose.generate_initial_hypothesis(type='simple', min_wall=10)
+rose.generate_initial_hypothesis(type='simple', min_wall=5)
 
 # rose.find_walls_with_line_segments()
 # rose.find_walls_flood_filing_with_overlaps()
