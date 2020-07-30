@@ -781,19 +781,6 @@ class FFTStructureExtraction:
                     local_done_segments.append(local_segment)
                 done_segments.extend(local_done_segments)
 
-                # for f in full_overlaps:
-                #     if l[f[0]].id in li:
-                #         local_segment = ws()
-                #         local_segment.add_cells(l[f[0]].cells + l[f[1]].cells)
-                #         local_segment.id = l[f[1]].id
-                #         local_done_segments.append(local_segment)
-                #         remove_list.append(l[f[0]])
-                #         li.remove(l[f[0]].id)
-                # logging.debug("overlap after pruning")
-                # logging.debug(li)
-                # if len(li) == 1:
-                #     done_segments.extend(local_done_segments)
-
         import matplotlib.pyplot as plt
         plt.imshow(self.binary_map, cmap="gray")
         for seg in segments:
