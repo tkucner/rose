@@ -1,0 +1,23 @@
+{
+  "input_map": "/home/tzkr/python_workspace/HouseExpo/experiments/map_id_100/00a2a04afad84b16ff330f9038a3d126_obs_num_0.0_slamErr_linear_0.0_slamErr_angular_0.0_laser_noise_0.png",
+  "map_description": "map of real building from Freiburg",
+  "peak_extraction_parameters": {
+    "peak_height": 0.05,
+    "smooth_histogram": true,
+    "sigma": 0.5
+  },
+  "filtering_parameters": {
+    "filter_level": 0.18
+  },
+  "visualisation_flags": {
+    "Binary map": false,
+    "Unfolded FFT Spectrum": false,
+    "Map with directions": false,
+    "Map with walls": false,
+    "Wall lines from mbb": false,
+    "Short wall lines from mbb": false,
+    "Short wall lines over original map": false,
+    "Map with slices": false,
+    "Map Scored Good": false
+  }
+}
