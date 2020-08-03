@@ -103,6 +103,7 @@ class FFTStructureExtraction:
         self.ft_image_split = []
         self.ft_image = []
         self.map_split_good_t = []
+        self.dom_dirs = []
 
         self.__load_map(grid_map)
 
@@ -213,6 +214,7 @@ class FFTStructureExtraction:
         for p in self.comp:
             logging.info("Found direction %.2f, %.2f", self.angles[p[0]] * 180.0 / np.pi,
                          self.angles[p[1]] * 180.0 / np.pi)
+            self.dom_dirs.append([self.angles[p[0]], self.angles[p[1]]])
 
     def process_map(self):
         self.__compute_fft()
