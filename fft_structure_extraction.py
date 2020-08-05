@@ -789,9 +789,13 @@ class FFTStructureExtraction:
             y, x = seg.minimum_rotated_rectangle.exterior.xy
             plt.plot(x, y, 'b')
 
-        for seg in done_segments:
+        for seg in remove_list:
             y, x = seg.minimum_rotated_rectangle.exterior.xy
             plt.plot(x, y, 'r')
+
+        for seg in done_segments:
+            y, x = seg.minimum_rotated_rectangle.exterior.xy
+            plt.plot(x, y, 'g')
 
         plt.show()
 
