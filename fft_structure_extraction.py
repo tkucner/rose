@@ -639,9 +639,90 @@ class FFTStructureExtraction:
                 self.lines_long_h, max_len, padding, cell_tr, False)
             logging.debug("Initial hypothesis generated simple in %.2f", time.time() - t)
 
+    # def __process_wall_cluster(self, cells, intersection_ratio_treshold):
+    #     wall_segments = []
+    #     for cell in cells:
+    #         WS = ws()
+    #         WS.add_cells(cell)
+    #         WS.compute_central_lines()
+    #         wall_segments.append(WS)
+    #     interaction = [[False for x in range(len(cells))] for y in range(len(cells))]
+    #     proejctions = [[None for x in range(len(cells))] for y in range(len(cells))]
+    #     intersections = [[None for x in range(len(cells))] for y in range(len(cells))]
+    #     intersections_ratios = [[None for x in range(len(cells))] for y in range(len(cells))]
+    #     merge = [[False for x in range(len(cells))] for y in range(len(cells))]
+    #     for ws1_id, ws1 in enumerate(wall_segments):
+    #         for ws2_id, ws2 in enumerate(wall_segments):
+    #             if not ws1_id == ws2_id:
+    #                 interaction[ws1_id][ws2_id] = not ws1.minimum_rotated_rectangle.disjoint(
+    #                     ws2.minimum_rotated_rectangle)
+    #                 if interaction[ws1_id][ws2_id]:
+    #                     s = he.orthogonal_projection(list(ws1.central_lines['short'].coords),
+    #                                               ws2.minimum_rotated_rectangle.bounds)
+    #                     proejctions[ws1_id][ws2_id] = s
+    #                     intersections[ws1_id][ws2_id] = LineString(he.xy_to_coord(s[0], s[1])).difference(
+    #                         ws1.central_lines['short'])
+    #                     intersections_ratios[ws1_id][ws2_id] = intersections[ws1_id][ws2_id].length / LineString(
+    #                         he.xy_to_coord(s[0], s[1])).length
+    #                     if intersections_ratios[ws1_id][ws2_id] < intersection_ratio_treshold:
+    #                         merge[ws1_id][ws2_id] = True
+    #     return interaction, wall_segments, proejctions, intersections, intersections_ratios, merge
+
+    def __process_wall_cluster(self, wall_segments, intersection_ratio_treshold):
+
+        interaction = [[False for x in range(len(wall_segments))] for y in range(len(wall_segments))]
+        proejctions = [[None for x in range(len(wall_segments))] for y in range(len(wall_segments))]
+        intersections = [[None for x in range(len(wall_segments))] for y in range(len(wall_segments))]
+        intersections_ratios = [[None for x in range(len(wall_segments))] for y in range(len(wall_segments))]
+        merge = [[False for x in range(len(wall_segments))] for y in range(len(wall_segments))]
+        for ws1_id, ws1 in enumerate(wall_segments):
+            for ws2_id, ws2 in enumerate(wall_segments):
+                if not ws1_id == ws2_id:
+                    interaction[ws1_id][ws2_id] = not ws1.minimum_rotated_rectangle.disjoint(
+                        ws2.minimum_rotated_rectangle)
+                    if interaction[ws1_id][ws2_id]:
+                        s = he.orthogonal_projection(list(ws1.central_lines['short'].coords),
+                                                     ws2.minimum_rotated_rectangle.bounds)
+                        proejctions[ws1_id][ws2_id] = s
+                        # intersections[ws1_id][ws2_id] = LineString(he.xy_to_coord(s[0], s[1])).difference(
+                        #   ws1.central_lines['short'])
+                        intersections[ws1_id][ws2_id] = s.difference(ws1.central_lines['short'])
+                        intersections_ratios[ws1_id][ws2_id] = intersections[ws1_id][ws2_id].length / s.length
+                        # intersections_ratios[ws1_id][ws2_id] = intersections[ws1_id][ws2_id].length / LineString(
+                        #    he.xy_to_coord(s[0], s[1])).length
+                        if intersections_ratios[ws1_id][ws2_id] < intersection_ratio_treshold:
+                            merge[ws1_id][ws2_id] = True
+        print("------------------")
+        print(intersections_ratios)
+        print(merge)
+        return interaction, proejctions, intersections, intersections_ratios, merge
+
+    def __merge_walls(self, wall_segements, merge):
+        np_merge = np.array(merge)
+        mrge_list = list(zip(*np.where(np_merge == True)))
+        mrge_list = [set(x) for x in mrge_list]
+        mrge_list = he.tuple_list_merger(mrge_list)
+        remove_list = []
+        done_list = []
+        for mi in mrge_list:
+            new_cells = []
+            for m in mi:
+                new_cells.extend(list(wall_segements[m].cells))
+                remove_list.append(wall_segements[m])
+            WS = ws()
+            WS.add_cells(np.array(new_cells))
+            WS.compute_central_lines()
+            done_list.append(WS)
+
+        for w in wall_segements:
+            if not w in remove_list:
+                done_list.append(w)
+
+        return done_list, remove_list
+
     def find_walls_flood_filing(self):
 
-        overlap_ratio = 0.9
+        overlap_ratio = 0.8
 
         ids = 2
         segments_in_directions = []
@@ -692,6 +773,7 @@ class FFTStructureExtraction:
             for c in dir:
                 local_segment = ws()
                 local_segment.add_cells(c['cells'])
+                local_segment.compute_central_lines()
                 local_segment.id = c['id']
                 segments.append(local_segment)
 
@@ -708,6 +790,18 @@ class FFTStructureExtraction:
                 done_segments.append(c1)
         overlap_list = he.tuple_list_merger(overlap_list)
 
+        import matplotlib.pyplot as plt
+        # plt.imshow(self.binary_map, cmap="gray")
+        # for seg in segments:
+        #     y, x = seg.minimum_rotated_rectangle.exterior.xy
+        #     plt.plot(x, y, 'b')
+        #
+        # for seg in done_segments:
+        #     y, x = seg.minimum_rotated_rectangle.exterior.xy
+        #     plt.plot(x, y, 'g')
+        #
+        # plt.show()
+
         logging.debug("overlap list:")
         logging.debug(overlap_list)
         logging.debug([len(x) for x in overlap_list])
@@ -716,74 +810,110 @@ class FFTStructureExtraction:
         logging.debug([x.id for x in done_segments])
 
         remove_list = []
+        debug_it=0
         for overlap in overlap_list:
-            # resolve 2 overlaps
-            if len(overlap) == 2:
-                l = list(overlap)
-                l = [next(item for item in segments if item.id == l[0]),
-                     next(item for item in segments if item.id == l[1])]
-                logging.debug("overlaps %d %d", l[0].id, l[1].id)
-                over = l[0].minimum_rotated_rectangle.intersection(l[1].minimum_rotated_rectangle)
-                logging.debug("overlap area %d", over.area)
-                logging.debug("overlap to segment one ratio: %.2f", over.area / l[0].minimum_rotated_rectangle.area)
-                logging.debug("overlap to segment two ratio: %.2f", over.area / l[1].minimum_rotated_rectangle.area)
+            li = list(overlap)
+            l = []
+            for ll in li:
+                l.append(next(item for item in segments if item.id == ll))
+                print(l[-1].cells)
+            inter, proj, intersections, intersection_ratios, merge = self.__process_wall_cluster(l, overlap_ratio)
+            done, rm_list = self.__merge_walls(l, merge)
 
-                if over.area / l[0].minimum_rotated_rectangle.area > overlap_ratio:
-                    local_segment = ws()
-                    local_segment.add_cells(l[0].cells + l[1].cells)
-                    local_segment.id = l[1].id
-                    done_segments.append(local_segment)
-                    remove_list.append(l[0])
+            done_segments.extend(done)
+            remove_list.extend(rm_list)
 
-                if over.area / l[1].minimum_rotated_rectangle.area > overlap_ratio:
-                    local_segment = ws()
-                    local_segment.add_cells(l[0].cells + l[1].cells)
-                    local_segment.id = l[0].id
-                    done_segments.append(local_segment)
-                    remove_list.append(l[1])
+            plt.figure()
+            debug_it += 1
+            print(debug_it)
+            plt.imshow(self.binary_map, cmap="gray")
+            for ll in l:
+                y, x = ll.minimum_rotated_rectangle.exterior.xy
+                plt.plot(x, y)
+                # y, x = ll.central_lines['long'].xy
+                # plt.plot(x, y)
+                y, x = ll.central_lines['short'].xy
+                plt.plot(x, y)
+            for ws1_id, ws1 in enumerate(l):
+                for ws2_id, ws2 in enumerate(l):
+                    if proj[ws1_id][ws2_id] is not None:
+                        y, x = proj[ws1_id][ws2_id].xy
+                        plt.plot(x, y, '--')
+            for seg in rm_list:
+                y, x = seg.minimum_rotated_rectangle.exterior.xy
+                plt.plot(x, y, 'r')
+            for seg in done:
+                y, x = seg.minimum_rotated_rectangle.exterior.xy
+                plt.plot(x, y, 'g')
 
-            if len(overlap) > 2:
-                li = list(overlap)
-                l = []
-                local_done_segments = []
-                for ll in li:
-                    l.append(next(item for item in segments if item.id == ll))
+            # # resolve 2 overlaps
+            # if len(overlap) == 2:
+            #     l = list(overlap)
+            #     l = [next(item for item in segments if item.id == l[0]),
+            #          next(item for item in segments if item.id == l[1])]
+            #     logging.debug("overlaps %d %d", l[0].id, l[1].id)
+            #     over = l[0].minimum_rotated_rectangle.intersection(l[1].minimum_rotated_rectangle)
+            #     logging.debug("overlap area %d", over.area)
+            #     logging.debug("overlap to segment one ratio: %.2f", over.area / l[0].minimum_rotated_rectangle.area)
+            #     logging.debug("overlap to segment two ratio: %.2f", over.area / l[1].minimum_rotated_rectangle.area)
+            #
+            #     if over.area / l[0].minimum_rotated_rectangle.area > overlap_ratio:
+            #         local_segment = ws()
+            #         local_segment.add_cells(l[0].cells + l[1].cells)
+            #         local_segment.id = l[1].id
+            #         done_segments.append(local_segment)
+            #         remove_list.append(l[0])
+            #
+            #     if over.area / l[1].minimum_rotated_rectangle.area > overlap_ratio:
+            #         local_segment = ws()
+            #         local_segment.add_cells(l[0].cells + l[1].cells)
+            #         local_segment.id = l[0].id
+            #         done_segments.append(local_segment)
+            #         remove_list.append(l[1])
+            #
+            # if len(overlap) > 2:
+            #     li = list(overlap)
+            #     l = []
+            #     local_done_segments = []
+            #     for ll in li:
+            #         l.append(next(item for item in segments if item.id == ll))
+            #
+            #     coincidence = np.zeros((len(l), len(l)), dtype=float)
+            #     for ll1_id, ll1 in enumerate(l):
+            #         for ll2_id, ll2 in enumerate(l):
+            #             if ll1 is ll2:
+            #                 coincidence[ll1_id][ll2_id] = -1
+            #             else:
+            #                 if ll1.disjoint(ll2):
+            #                     coincidence[ll1_id][ll2_id] = -1
+            #                 else:
+            #                     over = ll1.minimum_rotated_rectangle.intersection(ll2.minimum_rotated_rectangle)
+            #                     coincidence[ll1_id][ll2_id] = over.area / ll1.minimum_rotated_rectangle.area
+            #
+            #     logging.debug("multioverlap")
+            #     logging.debug([x.id for x in l])
+            #     full_overlaps = np.argwhere(coincidence > overlap_ratio)
+            #     logging.debug(full_overlaps)
+            #
+            #     full_overlaps = [set(x) for x in full_overlaps]
+            #
+            #     logging.debug(full_overlaps)
+            #     full_overlaps = he.tuple_list_merger(full_overlaps)
+            #     logging.debug(full_overlaps)
+            #
+            #     for full_overlap in full_overlaps:
+            #         cells_cumulative = []
+            #         for f in list(full_overlap):
+            #             cells_cumulative.extend(l[f].cells)
+            #             remove_list.append(l[f])
+            #         local_segment = ws()
+            #         local_segment.id = l[list(full_overlap)[0]].id
+            #         local_segment.add_cells(cells_cumulative)
+            #         local_done_segments.append(local_segment)
+            #     done_segments.extend(local_done_segments)
 
-                coincidence = np.zeros((len(l), len(l)), dtype=float)
-                for ll1_id, ll1 in enumerate(l):
-                    for ll2_id, ll2 in enumerate(l):
-                        if ll1 is ll2:
-                            coincidence[ll1_id][ll2_id] = -1
-                        else:
-                            if ll1.disjoint(ll2):
-                                coincidence[ll1_id][ll2_id] = -1
-                            else:
-                                over = ll1.minimum_rotated_rectangle.intersection(ll2.minimum_rotated_rectangle)
-                                coincidence[ll1_id][ll2_id] = over.area / ll1.minimum_rotated_rectangle.area
-
-                logging.debug("multioverlap")
-                logging.debug([x.id for x in l])
-                full_overlaps = np.argwhere(coincidence > overlap_ratio)
-                logging.debug(full_overlaps)
-
-                full_overlaps = [set(x) for x in full_overlaps]
-
-                logging.debug(full_overlaps)
-                full_overlaps = he.tuple_list_merger(full_overlaps)
-                logging.debug(full_overlaps)
-
-                for full_overlap in full_overlaps:
-                    cells_cumulative = []
-                    for f in list(full_overlap):
-                        cells_cumulative.extend(l[f].cells)
-                        remove_list.append(l[f])
-                    local_segment = ws()
-                    local_segment.id = l[list(full_overlap)[0]].id
-                    local_segment.add_cells(cells_cumulative)
-                    local_done_segments.append(local_segment)
-                done_segments.extend(local_done_segments)
-
-        import matplotlib.pyplot as plt
+        # import matplotlib.pyplot as plt
+        plt.figure()
         plt.imshow(self.binary_map, cmap="gray")
         for seg in segments:
             y, x = seg.minimum_rotated_rectangle.exterior.xy

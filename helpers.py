@@ -2,12 +2,14 @@ from __future__ import print_function
 
 import math
 import sys
+from statistics import mean
 
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.ndimage.interpolation import geometric_transform
 from scipy.signal import fftconvolve
-from shapely.geometry import LineString
+from shapely.geometry import LineString, Point
+from shapely.ops import nearest_points
 from skimage.draw import polygon
 
 
@@ -328,3 +330,84 @@ def tuple_list_merger(l):
     for r in remove_list:
         l.remove(r)
     return l
+
+
+def orthogonal_projection_old(lin, bounds):
+    points = [np.array([bounds[0], bounds[1]]), np.array([bounds[2], bounds[3]])]
+    lin[0] = np.array(lin[0])
+    lin[1] = np.array(lin[1])
+    orig = lin[0]
+    y = lin[1] - orig
+    rx = []
+    ry = []
+    for point in points:
+        point = np.array(point)
+
+        x = point - orig
+        p = y * np.dot(x, y) / np.dot(y, y)
+        rx.append(orig[0] + p[0])
+        ry.append(orig[1] + p[1])
+
+    return rx, ry
+
+
+def orthogonal_projection(lin, bounds):
+    points = [np.array([bounds[0], bounds[1]]), np.array([bounds[2], bounds[3]])]
+    lin[0] = np.array(lin[0])
+    lin[1] = np.array(lin[1])
+
+    ret = []
+
+    for point in points:
+        point = Point(point[0], point[1])
+        line = LineString([lin[0], lin[1]])
+
+        x = np.array(point.coords[0])
+
+        u = np.array(line.coords[0])
+        v = np.array(line.coords[len(line.coords) - 1])
+
+        n = v - u
+        n /= np.linalg.norm(n, 2)
+
+        P = Point(u + n * np.dot(x - u, n))
+        ret.append(P)
+        P = nearest_points(line, P)[0]
+        ret.append(P)
+        # rx.append(P[0])
+        # ry.append(P[1])
+
+    origin = [mean([p.x for p in ret]), mean([p.y for p in ret])]
+    refvec = [0, 1]
+
+    def clockwiseangle_and_distance(P):
+        point = [P.x, P.y]
+        # Vector between point and the origin: v = p - o
+        vector = [point[0] - origin[0], point[1] - origin[1]]
+        # Length of vector: ||v||
+        lenvector = math.hypot(vector[0], vector[1])
+        # If length is zero there is no angle
+        if lenvector == 0:
+            return -math.pi, 0
+        # Normalize vector: v/||v||
+        normalized = [vector[0] / lenvector, vector[1] / lenvector]
+        dotprod = normalized[0] * refvec[0] + normalized[1] * refvec[1]  # x1*x2 + y1*y2
+        diffprod = refvec[1] * normalized[0] - refvec[0] * normalized[1]  # x1*y2 - y1*x2
+        angle = math.atan2(diffprod, dotprod)
+        # Negative angles represent counter-clockwise angles so we need to subtract them
+        # from 2*pi (360 degrees)
+        if angle < 0:
+            return 2 * math.pi + angle, lenvector
+        # I return first the angle because that's the primary sorting criterium
+        # but if two vectors have the same angle then the shorter distance should come first.
+        return angle, lenvector
+
+    ret = sorted(ret, key=clockwiseangle_and_distance)
+    return LineString(ret)
+
+
+def xy_to_coord(ix, iy):
+    coord = []
+    for x, y, in zip(ix, iy):
+        coord.append((x, y))
+    return coord
