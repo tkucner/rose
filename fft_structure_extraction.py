@@ -17,22 +17,9 @@ from sklearn.cluster import DBSCAN
 from sklearn.neighbors import KernelDensity
 
 import helpers as he
-from wall_segment import WallSegment as ws
+from wall_segment import WallSegment
 
 logging.getLogger("PIL.PngImagePlugin").setLevel(logging.WARNING)
-
-
-def generate_line_segments_per_direction(slices):
-    slices_lines = []
-    for s in slices:
-        slices_lines.append([s[0][0][0], s[1][0][0], s[0][0][-1], s[1][0][-1]])
-    return slices_lines
-
-
-def save_simple_map(name, map_to_save):
-    with open(name, "wb") as out:
-        png_writer = png.Writer(map_to_save.shape[1], map_to_save.shape[0], greyscale=True, alpha=False, bitdepth=1)
-        png_writer.write(out, map_to_save)
 
 
 class FFTStructureExtraction:
@@ -84,7 +71,7 @@ class FFTStructureExtraction:
         self.pixel_quality_histogram = []
         self.pixel_quality_gmm = []
         # self.cluster_quality_threshold = []
-
+        self.map_size = None
         self.line_parameters = []
         self.norm_ft_image = None
         self.pol = []
@@ -128,6 +115,7 @@ class FFTStructureExtraction:
         square_map = np.zeros((np.max(self.binary_map.shape), np.max(self.binary_map.shape)), dtype=bool)
         square_map[:self.binary_map.shape[0], :self.binary_map.shape[1]] = self.binary_map
         self.binary_map = square_map
+        self.map_size = square_map.shape[0]
         self.analysed_map = self.binary_map.copy()
         logging.debug("Map loaded in %.2f s", time.time() - ti)
         logging.info("Map Shape: %d x %d", self.binary_map.shape[0], self.binary_map.shape[1])
@@ -215,6 +203,14 @@ class FFTStructureExtraction:
                          self.angles[p[1]] * 180.0 / np.pi)
             self.dom_dirs.append([self.angles[p[0]], self.angles[p[1]]])
 
+    @staticmethod
+    def __lin_eq(par, var):
+        res = []
+        for v in var:
+            res.append(v)
+            res.append((par['gamma'] - par['alpha'] * v) / par['beta'])
+        return res
+
     def process_map(self):
         self.__compute_fft()
         self.__get_dominant_directions()
@@ -225,24 +221,18 @@ class FFTStructureExtraction:
         else:
             diag = 10
             mask_all = np.zeros(self.norm_ft_image.shape)
+            min_l = self.map_size * (-1 / 2)
+            max_l = self.map_size * (3 / 2)
 
-            min_l = (self.binary_map.shape[0] if self.binary_map.shape[0] < self.binary_map.shape[1] else
-                     self.binary_map.shape[1]) / 2 - (self.binary_map.shape[0] if self.binary_map.shape[0] >
-                                                                                  self.binary_map.shape[1] else
-                                                      self.binary_map.shape[1])
-            max_l = (self.binary_map.shape[0] if self.binary_map.shape[0] > self.binary_map.shape[1] else
-                     self.binary_map.shape[1]) / 2 + (self.binary_map.shape[0] if self.binary_map.shape[0] >
-                                                                                  self.binary_map.shape[1] else
-                                                      self.binary_map.shape[1])
             for p in self.comp:
                 x1, y1 = he.pol2cart(diag, self.angles[p[0]] + np.pi / 2.0)
                 x2, y2 = he.pol2cart(diag, self.angles[p[1]] + np.pi / 2.0)
 
-                x1 = x1 + self.binary_map.shape[0] / 2.0
-                x2 = x2 + self.binary_map.shape[0] / 2.0
+                x1 = x1 + self.map_size / 2.0
+                x2 = x2 + self.map_size / 2.0
 
-                y1 = y1 + self.binary_map.shape[1] / 2.0
-                y2 = y2 + self.binary_map.shape[1] / 2.0
+                y1 = y1 + self.map_size / 2.0
+                y2 = y2 + self.map_size / 2.0
 
                 a = y2 - y1
                 b = x1 - x2
@@ -250,49 +240,35 @@ class FFTStructureExtraction:
                 c1 = c + self.par
                 c2 = c - self.par
 
+                par = {'gamma': c, 'alpha': a, 'beta': b}
                 ######
-                X1_l = min_l
-                Y1_l = (c - a * X1_l) / b
-                X2_l = max_l
-                Y2_l = (c - a * X2_l) / b
+                var = [min_l, max_l]
+                X1_l, Y1_l, X2_l, Y2_l = self.__lin_eq(par, var)
                 ######
-                X1 = 0
-                Y1 = (c - a * X1) / b
-                X2 = self.binary_map.shape[0]
-                Y2 = (c - a * X2) / b
+                var = [0, self.map_size]
+                X1, Y1, X2, Y2 = self.__lin_eq(par, var)
                 ###
-                X1_1 = 0
-                Y1_1 = (c1 - a * X1_1) / b
-                X2_1 = self.binary_map.shape[0]
-                Y2_1 = (c1 - a * X2_1) / b
+                par['gamma'] = c1
+                X1_1, Y1_1, X2_1, Y2_1 = self.__lin_eq(par, var)
                 ###
-                X1_2 = 0
-                Y1_2 = (c2 - a * X1_2) / b
-                X2_2 = self.binary_map.shape[0]
-                Y2_2 = (c2 - a * X2_2) / b
+                par['gamma'] = c2
+                X1_2, Y1_2, X2_2, Y2_2 = self.__lin_eq(par, var)
                 ###
                 Y_org = Y1
-                if np.abs(Y_org) > 3 * np.max(self.binary_map.shape):
+                if np.abs(Y_org) > 3 * self.map_size:
+                    par = {'gamma': c, 'alpha': b, 'beta': a}
                     ###
-                    Y1_l = min_l
-                    X1_l = (c - b * Y1_l) / a
-                    Y2_l = max_l
-                    X2_l = (c - b * Y2_l) / a
+                    var = [min_l, max_l]
+                    Y1_l, X1_l, Y2_l, X2_l = self.__lin_eq(par, var)
                     ###
-                    Y1 = 0
-                    X1 = (c - b * Y1) / a
-                    Y2 = self.binary_map.shape[1]
-                    X2 = (c - b * Y2) / a
+                    var = [0, self.map_size]
+                    Y1, X1, Y2, X2 = self.__lin_eq(par, var)
                     ###
-                    Y1_1 = 0
-                    X1_1 = (c1 - b * Y1_1) / a
-                    Y2_1 = self.binary_map.shape[1]
-                    X2_1 = (c1 - b * Y2_1) / a
+                    par['gamma'] = c1
+                    Y1_1, X1_1, Y2_1, X2_1 = self.__lin_eq(par, var)
                     ###
-                    Y1_2 = 0
-                    X1_2 = (c2 - b * Y1_2) / a
-                    Y2_2 = self.binary_map.shape[1]
-                    X2_2 = (c2 - b * Y2_2) / a
+                    par['gamma'] = c2
+                    Y1_2, X1_2, Y2_2, X2_2 = self.__lin_eq(par, var)
                     ###
                 if max(X1_l, X2_l) < max(Y1_l, Y2_l):
                     self.lines_long_v.append([X1_l, Y1_l, X2_l, Y2_l])
@@ -352,6 +328,19 @@ class FFTStructureExtraction:
                      "centers": [(a + b) / 2 for a, b in zip(edges[:-1], edges[1:])],
                      "width": [(a - b) for a, b in zip(edges[:-1], edges[1:])]}
         return histogram
+
+    @staticmethod
+    def __generate_line_segments_per_direction(slices):
+        slices_lines = []
+        for s in slices:
+            slices_lines.append([s[0][0][0], s[1][0][0], s[0][0][-1], s[1][0][-1]])
+        return slices_lines
+
+    @staticmethod
+    def __save_simple_map(name, map_to_save):
+        with open(name, "wb") as out:
+            png_writer = png.Writer(map_to_save.shape[1], map_to_save.shape[0], greyscale=True, alpha=False, bitdepth=1)
+            png_writer.write(out, map_to_save)
 
     def simple_filter_map(self, tr):
         ti = time.time()
@@ -654,7 +643,7 @@ class FFTStructureExtraction:
             for m in mi:
                 new_cells.extend(list(wall_segements[m].cells))
                 remove_list.append(wall_segements[m])
-            WS = ws()
+            WS = WallSegment()
             WS.add_cells(np.array(new_cells))
             WS.compute_central_lines()
             done_list.append(WS)
@@ -716,7 +705,7 @@ class FFTStructureExtraction:
 
         for dir in segments_in_directions:
             for c in dir:
-                local_segment = ws()
+                local_segment = WallSegment()
                 local_segment.add_cells(c['cells'])
                 local_segment.compute_central_lines()
                 local_segment.id = c['id']
@@ -745,7 +734,7 @@ class FFTStructureExtraction:
         logging.debug([x.id for x in done_segments])
 
         remove_list = []
-        debug_it=0
+        debug_it = 0
         for overlap in overlap_list:
             li = list(overlap)
             l = []
@@ -905,7 +894,7 @@ class FFTStructureExtraction:
         min_samples = 2
         if len(self.slices_h_dir) is not 0:
             for direction in self.slices_h_dir:
-                slice_lines = generate_line_segments_per_direction(direction)
+                slice_lines = self.__generate_line_segments_per_direction(direction)
                 clustering_h = DBSCAN(eps=eps, min_samples=min_samples,
                                       metric=he.shortest_distance_between_segements).fit(
                     slice_lines)
@@ -914,7 +903,7 @@ class FFTStructureExtraction:
 
         if len(self.slices_v_dir) is not 0:
             for direction in self.slices_v_dir:
-                slice_lines = generate_line_segments_per_direction(direction)
+                slice_lines = self.__generate_line_segments_per_direction(direction)
                 clustering_v = DBSCAN(eps=eps, min_samples=min_samples,
                                       metric=he.shortest_distance_between_segements).fit(
                     slice_lines)

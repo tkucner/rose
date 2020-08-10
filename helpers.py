@@ -26,6 +26,7 @@ def is_between(a, b, c):
         return False
     return True
 
+
 def cart2pol(x, y):
     rho = np.sqrt(x ** 2 + y ** 2)
     phi = np.arctan2(y, x)
@@ -203,6 +204,7 @@ def generate_mask(r, c, s):
 def proper_divs2(n):
     return {x for x in range(1, (n + 1) // 2 + 1) if n % x == 0 and n != x}
 
+
 def dot(v, w):
     x, y = v
     X, Y = w
@@ -275,6 +277,7 @@ def closest_point_on_line(start, end, pnt):
     nearest = add(nearest, start)
     return dist, nearest
 
+
 def segment_interesction(segment1, segment2):
     x, y = line_intersection(segment1, segment2)
     if is_between([segment1[0][0], segment1[0][1]], [segment1[1][0], segment1[1][1]], [x, y]):
@@ -318,6 +321,7 @@ def cetral_line(points):
     else:
         return edges_2[0].interpolate(0.5, normalized=True), edges_2[1].interpolate(0.5, normalized=True)
 
+
 def tuple_list_merger(l):
     skip_list = []
     remove_list = []
@@ -330,6 +334,7 @@ def tuple_list_merger(l):
     for r in remove_list:
         l.remove(r)
     return l
+
 
 def orthogonal_projection(lin, bounds):
     points = [np.array([bounds[0], bounds[1]]), np.array([bounds[2], bounds[3]])]
@@ -359,6 +364,8 @@ def orthogonal_projection(lin, bounds):
     refvec = [0, 1]
 
     def clockwiseangle_and_distance(P):
+        # source: https://stackoverflow.com/a/41856340
+        # Lic: CC BY-SA 3.0
         point = [P.x, P.y]
         # Vector between point and the origin: v = p - o
         vector = [point[0] - origin[0], point[1] - origin[1]]
