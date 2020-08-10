@@ -314,9 +314,9 @@ def cetral_line(points):
     edges_1 = [LineString([points[0], points[1]]), LineString([points[2], points[3]])]
     edges_2 = [LineString([points[1], points[2]]), LineString([points[3], points[4]])]
     if edges_1[0].length < edges_2[0].length:
-        return (edges_1[0].interpolate(0.5, normalized=True), edges_1[1].interpolate(0.5, normalized=True))
+        return edges_1[0].interpolate(0.5, normalized=True), edges_1[1].interpolate(0.5, normalized=True)
     else:
-        return (edges_2[0].interpolate(0.5, normalized=True), edges_2[1].interpolate(0.5, normalized=True))
+        return edges_2[0].interpolate(0.5, normalized=True), edges_2[1].interpolate(0.5, normalized=True)
 
 def tuple_list_merger(l):
     skip_list = []
@@ -374,8 +374,6 @@ def orthogonal_projection(lin, bounds):
         ret.append(P)
         P = nearest_points(line, P)[0]
         ret.append(P)
-        # rx.append(P[0])
-        # ry.append(P[1])
 
     origin = [mean([p.x for p in ret]), mean([p.y for p in ret])]
     refvec = [0, 1]
