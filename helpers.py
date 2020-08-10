@@ -331,26 +331,6 @@ def tuple_list_merger(l):
         l.remove(r)
     return l
 
-
-def orthogonal_projection_old(lin, bounds):
-    points = [np.array([bounds[0], bounds[1]]), np.array([bounds[2], bounds[3]])]
-    lin[0] = np.array(lin[0])
-    lin[1] = np.array(lin[1])
-    orig = lin[0]
-    y = lin[1] - orig
-    rx = []
-    ry = []
-    for point in points:
-        point = np.array(point)
-
-        x = point - orig
-        p = y * np.dot(x, y) / np.dot(y, y)
-        rx.append(orig[0] + p[0])
-        ry.append(orig[1] + p[1])
-
-    return rx, ry
-
-
 def orthogonal_projection(lin, bounds):
     points = [np.array([bounds[0], bounds[1]]), np.array([bounds[2], bounds[3]])]
     lin[0] = np.array(lin[0])
