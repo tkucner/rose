@@ -94,6 +94,60 @@ class FFTStructureExtraction:
         self.__load_map(grid_map)
 
     ####################################################################################
+    # Static methods
+
+    @staticmethod
+    def __get_gmm_threshold(values):
+        clf = mixture.GaussianMixture(n_components=2)
+        clf.fit(values.ravel().reshape(-1, 1))
+        gmm = {"means": clf.means_, "weights": clf.weights_, "covariances": clf.covariances_}
+        # v_range = (np.max(values) - np.min(values))
+
+        bins, edges = np.histogram(values.ravel(), density=True)
+        x = np.arange(min(edges), max(edges), (max(edges) - min(edges)) / 1000)
+
+        y1 = stats.norm.pdf(x, gmm["means"][0], math.sqrt(gmm["covariances"][0])) * gmm["weights"][0]
+        y2 = stats.norm.pdf(x, gmm["means"][1], math.sqrt(gmm["covariances"][1])) * gmm["weights"][1]
+
+        if gmm["means"][0] < gmm["means"][1]:
+            y_b = y1
+            y_g = y2
+        else:
+            y_g = y1
+            y_b = y2
+        ind = np.argmax(y_g > y_b)
+        return x[ind], gmm
+
+    @staticmethod
+    def __get_histogram(values):
+        bins, edges = np.histogram(values.ravel(), density=True)
+        histogram = {"bins": bins, "edges": edges,
+                     "centers": [(a + b) / 2 for a, b in zip(edges[:-1], edges[1:])],
+                     "width": [(a - b) for a, b in zip(edges[:-1], edges[1:])]}
+        return histogram
+
+    @staticmethod
+    def __generate_line_segments_per_direction(slices):
+        slices_lines = []
+        for s in slices:
+            slices_lines.append([s[0][0][0], s[1][0][0], s[0][0][-1], s[1][0][-1]])
+        return slices_lines
+
+    @staticmethod
+    def __save_simple_map(name, map_to_save):
+        with open(name, "wb") as out:
+            png_writer = png.Writer(map_to_save.shape[1], map_to_save.shape[0], greyscale=True, alpha=False, bitdepth=1)
+            png_writer.write(out, map_to_save)
+
+    @staticmethod
+    def __lin_eq(par, var):
+        res = []
+        for v in var:
+            res.append(v)
+            res.append((par['gamma'] - par['alpha'] * v) / par['beta'])
+        return res
+
+    ####################################################################################
     # Private methods
 
     def __load_map(self, grid_map):
@@ -203,13 +257,312 @@ class FFTStructureExtraction:
                          self.angles[p[1]] * 180.0 / np.pi)
             self.dom_dirs.append([self.angles[p[0]], self.angles[p[1]]])
 
-    @staticmethod
-    def __lin_eq(par, var):
-        res = []
-        for v in var:
-            res.append(v)
-            res.append((par['gamma'] - par['alpha'] * v) / par['beta'])
-        return res
+    def __generate_initial_hypothesis_direction_with_kde(self, lines_long, max_len, bandwidth, cutoff_percent, cell_tr,
+                                                         vert):
+        d_row_ret = []
+        slices_ids = []
+        slices = []
+        cell_hypothesis = []
+        lines_hypothesis = []
+        kde_hypothesis = []
+        kde_hypothesis_cut = []
+        slices_dir = []
+
+        for line_long in lines_long:
+            temp_slice = []
+            for s in np.arange(-1 * max_len, max_len, 1):
+                if vert:
+                    rr, cc = sk_draw.line(int(round(line_long[0] + s)), int(round(line_long[3])),
+                                          int(round(line_long[2] + s)),
+                                          int(round(line_long[1])))
+                elif not vert:
+                    rr, cc = sk_draw.line(int(round(line_long[0])), int(round(line_long[3] + s)),
+                                          int(round(line_long[2])),
+                                          int(round(line_long[1] + s)))
+                rr_flag = (np.logical_or(rr < 0, rr >= self.analysed_map.shape[1]))
+                cc_flag = (np.logical_or(cc < 0, cc >= self.analysed_map.shape[0]))
+                flag = np.logical_not(np.logical_or(rr_flag, cc_flag))
+                new_row = True
+                if np.sum(self.analysed_map[cc[flag], rr[flag]] * 1) > 1:
+                    l_slice_ids, temp_row_full, temp_row_cut, d_row = self.__get_slices_along_the_line_kde(cc[flag],
+                                                                                                           rr[flag],
+                                                                                                           bandwidth,
+                                                                                                           max_len,
+                                                                                                           cutoff_percent)
+                    d_row_ret.append(d_row)
+                    # # advanced hypothesis generation
+                    # row = self.analysed_map[cc[flag], rr[flag]] * 1
+                    # t_row = np.ones(row.shape) - row
+                    # d_row = ndimage.distance_transform_cdt(t_row)
+                    # d_row = max_len - d_row
+                    # d_row = d_row.reshape(-1, 1)
+                    # # self.d_row_v.append(d_row)
+                    # d_row_ret.append(d_row)
+                    # kde = KernelDensity(kernel='gaussian', bandwidth=bandwidth).fit(d_row)
+                    # # cut the gaps
+                    # temp_row_full = np.exp(kde.score_samples(d_row))
+                    # temp_row_cut = temp_row_full.copy()
+                    # temp_row_cut[temp_row_full < cutoff_percent * min(np.exp(kde.score_samples(d_row)))] = 0
+                    # l_slice_ids = []
+                    # pt = 0
+                    # for i, t in enumerate(temp_row_cut):
+                    #     if t == 0 and pt == 0:
+                    #         pt = t
+                    #     elif pt == 0 and t != 0:
+                    #         ts = []
+                    #         ts.append(i)
+                    #         pt = t
+                    #     elif pt != 0 and t != 0:
+                    #         ts.append(i)
+                    #         pt = t
+                    #     elif t == 0 and pt != 0:
+                    #         l_slice_ids.append(ts)
+                    #         ts = []
+                    #         pt = t
+
+                    cc_f = cc[flag]
+                    rr_f = rr[flag]
+
+                    cc_slices = []
+                    rr_slices = []
+
+                    for tslice in l_slice_ids:
+                        if len(tslice) > cell_tr:
+                            cc_s = []
+                            rr_s = []
+                            for i in tslice:
+                                cc_s.append(cc_f[i])
+                                rr_s.append(rr_f[i])
+                            cc_slices.append(cc_s)
+                            rr_slices.append(rr_s)
+
+                            temp_slice.append((cc_slices, rr_slices))
+
+                            slices_ids.append((cc_slices, rr_slices))
+
+                            slices.append((cc_slices, rr_slices))
+                            if new_row:
+
+                                cell_hypothesis.append((cc[flag], rr[flag]))
+                                if vert:
+                                    lines_hypothesis.append(
+                                        [line_long[0] + s, line_long[1], line_long[2] + s, line_long[3]])
+                                elif not vert:
+                                    lines_hypothesis.append(
+                                        [line_long[0], line_long[1] + s, line_long[2], line_long[3] + s])
+                                kde_hypothesis.append(temp_row_full)
+                                kde_hypothesis_cut.append(temp_row_cut)
+                                new_row = False
+
+            slices_dir.append(temp_slice)
+        return d_row_ret, slices_ids, slices, cell_hypothesis, lines_hypothesis, \
+               kde_hypothesis, kde_hypothesis_cut, slices_dir
+
+    def __estimate_wall_thickness(self):
+        max_len = 5000
+        padding = 1
+        thickness = np.array(self.__estimate_wall_thickness_in_direction(self.lines_long_v, max_len, padding, True) +
+                             self.__estimate_wall_thickness_in_direction(self.lines_long_h, max_len, padding, False))
+        thickness_threshold, thickness_gmm = self.__get_gmm_threshold(thickness)
+        return thickness_threshold
+
+    def __get_slices_along_the_line_simple(self, ccf, rrf, padding):
+        row = self.analysed_map[ccf, rrf]
+        row.shape = (row.shape[0], 1)
+        if padding == 0:
+            temp_row_full = row
+        else:
+            temp_row_full = binary_dilation(row, selem=np.ones((padding, padding)))
+
+        temp_row_full = temp_row_full * 1
+        temp_row_cut = temp_row_full.copy()
+        l_slice_ids = []
+        pt = 0
+        for i, t in enumerate(temp_row_cut):
+            if t == 0 and pt == 0:
+                pt = t
+            elif pt == 0 and t != 0:
+                ts = []
+                ts.append(i)
+                pt = t
+            elif pt != 0 and t != 0:
+                ts.append(i)
+                pt = t
+            elif t == 0 and pt != 0:
+                l_slice_ids.append(ts)
+                ts = []
+                pt = t
+        return l_slice_ids, temp_row_full, temp_row_cut
+
+    def __get_slices_along_the_line_kde(self, ccf, rrf, bandwidth, max_len, cutoff_percent):
+        # advanced hypothesis generation
+        row = self.analysed_map[ccf, rrf] * 1
+        t_row = np.ones(row.shape) - row
+        d_row = ndimage.distance_transform_cdt(t_row)
+        d_row = max_len - d_row
+        d_row = d_row.reshape(-1, 1)
+        # self.d_row_v.append(d_row)
+        # d_row_ret.append(d_row)
+        kde = KernelDensity(kernel='gaussian', bandwidth=bandwidth).fit(d_row)
+        # cut the gaps
+        temp_row_full = np.exp(kde.score_samples(d_row))
+        temp_row_cut = temp_row_full.copy()
+        temp_row_cut[temp_row_full < cutoff_percent * min(np.exp(kde.score_samples(d_row)))] = 0
+        l_slice_ids = []
+        pt = 0
+        for i, t in enumerate(temp_row_cut):
+            if t == 0 and pt == 0:
+                pt = t
+            elif pt == 0 and t != 0:
+                ts = []
+                ts.append(i)
+                pt = t
+            elif pt != 0 and t != 0:
+                ts.append(i)
+                pt = t
+            elif t == 0 and pt != 0:
+                l_slice_ids.append(ts)
+                ts = []
+                pt = t
+        return l_slice_ids, temp_row_full, temp_row_cut, d_row
+
+    def __estimate_wall_thickness_in_direction(self, lines_long, max_len, padding, V):
+        thickness = []
+        for l in lines_long:
+            for s in np.arange(-1 * max_len, max_len, 1):
+                if V:
+                    rr, cc = sk_draw.line(int(round(l[0] + s)), int(round(l[3])), int(round(l[2] + s)),
+                                          int(round(l[1])))
+                elif not V:
+                    rr, cc = sk_draw.line(int(round(l[0])), int(round(l[3] + s)), int(round(l[2])),
+                                          int(round(l[1] + s)))
+                rr_flag = (np.logical_or(rr < 0, rr >= self.analysed_map.shape[1]))
+                cc_flag = (np.logical_or(cc < 0, cc >= self.analysed_map.shape[0]))
+                flag = np.logical_not(np.logical_or(rr_flag, cc_flag))
+                if np.sum(self.analysed_map[cc[flag], rr[flag]] * 1) > 1:
+                    l_slice_ids, _, _ = self.__get_slices_along_the_line_simple(cc[flag], rr[flag], padding)
+
+                    for tslice in l_slice_ids:
+                        thickness.append(len(tslice))
+        return thickness
+
+    def __generate_initial_hypothesis_direction_simple(self, lines_long, max_len, padding, cell_tr, vert):
+        d_row_ret = []
+        slices_ids = []
+        slices = []
+        cell_hypothesis = []
+        lines_hypothesis = []
+        kde_hypothesis = []
+        kde_hypothesis_cut = []
+        slices_dir = []
+
+        for line_long in lines_long:
+            temp_slice = []
+            for s in np.arange(-1 * max_len, max_len, 1):
+                if vert:
+                    rr, cc = sk_draw.line(int(round(line_long[0] + s)), int(round(line_long[3])),
+                                          int(round(line_long[2] + s)),
+                                          int(round(line_long[1])))
+                elif not vert:
+                    rr, cc = sk_draw.line(int(round(line_long[0])), int(round(line_long[3] + s)),
+                                          int(round(line_long[2])),
+                                          int(round(line_long[1] + s)))
+                rr_flag = (np.logical_or(rr < 0, rr >= self.analysed_map.shape[1]))
+                cc_flag = (np.logical_or(cc < 0, cc >= self.analysed_map.shape[0]))
+                flag = np.logical_not(np.logical_or(rr_flag, cc_flag))
+                new_row = True
+                if np.sum(self.analysed_map[cc[flag], rr[flag]] * 1) > 1:
+                    l_slice_ids, temp_row_full, temp_row_cut = self.__get_slices_along_the_line_simple(cc[flag],
+                                                                                                       rr[flag],
+                                                                                                       padding)
+                    cc_f = cc[flag]
+                    rr_f = rr[flag]
+
+                    cc_slices = []
+                    rr_slices = []
+
+                    for tslice in l_slice_ids:
+                        if len(tslice) > cell_tr:
+                            cc_s = []
+                            rr_s = []
+                            for i in tslice:
+                                cc_s.append(cc_f[i])
+                                rr_s.append(rr_f[i])
+                            cc_slices.append(cc_s)
+                            rr_slices.append(rr_s)
+
+                            temp_slice.append((cc_slices, rr_slices))
+
+                            slices_ids.append((cc_slices, rr_slices))
+
+                            slices.append((cc_slices, rr_slices))
+                            if new_row:
+
+                                cell_hypothesis.append((cc[flag], rr[flag]))
+                                if vert:
+                                    lines_hypothesis.append(
+                                        [line_long[0] + s, line_long[1], line_long[2] + s, line_long[3]])
+                                elif not vert:
+                                    lines_hypothesis.append(
+                                        [line_long[0], line_long[1] + s, line_long[2], line_long[3] + s])
+                                kde_hypothesis.append(temp_row_full)
+                                kde_hypothesis_cut.append(temp_row_cut)
+                                new_row = False
+
+            slices_dir.append(temp_slice)
+        return d_row_ret, slices_ids, slices, cell_hypothesis, \
+               lines_hypothesis, kde_hypothesis, kde_hypothesis_cut, slices_dir
+
+    def __process_wall_cluster(self, wall_segments, intersection_ratio_treshold):
+
+        interaction = [[False for x in range(len(wall_segments))] for y in range(len(wall_segments))]
+        proejctions = [[None for x in range(len(wall_segments))] for y in range(len(wall_segments))]
+        intersections = [[None for x in range(len(wall_segments))] for y in range(len(wall_segments))]
+        intersections_ratios = [[None for x in range(len(wall_segments))] for y in range(len(wall_segments))]
+        merge = [[False for x in range(len(wall_segments))] for y in range(len(wall_segments))]
+        for ws1_id, ws1 in enumerate(wall_segments):
+            for ws2_id, ws2 in enumerate(wall_segments):
+                if not ws1_id == ws2_id:
+                    interaction[ws1_id][ws2_id] = not ws1.minimum_rotated_rectangle.disjoint(
+                        ws2.minimum_rotated_rectangle)
+                    if interaction[ws1_id][ws2_id]:
+                        s = he.orthogonal_projection(list(ws1.central_lines['short'].coords),
+                                                     ws2.minimum_rotated_rectangle.bounds)
+                        proejctions[ws1_id][ws2_id] = s
+                        intersections[ws1_id][ws2_id] = s.difference(ws1.central_lines['short'])
+                        intersections_ratios[ws1_id][ws2_id] = intersections[ws1_id][ws2_id].length / s.length
+                        if intersections_ratios[ws1_id][ws2_id] < intersection_ratio_treshold:
+                            merge[ws1_id][ws2_id] = True
+        print("------------------")
+        print(intersections_ratios)
+        print(merge)
+        return interaction, proejctions, intersections, intersections_ratios, merge
+
+    def __merge_walls(self, wall_segements, merge):
+        np_merge = np.array(merge)
+        mrge_list = list(zip(*np.where(np_merge == True)))
+        mrge_list = [set(x) for x in mrge_list]
+        mrge_list = he.tuple_list_merger(mrge_list)
+        remove_list = []
+        done_list = []
+        for mi in mrge_list:
+            new_cells = []
+            for m in mi:
+                new_cells.extend(list(wall_segements[m].cells))
+                remove_list.append(wall_segements[m])
+            WS = WallSegment()
+            WS.add_cells(np.array(new_cells))
+            WS.compute_central_lines()
+            done_list.append(WS)
+
+        for w in wall_segements:
+            if not w in remove_list:
+                done_list.append(w)
+
+        return done_list, remove_list
+
+    ####################################################################################
+    # Public Methods
 
     def process_map(self):
         self.__compute_fft()
@@ -299,48 +652,6 @@ class FFTStructureExtraction:
 
             self.map_scored_good = np.abs(mask_iftimage) * (self.binary_map * 1)
 
-    @staticmethod
-    def __get_gmm_threshold(values):
-        clf = mixture.GaussianMixture(n_components=2)
-        clf.fit(values.ravel().reshape(-1, 1))
-        gmm = {"means": clf.means_, "weights": clf.weights_, "covariances": clf.covariances_}
-        # v_range = (np.max(values) - np.min(values))
-
-        bins, edges = np.histogram(values.ravel(), density=True)
-        x = np.arange(min(edges), max(edges), (max(edges) - min(edges)) / 1000)
-
-        y1 = stats.norm.pdf(x, gmm["means"][0], math.sqrt(gmm["covariances"][0])) * gmm["weights"][0]
-        y2 = stats.norm.pdf(x, gmm["means"][1], math.sqrt(gmm["covariances"][1])) * gmm["weights"][1]
-
-        if gmm["means"][0] < gmm["means"][1]:
-            y_b = y1
-            y_g = y2
-        else:
-            y_g = y1
-            y_b = y2
-        ind = np.argmax(y_g > y_b)
-        return x[ind], gmm
-
-    @staticmethod
-    def __get_histogram(values):
-        bins, edges = np.histogram(values.ravel(), density=True)
-        histogram = {"bins": bins, "edges": edges,
-                     "centers": [(a + b) / 2 for a, b in zip(edges[:-1], edges[1:])],
-                     "width": [(a - b) for a, b in zip(edges[:-1], edges[1:])]}
-        return histogram
-
-    @staticmethod
-    def __generate_line_segments_per_direction(slices):
-        slices_lines = []
-        for s in slices:
-            slices_lines.append([s[0][0][0], s[1][0][0], s[0][0][-1], s[1][0][-1]])
-        return slices_lines
-
-    @staticmethod
-    def __save_simple_map(name, map_to_save):
-        with open(name, "wb") as out:
-            png_writer = png.Writer(map_to_save.shape[1], map_to_save.shape[0], greyscale=True, alpha=False, bitdepth=1)
-            png_writer.write(out, map_to_save)
 
     def simple_filter_map(self, tr):
         ti = time.time()
@@ -361,222 +672,6 @@ class FFTStructureExtraction:
         self.analysed_map[np.abs(self.map_scored_good) < self.quality_threshold] = 0.0
         logging.debug("Map filtered with histogram in : %.2f s", time.time() - ti)
 
-    def __generate_initial_hypothesis_direction_with_kde(self, lines_long, max_len, bandwidth, cutoff_percent, cell_tr,
-                                                         vert):
-        d_row_ret = []
-        slices_ids = []
-        slices = []
-        cell_hypothesis = []
-        lines_hypothesis = []
-        kde_hypothesis = []
-        kde_hypothesis_cut = []
-        slices_dir = []
-
-        for line_long in lines_long:
-            temp_slice = []
-            for s in np.arange(-1 * max_len, max_len, 1):
-                if vert:
-                    rr, cc = sk_draw.line(int(round(line_long[0] + s)), int(round(line_long[3])),
-                                          int(round(line_long[2] + s)),
-                                          int(round(line_long[1])))
-                elif not vert:
-                    rr, cc = sk_draw.line(int(round(line_long[0])), int(round(line_long[3] + s)),
-                                          int(round(line_long[2])),
-                                          int(round(line_long[1] + s)))
-                rr_flag = (np.logical_or(rr < 0, rr >= self.analysed_map.shape[1]))
-                cc_flag = (np.logical_or(cc < 0, cc >= self.analysed_map.shape[0]))
-                flag = np.logical_not(np.logical_or(rr_flag, cc_flag))
-                new_row = True
-                if np.sum(self.analysed_map[cc[flag], rr[flag]] * 1) > 1:
-                    # advanced hypothesis generation
-                    row = self.analysed_map[cc[flag], rr[flag]] * 1
-                    t_row = np.ones(row.shape) - row
-                    d_row = ndimage.distance_transform_cdt(t_row)
-                    d_row = max_len - d_row
-                    d_row = d_row.reshape(-1, 1)
-                    # self.d_row_v.append(d_row)
-                    d_row_ret.append(d_row)
-                    kde = KernelDensity(kernel='gaussian', bandwidth=bandwidth).fit(d_row)
-                    # cut the gaps
-                    temp_row_full = np.exp(kde.score_samples(d_row))
-                    temp_row_cut = temp_row_full.copy()
-                    temp_row_cut[temp_row_full < cutoff_percent * min(np.exp(kde.score_samples(d_row)))] = 0
-                    l_slice_ids = []
-                    pt = 0
-                    for i, t in enumerate(temp_row_cut):
-                        if t == 0 and pt == 0:
-                            pt = t
-                        elif pt == 0 and t != 0:
-                            ts = []
-                            ts.append(i)
-                            pt = t
-                        elif pt != 0 and t != 0:
-                            ts.append(i)
-                            pt = t
-                        elif t == 0 and pt != 0:
-                            l_slice_ids.append(ts)
-                            ts = []
-                            pt = t
-
-                    cc_f = cc[flag]
-                    rr_f = rr[flag]
-
-                    cc_slices = []
-                    rr_slices = []
-
-                    for tslice in l_slice_ids:
-                        if len(tslice) > cell_tr:
-                            cc_s = []
-                            rr_s = []
-                            for i in tslice:
-                                cc_s.append(cc_f[i])
-                                rr_s.append(rr_f[i])
-                            cc_slices.append(cc_s)
-                            rr_slices.append(rr_s)
-
-                            temp_slice.append((cc_slices, rr_slices))
-
-                            slices_ids.append((cc_slices, rr_slices))
-
-                            slices.append((cc_slices, rr_slices))
-                            if new_row:
-
-                                cell_hypothesis.append((cc[flag], rr[flag]))
-                                if vert:
-                                    lines_hypothesis.append(
-                                        [line_long[0] + s, line_long[1], line_long[2] + s, line_long[3]])
-                                elif not vert:
-                                    lines_hypothesis.append(
-                                        [line_long[0], line_long[1] + s, line_long[2], line_long[3] + s])
-                                kde_hypothesis.append(temp_row_full)
-                                kde_hypothesis_cut.append(temp_row_cut)
-                                new_row = False
-
-            slices_dir.append(temp_slice)
-        return d_row_ret, slices_ids, slices, cell_hypothesis, lines_hypothesis, \
-               kde_hypothesis, kde_hypothesis_cut, slices_dir
-
-    def __estimate_wall_thickness(self):
-        max_len = 5000
-        padding = 1
-        thickness = np.array(self.__estimate_wall_thickness_in_direction(self.lines_long_v, max_len, padding, True) +
-                             self.__estimate_wall_thickness_in_direction(self.lines_long_h, max_len, padding, False))
-        thickness_threshold, thickness_gmm = self.__get_gmm_threshold(thickness)
-        return thickness_threshold
-
-    def __get_slices_along_the_line(self, ccf, rrf, padding):
-        row = self.analysed_map[ccf, rrf]
-        row.shape = (row.shape[0], 1)
-        if padding == 0:
-            temp_row_full = row
-        else:
-            temp_row_full = binary_dilation(row, selem=np.ones((padding, padding)))
-
-        temp_row_full = temp_row_full * 1
-        temp_row_cut = temp_row_full.copy()
-        l_slice_ids = []
-        pt = 0
-        for i, t in enumerate(temp_row_cut):
-            if t == 0 and pt == 0:
-                pt = t
-            elif pt == 0 and t != 0:
-                ts = []
-                ts.append(i)
-                pt = t
-            elif pt != 0 and t != 0:
-                ts.append(i)
-                pt = t
-            elif t == 0 and pt != 0:
-                l_slice_ids.append(ts)
-                ts = []
-                pt = t
-        return l_slice_ids, temp_row_full, temp_row_cut
-
-    def __estimate_wall_thickness_in_direction(self, lines_long, max_len, padding, V):
-        thickness = []
-        for l in lines_long:
-            for s in np.arange(-1 * max_len, max_len, 1):
-                if V:
-                    rr, cc = sk_draw.line(int(round(l[0] + s)), int(round(l[3])), int(round(l[2] + s)),
-                                          int(round(l[1])))
-                elif not V:
-                    rr, cc = sk_draw.line(int(round(l[0])), int(round(l[3] + s)), int(round(l[2])),
-                                          int(round(l[1] + s)))
-                rr_flag = (np.logical_or(rr < 0, rr >= self.analysed_map.shape[1]))
-                cc_flag = (np.logical_or(cc < 0, cc >= self.analysed_map.shape[0]))
-                flag = np.logical_not(np.logical_or(rr_flag, cc_flag))
-                if np.sum(self.analysed_map[cc[flag], rr[flag]] * 1) > 1:
-                    l_slice_ids, _, _ = self.__get_slices_along_the_line(cc[flag], rr[flag], padding)
-
-                    for tslice in l_slice_ids:
-                        thickness.append(len(tslice))
-        return thickness
-
-    def __generate_initial_hypothesis_direction_simple(self, lines_long, max_len, padding, cell_tr, vert):
-        d_row_ret = []
-        slices_ids = []
-        slices = []
-        cell_hypothesis = []
-        lines_hypothesis = []
-        kde_hypothesis = []
-        kde_hypothesis_cut = []
-        slices_dir = []
-
-        for line_long in lines_long:
-            temp_slice = []
-            for s in np.arange(-1 * max_len, max_len, 1):
-                if vert:
-                    rr, cc = sk_draw.line(int(round(line_long[0] + s)), int(round(line_long[3])),
-                                          int(round(line_long[2] + s)),
-                                          int(round(line_long[1])))
-                elif not vert:
-                    rr, cc = sk_draw.line(int(round(line_long[0])), int(round(line_long[3] + s)),
-                                          int(round(line_long[2])),
-                                          int(round(line_long[1] + s)))
-                rr_flag = (np.logical_or(rr < 0, rr >= self.analysed_map.shape[1]))
-                cc_flag = (np.logical_or(cc < 0, cc >= self.analysed_map.shape[0]))
-                flag = np.logical_not(np.logical_or(rr_flag, cc_flag))
-                new_row = True
-                if np.sum(self.analysed_map[cc[flag], rr[flag]] * 1) > 1:
-                    l_slice_ids, temp_row_full, temp_row_cut = self.__get_slices_along_the_line(cc[flag], rr[flag],
-                                                                                                padding)
-                    cc_f = cc[flag]
-                    rr_f = rr[flag]
-
-                    cc_slices = []
-                    rr_slices = []
-
-                    for tslice in l_slice_ids:
-                        if len(tslice) > cell_tr:
-                            cc_s = []
-                            rr_s = []
-                            for i in tslice:
-                                cc_s.append(cc_f[i])
-                                rr_s.append(rr_f[i])
-                            cc_slices.append(cc_s)
-                            rr_slices.append(rr_s)
-
-                            temp_slice.append((cc_slices, rr_slices))
-
-                            slices_ids.append((cc_slices, rr_slices))
-
-                            slices.append((cc_slices, rr_slices))
-                            if new_row:
-
-                                cell_hypothesis.append((cc[flag], rr[flag]))
-                                if vert:
-                                    lines_hypothesis.append(
-                                        [line_long[0] + s, line_long[1], line_long[2] + s, line_long[3]])
-                                elif not vert:
-                                    lines_hypothesis.append(
-                                        [line_long[0], line_long[1] + s, line_long[2], line_long[3] + s])
-                                kde_hypothesis.append(temp_row_full)
-                                kde_hypothesis_cut.append(temp_row_cut)
-                                new_row = False
-
-            slices_dir.append(temp_slice)
-        return d_row_ret, slices_ids, slices, cell_hypothesis, \
-               lines_hypothesis, kde_hypothesis, kde_hypothesis_cut, slices_dir
 
     def generate_initial_hypothesis(self, **kwargs):
         if 'type' in kwargs:
@@ -606,53 +701,7 @@ class FFTStructureExtraction:
                 self.lines_long_h, max_len, padding, cell_tr, False)
             logging.debug("Initial hypothesis generated simple in %.2f", time.time() - t)
 
-    def __process_wall_cluster(self, wall_segments, intersection_ratio_treshold):
 
-        interaction = [[False for x in range(len(wall_segments))] for y in range(len(wall_segments))]
-        proejctions = [[None for x in range(len(wall_segments))] for y in range(len(wall_segments))]
-        intersections = [[None for x in range(len(wall_segments))] for y in range(len(wall_segments))]
-        intersections_ratios = [[None for x in range(len(wall_segments))] for y in range(len(wall_segments))]
-        merge = [[False for x in range(len(wall_segments))] for y in range(len(wall_segments))]
-        for ws1_id, ws1 in enumerate(wall_segments):
-            for ws2_id, ws2 in enumerate(wall_segments):
-                if not ws1_id == ws2_id:
-                    interaction[ws1_id][ws2_id] = not ws1.minimum_rotated_rectangle.disjoint(
-                        ws2.minimum_rotated_rectangle)
-                    if interaction[ws1_id][ws2_id]:
-                        s = he.orthogonal_projection(list(ws1.central_lines['short'].coords),
-                                                     ws2.minimum_rotated_rectangle.bounds)
-                        proejctions[ws1_id][ws2_id] = s
-                        intersections[ws1_id][ws2_id] = s.difference(ws1.central_lines['short'])
-                        intersections_ratios[ws1_id][ws2_id] = intersections[ws1_id][ws2_id].length / s.length
-                        if intersections_ratios[ws1_id][ws2_id] < intersection_ratio_treshold:
-                            merge[ws1_id][ws2_id] = True
-        print("------------------")
-        print(intersections_ratios)
-        print(merge)
-        return interaction, proejctions, intersections, intersections_ratios, merge
-
-    def __merge_walls(self, wall_segements, merge):
-        np_merge = np.array(merge)
-        mrge_list = list(zip(*np.where(np_merge == True)))
-        mrge_list = [set(x) for x in mrge_list]
-        mrge_list = he.tuple_list_merger(mrge_list)
-        remove_list = []
-        done_list = []
-        for mi in mrge_list:
-            new_cells = []
-            for m in mi:
-                new_cells.extend(list(wall_segements[m].cells))
-                remove_list.append(wall_segements[m])
-            WS = WallSegment()
-            WS.add_cells(np.array(new_cells))
-            WS.compute_central_lines()
-            done_list.append(WS)
-
-        for w in wall_segements:
-            if not w in remove_list:
-                done_list.append(w)
-
-        return done_list, remove_list
 
     def find_walls_flood_filing(self):
 
