@@ -3,7 +3,6 @@ import math
 import time
 
 import numpy as np
-import png
 import scipy.signal as signal
 import scipy.stats as stats
 import skimage.draw as sk_draw
@@ -134,21 +133,115 @@ class FFTStructureExtraction:
         return slices_lines
 
     @staticmethod
-    def __save_simple_map(name, map_to_save):
-        with open(name, "wb") as out:
-            png_writer = png.Writer(map_to_save.shape[1], map_to_save.shape[0], greyscale=True, alpha=False, bitdepth=1)
-            png_writer.write(out, map_to_save)
+    def __merge_walls(wall_segements, merge):
+        np_merge = np.array(merge)
+        mrge_list = list(zip(*np.where(np_merge == True)))
+        mrge_list = [set(x) for x in mrge_list]
+        mrge_list = he.tuple_list_merger(mrge_list)
+        remove_list = []
+        done_list = []
+        for mi in mrge_list:
+            new_cells = []
+            for m in mi:
+                new_cells.extend(list(wall_segements[m].cells))
+                remove_list.append(wall_segements[m])
+            WS = WallSegment()
+            WS.add_cells(np.array(new_cells))
+            WS.compute_central_lines()
+            done_list.append(WS)
+
+        for w in wall_segements:
+            if not w in remove_list:
+                done_list.append(w)
+
+        return done_list, remove_list
 
     @staticmethod
-    def __lin_eq(par, var):
-        res = []
-        for v in var:
-            res.append(v)
-            res.append((par['gamma'] - par['alpha'] * v) / par['beta'])
-        return res
+    def __process_wall_cluster(wall_segments, intersection_ratio_threshold):
+        interaction = [[False for x in range(len(wall_segments))] for y in range(len(wall_segments))]
+        projections = [[None for x in range(len(wall_segments))] for y in range(len(wall_segments))]
+        intersections = [[None for x in range(len(wall_segments))] for y in range(len(wall_segments))]
+        intersections_ratios = [[None for x in range(len(wall_segments))] for y in range(len(wall_segments))]
+        merge = [[False for x in range(len(wall_segments))] for y in range(len(wall_segments))]
+        for ws1_id, ws1 in enumerate(wall_segments):
+            for ws2_id, ws2 in enumerate(wall_segments):
+                if not ws1_id == ws2_id:
+                    interaction[ws1_id][ws2_id] = not ws1.minimum_rotated_rectangle.disjoint(
+                        ws2.minimum_rotated_rectangle)
+                    if interaction[ws1_id][ws2_id]:
+                        s = he.orthogonal_projection(list(ws1.central_lines['short'].coords),
+                                                     ws2.minimum_rotated_rectangle.bounds)
+                        projections[ws1_id][ws2_id] = s
+                        intersections[ws1_id][ws2_id] = s.difference(ws1.central_lines['short'])
+                        intersections_ratios[ws1_id][ws2_id] = intersections[ws1_id][ws2_id].length / s.length
+                        if intersections_ratios[ws1_id][ws2_id] < intersection_ratio_threshold:
+                            merge[ws1_id][ws2_id] = True
+        return interaction, projections, intersections, intersections_ratios, merge
+
+    @staticmethod
+    def __slice_wall(cc, rr, flag, l_slice_ids, cell_tr, new_row, vert, line_long, temp_row_full, temp_row_cut, s):
+        # d_row_ret = []
+        slices_ids = []
+        slices = []
+        cell_hypothesis = []
+        lines_hypothesis = []
+        kde_hypothesis = []
+        kde_hypothesis_cut = []
+        # slices_dir = []
+        temp_slice = []
+
+        cc_f = cc[flag]
+        rr_f = rr[flag]
+        cc_slices = []
+        rr_slices = []
+
+        for tslice in l_slice_ids:
+            if len(tslice) > cell_tr:
+                cc_s = []
+                rr_s = []
+                for i in tslice:
+                    cc_s.append(cc_f[i])
+                    rr_s.append(rr_f[i])
+                cc_slices.append(cc_s)
+                rr_slices.append(rr_s)
+
+                temp_slice.append((cc_slices, rr_slices))
+
+                slices_ids.append((cc_slices, rr_slices))
+
+                slices.append((cc_slices, rr_slices))
+                if new_row:
+
+                    cell_hypothesis.append((cc[flag], rr[flag]))
+                    if vert:
+                        lines_hypothesis.append(
+                            [line_long[0] + s, line_long[1], line_long[2] + s, line_long[3]])
+                    elif not vert:
+                        lines_hypothesis.append(
+                            [line_long[0], line_long[1] + s, line_long[2], line_long[3] + s])
+                    kde_hypothesis.append(temp_row_full)
+                    kde_hypothesis_cut.append(temp_row_cut)
+                    new_row = False
+
+        return slices_ids, slices, cell_hypothesis, lines_hypothesis, kde_hypothesis, kde_hypothesis_cut, temp_slice, \
+               new_row
 
     ####################################################################################
     # Private methods
+
+    def __get_cell_ids(self, vert, line_long, s):
+        if vert:
+            rr, cc = sk_draw.line(int(round(line_long[0] + s)), int(round(line_long[3])),
+                                  int(round(line_long[2] + s)),
+                                  int(round(line_long[1])))
+        elif not vert:
+            rr, cc = sk_draw.line(int(round(line_long[0])), int(round(line_long[3] + s)),
+                                  int(round(line_long[2])),
+                                  int(round(line_long[1] + s)))
+        rr_flag = (np.logical_or(rr < 0, rr >= self.analysed_map.shape[1]))
+        cc_flag = (np.logical_or(cc < 0, cc >= self.analysed_map.shape[0]))
+        flag = np.logical_not(np.logical_or(rr_flag, cc_flag))
+        return rr, cc, rr_flag, cc_flag, flag
 
     def __load_map(self, grid_map):
         ti = time.time()
@@ -271,17 +364,7 @@ class FFTStructureExtraction:
         for line_long in lines_long:
             temp_slice = []
             for s in np.arange(-1 * max_len, max_len, 1):
-                if vert:
-                    rr, cc = sk_draw.line(int(round(line_long[0] + s)), int(round(line_long[3])),
-                                          int(round(line_long[2] + s)),
-                                          int(round(line_long[1])))
-                elif not vert:
-                    rr, cc = sk_draw.line(int(round(line_long[0])), int(round(line_long[3] + s)),
-                                          int(round(line_long[2])),
-                                          int(round(line_long[1] + s)))
-                rr_flag = (np.logical_or(rr < 0, rr >= self.analysed_map.shape[1]))
-                cc_flag = (np.logical_or(cc < 0, cc >= self.analysed_map.shape[0]))
-                flag = np.logical_not(np.logical_or(rr_flag, cc_flag))
+                rr, cc, rr_flag, cc_flag, flag = self.__get_cell_ids(vert, line_long, s)
                 new_row = True
                 if np.sum(self.analysed_map[cc[flag], rr[flag]] * 1) > 1:
                     l_slice_ids, temp_row_full, temp_row_cut, d_row = self.__get_slices_along_the_line_kde(cc[flag],
@@ -290,69 +373,15 @@ class FFTStructureExtraction:
                                                                                                            max_len,
                                                                                                            cutoff_percent)
                     d_row_ret.append(d_row)
-                    # # advanced hypothesis generation
-                    # row = self.analysed_map[cc[flag], rr[flag]] * 1
-                    # t_row = np.ones(row.shape) - row
-                    # d_row = ndimage.distance_transform_cdt(t_row)
-                    # d_row = max_len - d_row
-                    # d_row = d_row.reshape(-1, 1)
-                    # # self.d_row_v.append(d_row)
-                    # d_row_ret.append(d_row)
-                    # kde = KernelDensity(kernel='gaussian', bandwidth=bandwidth).fit(d_row)
-                    # # cut the gaps
-                    # temp_row_full = np.exp(kde.score_samples(d_row))
-                    # temp_row_cut = temp_row_full.copy()
-                    # temp_row_cut[temp_row_full < cutoff_percent * min(np.exp(kde.score_samples(d_row)))] = 0
-                    # l_slice_ids = []
-                    # pt = 0
-                    # for i, t in enumerate(temp_row_cut):
-                    #     if t == 0 and pt == 0:
-                    #         pt = t
-                    #     elif pt == 0 and t != 0:
-                    #         ts = []
-                    #         ts.append(i)
-                    #         pt = t
-                    #     elif pt != 0 and t != 0:
-                    #         ts.append(i)
-                    #         pt = t
-                    #     elif t == 0 and pt != 0:
-                    #         l_slice_ids.append(ts)
-                    #         ts = []
-                    #         pt = t
-
-                    cc_f = cc[flag]
-                    rr_f = rr[flag]
-
-                    cc_slices = []
-                    rr_slices = []
-
-                    for tslice in l_slice_ids:
-                        if len(tslice) > cell_tr:
-                            cc_s = []
-                            rr_s = []
-                            for i in tslice:
-                                cc_s.append(cc_f[i])
-                                rr_s.append(rr_f[i])
-                            cc_slices.append(cc_s)
-                            rr_slices.append(rr_s)
-
-                            temp_slice.append((cc_slices, rr_slices))
-
-                            slices_ids.append((cc_slices, rr_slices))
-
-                            slices.append((cc_slices, rr_slices))
-                            if new_row:
-
-                                cell_hypothesis.append((cc[flag], rr[flag]))
-                                if vert:
-                                    lines_hypothesis.append(
-                                        [line_long[0] + s, line_long[1], line_long[2] + s, line_long[3]])
-                                elif not vert:
-                                    lines_hypothesis.append(
-                                        [line_long[0], line_long[1] + s, line_long[2], line_long[3] + s])
-                                kde_hypothesis.append(temp_row_full)
-                                kde_hypothesis_cut.append(temp_row_cut)
-                                new_row = False
+                    l_slices_ids, l_slices, l_cell_hypothesis, l_lines_hypothesis, l_kde_hypothesis, l_kde_hypothesis_cut, l_temp_slice, new_row = self.__slice_wall(
+                        cc, rr, flag, l_slice_ids, cell_tr, new_row, vert, line_long, temp_row_full, temp_row_cut, s)
+                    slices_ids.extend(l_slices_ids)
+                    slices.extend(l_slices)
+                    cell_hypothesis.extend(l_cell_hypothesis)
+                    lines_hypothesis.extend(l_lines_hypothesis)
+                    kde_hypothesis.extend(l_kde_hypothesis)
+                    kde_hypothesis_cut.extend(l_kde_hypothesis_cut)
+                    temp_slice.extend(l_temp_slice)
 
             slices_dir.append(temp_slice)
         return d_row_ret, slices_ids, slices, cell_hypothesis, lines_hypothesis, \
@@ -401,8 +430,6 @@ class FFTStructureExtraction:
         d_row = ndimage.distance_transform_cdt(t_row)
         d_row = max_len - d_row
         d_row = d_row.reshape(-1, 1)
-        # self.d_row_v.append(d_row)
-        # d_row_ret.append(d_row)
         kde = KernelDensity(kernel='gaussian', bandwidth=bandwidth).fit(d_row)
         # cut the gaps
         temp_row_full = np.exp(kde.score_samples(d_row))
@@ -430,15 +457,7 @@ class FFTStructureExtraction:
         thickness = []
         for l in lines_long:
             for s in np.arange(-1 * max_len, max_len, 1):
-                if V:
-                    rr, cc = sk_draw.line(int(round(l[0] + s)), int(round(l[3])), int(round(l[2] + s)),
-                                          int(round(l[1])))
-                elif not V:
-                    rr, cc = sk_draw.line(int(round(l[0])), int(round(l[3] + s)), int(round(l[2])),
-                                          int(round(l[1] + s)))
-                rr_flag = (np.logical_or(rr < 0, rr >= self.analysed_map.shape[1]))
-                cc_flag = (np.logical_or(cc < 0, cc >= self.analysed_map.shape[0]))
-                flag = np.logical_not(np.logical_or(rr_flag, cc_flag))
+                rr, cc, rr_flag, cc_flag, flag = self.__get_cell_ids(V, l, s)
                 if np.sum(self.analysed_map[cc[flag], rr[flag]] * 1) > 1:
                     l_slice_ids, _, _ = self.__get_slices_along_the_line_simple(cc[flag], rr[flag], padding)
 
@@ -459,107 +478,25 @@ class FFTStructureExtraction:
         for line_long in lines_long:
             temp_slice = []
             for s in np.arange(-1 * max_len, max_len, 1):
-                if vert:
-                    rr, cc = sk_draw.line(int(round(line_long[0] + s)), int(round(line_long[3])),
-                                          int(round(line_long[2] + s)),
-                                          int(round(line_long[1])))
-                elif not vert:
-                    rr, cc = sk_draw.line(int(round(line_long[0])), int(round(line_long[3] + s)),
-                                          int(round(line_long[2])),
-                                          int(round(line_long[1] + s)))
-                rr_flag = (np.logical_or(rr < 0, rr >= self.analysed_map.shape[1]))
-                cc_flag = (np.logical_or(cc < 0, cc >= self.analysed_map.shape[0]))
-                flag = np.logical_not(np.logical_or(rr_flag, cc_flag))
+                rr, cc, rr_flag, cc_flag, flag = self.__get_cell_ids(vert, line_long, s)
                 new_row = True
                 if np.sum(self.analysed_map[cc[flag], rr[flag]] * 1) > 1:
                     l_slice_ids, temp_row_full, temp_row_cut = self.__get_slices_along_the_line_simple(cc[flag],
                                                                                                        rr[flag],
                                                                                                        padding)
-                    cc_f = cc[flag]
-                    rr_f = rr[flag]
-
-                    cc_slices = []
-                    rr_slices = []
-
-                    for tslice in l_slice_ids:
-                        if len(tslice) > cell_tr:
-                            cc_s = []
-                            rr_s = []
-                            for i in tslice:
-                                cc_s.append(cc_f[i])
-                                rr_s.append(rr_f[i])
-                            cc_slices.append(cc_s)
-                            rr_slices.append(rr_s)
-
-                            temp_slice.append((cc_slices, rr_slices))
-
-                            slices_ids.append((cc_slices, rr_slices))
-
-                            slices.append((cc_slices, rr_slices))
-                            if new_row:
-
-                                cell_hypothesis.append((cc[flag], rr[flag]))
-                                if vert:
-                                    lines_hypothesis.append(
-                                        [line_long[0] + s, line_long[1], line_long[2] + s, line_long[3]])
-                                elif not vert:
-                                    lines_hypothesis.append(
-                                        [line_long[0], line_long[1] + s, line_long[2], line_long[3] + s])
-                                kde_hypothesis.append(temp_row_full)
-                                kde_hypothesis_cut.append(temp_row_cut)
-                                new_row = False
+                    l_slices_ids, l_slices, l_cell_hypothesis, l_lines_hypothesis, l_kde_hypothesis, l_kde_hypothesis_cut, l_temp_slice, new_row = self.__slice_wall(
+                        cc, rr, flag, l_slice_ids, cell_tr, new_row, vert, line_long, temp_row_full, temp_row_cut, s)
+                    slices_ids.extend(l_slices_ids)
+                    slices.extend(l_slices)
+                    cell_hypothesis.extend(l_cell_hypothesis)
+                    lines_hypothesis.extend(l_lines_hypothesis)
+                    kde_hypothesis.extend(l_kde_hypothesis)
+                    kde_hypothesis_cut.extend(l_kde_hypothesis_cut)
+                    temp_slice.extend(l_temp_slice)
 
             slices_dir.append(temp_slice)
         return d_row_ret, slices_ids, slices, cell_hypothesis, \
                lines_hypothesis, kde_hypothesis, kde_hypothesis_cut, slices_dir
-
-    def __process_wall_cluster(self, wall_segments, intersection_ratio_treshold):
-
-        interaction = [[False for x in range(len(wall_segments))] for y in range(len(wall_segments))]
-        proejctions = [[None for x in range(len(wall_segments))] for y in range(len(wall_segments))]
-        intersections = [[None for x in range(len(wall_segments))] for y in range(len(wall_segments))]
-        intersections_ratios = [[None for x in range(len(wall_segments))] for y in range(len(wall_segments))]
-        merge = [[False for x in range(len(wall_segments))] for y in range(len(wall_segments))]
-        for ws1_id, ws1 in enumerate(wall_segments):
-            for ws2_id, ws2 in enumerate(wall_segments):
-                if not ws1_id == ws2_id:
-                    interaction[ws1_id][ws2_id] = not ws1.minimum_rotated_rectangle.disjoint(
-                        ws2.minimum_rotated_rectangle)
-                    if interaction[ws1_id][ws2_id]:
-                        s = he.orthogonal_projection(list(ws1.central_lines['short'].coords),
-                                                     ws2.minimum_rotated_rectangle.bounds)
-                        proejctions[ws1_id][ws2_id] = s
-                        intersections[ws1_id][ws2_id] = s.difference(ws1.central_lines['short'])
-                        intersections_ratios[ws1_id][ws2_id] = intersections[ws1_id][ws2_id].length / s.length
-                        if intersections_ratios[ws1_id][ws2_id] < intersection_ratio_treshold:
-                            merge[ws1_id][ws2_id] = True
-        print("------------------")
-        print(intersections_ratios)
-        print(merge)
-        return interaction, proejctions, intersections, intersections_ratios, merge
-
-    def __merge_walls(self, wall_segements, merge):
-        np_merge = np.array(merge)
-        mrge_list = list(zip(*np.where(np_merge == True)))
-        mrge_list = [set(x) for x in mrge_list]
-        mrge_list = he.tuple_list_merger(mrge_list)
-        remove_list = []
-        done_list = []
-        for mi in mrge_list:
-            new_cells = []
-            for m in mi:
-                new_cells.extend(list(wall_segements[m].cells))
-                remove_list.append(wall_segements[m])
-            WS = WallSegment()
-            WS.add_cells(np.array(new_cells))
-            WS.compute_central_lines()
-            done_list.append(WS)
-
-        for w in wall_segements:
-            if not w in remove_list:
-                done_list.append(w)
-
-        return done_list, remove_list
 
     ####################################################################################
     # Public Methods
@@ -596,32 +533,32 @@ class FFTStructureExtraction:
                 par = {'gamma': c, 'alpha': a, 'beta': b}
                 ######
                 var = [min_l, max_l]
-                X1_l, Y1_l, X2_l, Y2_l = self.__lin_eq(par, var)
+                X1_l, Y1_l, X2_l, Y2_l = he.lin_eq(par, var)
                 ######
                 var = [0, self.map_size]
-                X1, Y1, X2, Y2 = self.__lin_eq(par, var)
+                X1, Y1, X2, Y2 = he.lin_eq(par, var)
                 ###
                 par['gamma'] = c1
-                X1_1, Y1_1, X2_1, Y2_1 = self.__lin_eq(par, var)
+                X1_1, Y1_1, X2_1, Y2_1 = he.lin_eq(par, var)
                 ###
                 par['gamma'] = c2
-                X1_2, Y1_2, X2_2, Y2_2 = self.__lin_eq(par, var)
+                X1_2, Y1_2, X2_2, Y2_2 = he.lin_eq(par, var)
                 ###
                 Y_org = Y1
                 if np.abs(Y_org) > 3 * self.map_size:
                     par = {'gamma': c, 'alpha': b, 'beta': a}
                     ###
                     var = [min_l, max_l]
-                    Y1_l, X1_l, Y2_l, X2_l = self.__lin_eq(par, var)
+                    Y1_l, X1_l, Y2_l, X2_l = he.lin_eq(par, var)
                     ###
                     var = [0, self.map_size]
-                    Y1, X1, Y2, X2 = self.__lin_eq(par, var)
+                    Y1, X1, Y2, X2 = he.lin_eq(par, var)
                     ###
                     par['gamma'] = c1
-                    Y1_1, X1_1, Y2_1, X2_1 = self.__lin_eq(par, var)
+                    Y1_1, X1_1, Y2_1, X2_1 = he.lin_eq(par, var)
                     ###
                     par['gamma'] = c2
-                    Y1_2, X1_2, Y2_2, X2_2 = self.__lin_eq(par, var)
+                    Y1_2, X1_2, Y2_2, X2_2 = he.lin_eq(par, var)
                     ###
                 if max(X1_l, X2_l) < max(Y1_l, Y2_l):
                     self.lines_long_v.append([X1_l, Y1_l, X2_l, Y2_l])
@@ -652,7 +589,6 @@ class FFTStructureExtraction:
 
             self.map_scored_good = np.abs(mask_iftimage) * (self.binary_map * 1)
 
-
     def simple_filter_map(self, tr):
         ti = time.time()
         l_map = np.array(np.abs(self.map_scored_good) / np.max(np.abs(self.map_scored_good)))
@@ -671,7 +607,6 @@ class FFTStructureExtraction:
         self.analysed_map = self.binary_map.copy()
         self.analysed_map[np.abs(self.map_scored_good) < self.quality_threshold] = 0.0
         logging.debug("Map filtered with histogram in : %.2f s", time.time() - ti)
-
 
     def generate_initial_hypothesis(self, **kwargs):
         if 'type' in kwargs:
@@ -701,12 +636,8 @@ class FFTStructureExtraction:
                 self.lines_long_h, max_len, padding, cell_tr, False)
             logging.debug("Initial hypothesis generated simple in %.2f", time.time() - t)
 
-
-
     def find_walls_flood_filing(self):
-
         overlap_ratio = 0.8
-
         ids = 2
         segments_in_directions = []
         for s in self.slices_v_dir:

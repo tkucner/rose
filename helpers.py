@@ -6,6 +6,7 @@ from statistics import mean
 
 import matplotlib.pyplot as plt
 import numpy as np
+import png
 from scipy.ndimage.interpolation import geometric_transform
 from scipy.signal import fftconvolve
 from shapely.geometry import LineString, Point
@@ -396,3 +397,17 @@ def xy_to_coord(ix, iy):
     for x, y, in zip(ix, iy):
         coord.append((x, y))
     return coord
+
+
+def save_simple_map(name, map_to_save):
+    with open(name, "wb") as out:
+        png_writer = png.Writer(map_to_save.shape[1], map_to_save.shape[0], greyscale=True, alpha=False, bitdepth=1)
+        png_writer.write(out, map_to_save)
+
+
+def lin_eq(par, var):
+    res = []
+    for v in var:
+        res.append(v)
+        res.append((par['gamma'] - par['alpha'] * v) / par['beta'])
+    return res
