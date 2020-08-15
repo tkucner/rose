@@ -92,11 +92,17 @@ class FFTStructureExtraction:
 
         self.__load_map(grid_map)
 
-    ####################################################################################
     # Static methods
 
     @staticmethod
     def __get_gmm_threshold(values):
+        """
+        Function generates a treshold assuming that the data is one dimensional and is buidl out of two normally distributed populations.
+        The treshold is set as a value where two distributions has equal value.
+
+        :param values: 1D vector of data
+        :return: the value of the trehsold and the gaussian mixture model
+        """
         clf = mixture.GaussianMixture(n_components=2)
         clf.fit(values.ravel().reshape(-1, 1))
         gmm = {"means": clf.means_, "weights": clf.weights_, "covariances": clf.covariances_}
@@ -119,6 +125,11 @@ class FFTStructureExtraction:
 
     @staticmethod
     def __get_histogram(values):
+        """
+        Wrapper function for numpy historgram,
+        :param values: 1D vector of values
+        :return: dict containing historgam values
+        """
         bins, edges = np.histogram(values.ravel(), density=True)
         histogram = {"bins": bins, "edges": edges,
                      "centers": [(a + b) / 2 for a, b in zip(edges[:-1], edges[1:])],
@@ -127,37 +138,56 @@ class FFTStructureExtraction:
 
     @staticmethod
     def __generate_line_segments_per_direction(slices):
+        """
+        Function merging the slices a long lines to one list
+
+        :param slices: 3D list of slices
+        :return: list of slices
+        """
         slices_lines = []
         for s in slices:
             slices_lines.append([s[0][0][0], s[1][0][0], s[0][0][-1], s[1][0][-1]])
         return slices_lines
 
     @staticmethod
-    def __merge_walls(wall_segements, merge):
+    def __merge_walls(wall_segments, merge):
+        """
+        Function merge overlaping wall segsemnts.
+
+        :param wall_segments: List of interacting wall segeemnts
+        :param merge: array defining which segments to merge
+        :return: lsit of mergeged walls, list of walls droped after merging
+        """
         np_merge = np.array(merge)
-        mrge_list = list(zip(*np.where(np_merge == True)))
-        mrge_list = [set(x) for x in mrge_list]
-        mrge_list = he.tuple_list_merger(mrge_list)
+        merge_list = list(zip(*np.where(np_merge == True)))
+        merge_list = [set(x) for x in merge_list]
+        merge_list = he.tuple_list_merger(merge_list)
         remove_list = []
         done_list = []
-        for mi in mrge_list:
+        for mi in merge_list:
             new_cells = []
             for m in mi:
-                new_cells.extend(list(wall_segements[m].cells))
-                remove_list.append(wall_segements[m])
+                new_cells.extend(list(wall_segments[m].cells))
+                remove_list.append(wall_segments[m])
             WS = WallSegment()
             WS.add_cells(np.array(new_cells))
             WS.compute_central_lines()
             done_list.append(WS)
 
-        for w in wall_segements:
-            if not w in remove_list:
+        for w in wall_segments:
+            if w not in remove_list:
                 done_list.append(w)
 
         return done_list, remove_list
 
     @staticmethod
     def __process_wall_cluster(wall_segments, intersection_ratio_threshold):
+        """
+        Function checks if the walls are overlaping enough and label them to be merged.
+        :param wall_segments: list of interacting wall segements
+        :param intersection_ratio_threshold: proejction ration for merging
+        :return: 2d array dentoing which segemnts interact, 2d array
+        """
         interaction = [[False for x in range(len(wall_segments))] for y in range(len(wall_segments))]
         projections = [[None for x in range(len(wall_segments))] for y in range(len(wall_segments))]
         intersections = [[None for x in range(len(wall_segments))] for y in range(len(wall_segments))]
@@ -180,6 +210,21 @@ class FFTStructureExtraction:
 
     @staticmethod
     def __slice_wall(cc, rr, flag, l_slice_ids, cell_tr, new_row, vert, line_long, temp_row_full, temp_row_cut, s):
+        """
+
+        :param cc: column ids for the slice
+        :param rr: row ids for the slice
+        :param flag: flag if the cell is a wall or not
+        :param l_slice_ids: line slice ids
+        :param cell_tr: cell treshold
+        :param new_row: flag is new row porceesed in direction
+        :param vert: flag if line is vertical
+        :param line_long: line long paremeters
+        :param temp_row_full: full row of cells
+        :param temp_row_cut: cuted row of cells
+        :param s: offset
+        :return:
+        """
         # d_row_ret = []
         slices_ids = []
         slices = []
@@ -226,10 +271,16 @@ class FFTStructureExtraction:
         return slices_ids, slices, cell_hypothesis, lines_hypothesis, kde_hypothesis, kde_hypothesis_cut, temp_slice, \
                new_row
 
-    ####################################################################################
     # Private methods
 
     def __get_cell_ids(self, vert, line_long, s):
+        """
+        Function computing cell ids along the lines it also computes the ids of occupied cells
+        :param vert: flag is line is vertical
+        :param line_long: long line crossing the map
+        :param s: offset
+        :return: list of cell ids as row anc coulumn ids, row and column flags, joint clags
+        """
         if vert:
             rr, cc = sk_draw.line(int(round(line_long[0] + s)), int(round(line_long[3])),
                                   int(round(line_long[2] + s)),
@@ -244,6 +295,10 @@ class FFTStructureExtraction:
         return rr, cc, rr_flag, cc_flag, flag
 
     def __load_map(self, grid_map):
+        """
+        Function loads maps form image file to the internal array
+        :param grid_map: map in pgm format
+        """
         ti = time.time()
         if len(grid_map.shape) == 3:
             grid_map = grid_map[:, :, 1]
@@ -268,6 +323,9 @@ class FFTStructureExtraction:
         logging.info("Map Shape: %d x %d", self.binary_map.shape[0], self.binary_map.shape[1])
 
     def __compute_fft(self):
+        """
+        Functions computes fft of a map
+        """
         ti = time.time()
         self.ft_image = np.fft.fftshift(np.fft.fft2(self.binary_map * 1))
         self.norm_ft_image = (np.abs(self.ft_image) / np.max(np.abs(self.ft_image))) * 255.0
@@ -276,6 +334,19 @@ class FFTStructureExtraction:
         logging.debug("FFT computed in: %.2f s", time.time() - ti)
 
     def __generate_mask(self, x1_1, y1_1, x2_1, y2_1, x1_2, y1_2, x2_2, y2_2, y_org):
+        """
+
+        :param x1_1:
+        :param y1_1:
+        :param x2_1:
+        :param y2_1:
+        :param x1_2:
+        :param y1_2:
+        :param x2_2:
+        :param y2_2:
+        :param y_org:
+        :return:
+        """
         mask_1 = np.zeros(self.norm_ft_image.shape, dtype=np.uint8)
         c_1 = np.array([y1_1, y2_1, self.norm_ft_image.shape[0], self.norm_ft_image.shape[0]])
         r_1 = np.array([x1_1, x2_1, self.norm_ft_image.shape[0], 0])
@@ -498,7 +569,6 @@ class FFTStructureExtraction:
         return d_row_ret, slices_ids, slices, cell_hypothesis, \
                lines_hypothesis, kde_hypothesis, kde_hypothesis_cut, slices_dir
 
-    ####################################################################################
     # Public Methods
 
     def process_map(self):
@@ -531,35 +601,35 @@ class FFTStructureExtraction:
                 c2 = c - self.par
 
                 par = {'gamma': c, 'alpha': a, 'beta': b}
-                ######
+                #
                 var = [min_l, max_l]
                 X1_l, Y1_l, X2_l, Y2_l = he.lin_eq(par, var)
-                ######
+                #
                 var = [0, self.map_size]
                 X1, Y1, X2, Y2 = he.lin_eq(par, var)
-                ###
+                #
                 par['gamma'] = c1
                 X1_1, Y1_1, X2_1, Y2_1 = he.lin_eq(par, var)
-                ###
+                #
                 par['gamma'] = c2
                 X1_2, Y1_2, X2_2, Y2_2 = he.lin_eq(par, var)
-                ###
+                #
                 Y_org = Y1
                 if np.abs(Y_org) > 3 * self.map_size:
                     par = {'gamma': c, 'alpha': b, 'beta': a}
-                    ###
+                    #
                     var = [min_l, max_l]
                     Y1_l, X1_l, Y2_l, X2_l = he.lin_eq(par, var)
-                    ###
+                    #
                     var = [0, self.map_size]
                     Y1, X1, Y2, X2 = he.lin_eq(par, var)
-                    ###
+                    #
                     par['gamma'] = c1
                     Y1_1, X1_1, Y2_1, X2_1 = he.lin_eq(par, var)
-                    ###
+                    #
                     par['gamma'] = c2
                     Y1_2, X1_2, Y2_2, X2_2 = he.lin_eq(par, var)
-                    ###
+                    #
                 if max(X1_l, X2_l) < max(Y1_l, Y2_l):
                     self.lines_long_v.append([X1_l, Y1_l, X2_l, Y2_l])
                 else:
@@ -807,12 +877,12 @@ class FFTStructureExtraction:
                     X2 = self.binary_map.shape[0]
                     Y2 = (c - a * X2) / b
                 if np.abs(Y1) > 3 * np.max(self.binary_map.shape) or b == 0:
-                    ###
+                    #
                     Y1 = 0
                     X1 = (c - b * Y1) / a
                     Y2 = self.binary_map.shape[1]
                     X2 = (c - b * Y2) / a
-                    ###
+                    #
                 local_mbb_lines.append({"X1": X1, "X2": X2, "Y1": Y1, "Y2": Y2})
                 self.all_lines.append(((X1, Y1), (X2, Y2)))
             self.segments_v_mbb_lines.append(local_mbb_lines)
@@ -855,12 +925,12 @@ class FFTStructureExtraction:
                     X2 = self.binary_map.shape[0]
                     Y2 = (c - a * X2) / b
                 if np.abs(Y1) > 3 * np.max(self.binary_map.shape) or b == 0:
-                    ###
+                    #
                     Y1 = 0
                     X1 = (c - b * Y1) / a
                     Y2 = self.binary_map.shape[1]
                     X2 = (c - b * Y2) / a
-                    ###
+                    #
                 local_mbb_lines.append({"X1": X1, "X2": X2, "Y1": Y1, "Y2": Y2})
                 self.all_lines.append(((X1, Y1), (X2, Y2)))
             self.segments_h_mbb_lines.append(local_mbb_lines)
