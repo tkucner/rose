@@ -97,7 +97,8 @@ class FFTStructureExtraction:
     @staticmethod
     def __get_gmm_threshold(values):
         """
-        Function generates a treshold assuming that the data is one dimensional and is buidl out of two normally distributed populations.
+        Function generates a treshold assuming that the data is one dimensional and is buidl out of two normally
+        distributed populations.
         The treshold is set as a value where two distributions has equal value.
 
         :param values: 1D vector of data
@@ -169,10 +170,10 @@ class FFTStructureExtraction:
             for m in mi:
                 new_cells.extend(list(wall_segments[m].cells))
                 remove_list.append(wall_segments[m])
-            WS = WallSegment()
-            WS.add_cells(np.array(new_cells))
-            WS.compute_central_lines()
-            done_list.append(WS)
+            local_wall_segment = WallSegment()
+            local_wall_segment.add_cells(np.array(new_cells))
+            local_wall_segment.compute_central_lines()
+            done_list.append(local_wall_segment)
 
         for w in wall_segments:
             if w not in remove_list:
@@ -188,11 +189,18 @@ class FFTStructureExtraction:
         :param intersection_ratio_threshold: proejction ration for merging
         :return: 2d array dentoing which segemnts interact, 2d array
         """
-        interaction = [[False for x in range(len(wall_segments))] for y in range(len(wall_segments))]
-        projections = [[None for x in range(len(wall_segments))] for y in range(len(wall_segments))]
-        intersections = [[None for x in range(len(wall_segments))] for y in range(len(wall_segments))]
-        intersections_ratios = [[None for x in range(len(wall_segments))] for y in range(len(wall_segments))]
-        merge = [[False for x in range(len(wall_segments))] for y in range(len(wall_segments))]
+        # interaction = [[False for x in range(len(wall_segments))] for y in range(len(wall_segments))]
+        # projections = [[None for x in range(len(wall_segments))] for y in range(len(wall_segments))]
+        # intersections = [[None for x in range(len(wall_segments))] for y in range(len(wall_segments))]
+        # intersections_ratios = [[None for x in range(len(wall_segments))] for y in range(len(wall_segments))]
+        # merge = [[False for x in range(len(wall_segments))] for y in range(len(wall_segments))]
+
+        interaction = [[False for _ in range(len(wall_segments))] for _ in range(len(wall_segments))]
+        projections = [[None for _ in range(len(wall_segments))] for _ in range(len(wall_segments))]
+        intersections = [[None for _ in range(len(wall_segments))] for _ in range(len(wall_segments))]
+        intersections_ratios = [[None for _ in range(len(wall_segments))] for _ in range(len(wall_segments))]
+        merge = [[False for _ in range(len(wall_segments))] for _ in range(len(wall_segments))]
+
         for ws1_id, ws1 in enumerate(wall_segments):
             for ws2_id, ws2 in enumerate(wall_segments):
                 if not ws1_id == ws2_id:
@@ -445,7 +453,8 @@ class FFTStructureExtraction:
                                                                                                            cutoff_percent)
                     d_row_ret.append(d_row)
                     l_slices_ids, l_slices, l_cell_hypothesis, l_lines_hypothesis, l_kde_hypothesis, l_kde_hypothesis_cut, l_temp_slice, new_row = self.__slice_wall(
-                        cc, rr, flag, l_slice_ids, cell_tr, new_row, vert, line_long, temp_row_full, temp_row_cut, s)
+                        cc, rr, flag, l_slice_ids, cell_tr, new_row, vert,
+                        line_long, temp_row_full, temp_row_cut, s)
                     slices_ids.extend(l_slices_ids)
                     slices.extend(l_slices)
                     cell_hypothesis.extend(l_cell_hypothesis)
