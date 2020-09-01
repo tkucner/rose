@@ -250,7 +250,7 @@ def hough_angles(in_map):
     r_ang = mean_shift_result.mean_values
     # print("-------------------")
     # print(len(r_ang),r_ang)
-    r_ang = [r[0] for r in r_ang]
+    r_ang = [np.pi / 2 - r[0] for r in r_ang]
     # print(len(r_ang),r_ang)
     return r_ang
 
@@ -389,10 +389,10 @@ for ket, et in error_types.items():
                           "std"])
         # logging.debug("%s, %.2f: M=%.3f std=%.3f" % (ket, kv, v["stats_ang"]["mean"], v["stats_ang"]["std"]))
 
-f = open("results/dir_error_types_Hough.pkl", "wb")
+f = open("results/dir_error_types_Hough_90.pkl", "wb")
 pickle.dump(error_types, f)
 f.close()
 
-f = open("results/dir_batches_Hough.pkl", "wb")
+f = open("results/dir_batches_Hough_90.pkl", "wb")
 pickle.dump(batches, f)
 f.close()
