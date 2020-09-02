@@ -11,12 +11,35 @@ from os.path import isfile, join
 import numpy as np
 from numpy import random
 from skimage import io
+from skimage.filters import threshold_yen
 from skimage.transform import hough_line, hough_line_peaks
 from skimage.util import img_as_ubyte
 from tqdm import tqdm
 
 import helpers as he
 from extended_validator import ExtendedValidator
+
+
+def load_map(grid_map):
+    if len(grid_map.shape) == 3:
+        grid_map = grid_map[:, :, 1]
+    thresh = threshold_yen(grid_map)
+    binary_map = grid_map <= thresh
+    binary_map = binary_map
+    if binary_map.shape[0] % 2 != 0:
+        t = np.zeros((binary_map.shape[0] + 1, binary_map.shape[1]), dtype=bool)
+        t[:-1, :] = binary_map
+        binary_map = t
+    if binary_map.shape[1] % 2 != 0:
+        t = np.zeros((binary_map.shape[0], binary_map.shape[1] + 1), dtype=bool)
+        t[:, :-1] = binary_map
+        binary_map = t
+    # pad with zeros to square
+    square_map = np.zeros((np.max(binary_map.shape), np.max(binary_map.shape)), dtype=bool)
+    square_map[:binary_map.shape[0], :binary_map.shape[1]] = binary_map
+    binary_map = square_map
+    return binary_map
+
 
 ########################################################################################################################
 # The MIT License (MIT)
@@ -338,6 +361,7 @@ for batch in tqdm(batches, desc="Processed environments", disable=tqdm_flag):
     # compute orientations
     for variant in tqdm(batch['variations'], desc="finding directions " + batch['id'], disable=tqdm_flag):
         grid_map = img_as_ubyte(io.imread(join(house_expo_dir, variant['file_name'])))
+        grid_map = load_map(grid_map)
 
         variant['directions'] = hough_angles(grid_map)
         # find reference for the variant
