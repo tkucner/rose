@@ -1,5 +1,6 @@
 import logging
 import math
+import statistics as stat
 import time
 
 import matplotlib.patches as patches
@@ -222,6 +223,40 @@ class visualisation:
             ax[1].set_title(name2)
             plt.tight_layout()
             plt.subplots_adjust(left=0.0, right=1.0, top=1.0, bottom=0, wspace=0, hspace=0)
+            plt.show()
+
+        if visualisation_flags["Map and peaks"]:
+            fig, ax = plt.subplots(nrows=1, ncols=2)
+            ax[0].imshow(self.structure.binary_map * 1, cmap="gray")
+            ax[0].axis("off")
+
+            # signal_av=stat.mean((self.structure.pol_h-min(self.structure.pol_h))/max(self.structure.pol_h))
+            # peak_av=stat.mean((self.structure.pol_h[self.structure.peak_indices]-min(self.structure.pol_h))/max(self.structure.pol_h))
+
+            grounded_rose = self.structure.pol_h - min(self.structure.pol_h)
+            streached_rose = grounded_rose / max(grounded_rose)
+            signal_av = stat.mean(streached_rose)
+            peak_av = stat.mean(streached_rose[self.structure.peak_indices])
+
+            ax[1].plot(self.structure.angles, streached_rose)
+            ax[1].plot(self.structure.angles[self.structure.peak_indices],
+                       streached_rose[self.structure.peak_indices], 'r+')
+            for p in self.structure.comp:
+                ax[1].scatter(self.structure.angles[p], streached_rose[p], marker='^', s=120)
+
+            ax[1].plot([self.structure.angles[0], self.structure.angles[-1]], [signal_av, signal_av])
+            ax[1].plot([self.structure.angles[0], self.structure.angles[-1]], [peak_av, peak_av])
+
+            ax[1].set_ylabel("Normalised orientation score")
+            ax[1].set_ylim(0.0, 1.0)
+            ax[1].set_xlabel("Orientation [rad]")
+
+            name1 = "Map"
+            name2 = "Unfolded FFT Spectrum"
+            fig.canvas.set_window_title("Map Quality assessment")
+            ax[0].set_title(name1)
+            ax[1].set_title(name2)
+
             plt.show()
 
         if visualisation_flags["Simple Filtered Map"]:
@@ -464,4 +499,5 @@ class visualisation:
             name = "Short wall lines over original map"
             fig.canvas.set_window_title(name)
             plt.show()
+
         logging.debug("Visualisation generated in : %.2f s", time.time() - t)
