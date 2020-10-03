@@ -93,7 +93,9 @@ for m in tqdm(mapfiles, desc="environment"):
                     noisy_map = add_noise(grid_map, mask)
                     error_type = (str(ty).split('.')[1])
                     save_name = name + "_ocount_" + str(count) + "_osize_" + str(size) + "_otype_" + error_type + ".png"
-                    noisy_map = noisy_map * 255
-                    noisy_map = noisy_map.astype(np.uint8)
+                    save_map = np.ones(noisy_map.shape) * 255
+                    save_map[noisy_map == 1] = 0
 
-                    png.from_array(np.array(noisy_map), 'L').save(join(save_dir, save_name))
+                    save_map = save_map.astype(np.uint8)
+
+                    png.from_array(np.array(save_map), 'L').save(join(save_dir, save_name))
