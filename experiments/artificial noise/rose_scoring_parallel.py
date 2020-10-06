@@ -81,67 +81,76 @@ def parallel_wrapper(map_set):
     result_file = map_set.split(".")[0]
     result_file = result_file + ".txt"
 
-    for fl in filter_levels:
-        f = open(join("results", result_file), 'a+')
-        if evaluate:
-            grid_map = img_as_ubyte(io.imread(join(house_expo_dir, map_set)))
+    # check if result file exist
+    if not isfile(join("results", result_file)):
+        print("{}....PROCESSING({:d}/{:d})".format(result_file, len(
+            [name for name in listdir("results") if isfile(join("results", name))]) - 1
+                                                   , len(mapfiles)))
+        for fl in filter_levels:
+            f = open(join("results", result_file), 'a+')
+            if evaluate:
+                grid_map = img_as_ubyte(io.imread(join(house_expo_dir, map_set)))
 
-            rose = FFT_se(grid_map, peak_height=config["peak_extraction_parameters"]["peak_height"],
-                          smooth=config["peak_extraction_parameters"]["smooth_histogram"],
-                          sigma=config["peak_extraction_parameters"]["sigma"],
-                          par=config["peak_extraction_parameters"]["par"])
-            rose.process_map()
-            filter_level = config["filtering_parameters"]["filter_level"]
+                rose = FFT_se(grid_map, peak_height=config["peak_extraction_parameters"]["peak_height"],
+                              smooth=config["peak_extraction_parameters"]["smooth_histogram"],
+                              sigma=config["peak_extraction_parameters"]["sigma"],
+                              par=config["peak_extraction_parameters"]["par"])
+                rose.process_map()
+                filter_level = config["filtering_parameters"]["filter_level"]
 
-            rose.simple_filter_map(fl)
-            # rose.histogram_filtering()
+                rose.simple_filter_map(fl)
+                # rose.histogram_filtering()
 
-        if visualise:
-            plots = visualisation(rose)
-            plots.show(config["visualisation_flags"])
+            if visualise:
+                plots = visualisation(rose)
+                plots.show(config["visualisation_flags"])
 
-        # compute precision recall
-        # 1 -> find reference map
-        name = map_set.split("_ocount")[0]
-        ref_map = reference_maps[name]
-        # 2 -> count true positives
-        tp = np.logical_and(ref_map, rose.analysed_map)
+            # compute precision recall
+            # 1 -> find reference map
+            name = map_set.split("_ocount")[0]
+            ref_map = reference_maps[name]
+            # 2 -> count true positives
+            tp = np.logical_and(ref_map, rose.analysed_map)
 
-        noise = np.logical_xor(rose.binary_map, ref_map)
-        noise_labels = np.logical_xor(rose.analysed_map, rose.binary_map)
+            noise = np.logical_xor(rose.binary_map, ref_map)
+            noise_labels = np.logical_xor(rose.analysed_map, rose.binary_map)
 
-        # 3-> find true negatives
-        tn = np.logical_and(noise, noise_labels)
+            # 3-> find true negatives
+            tn = np.logical_and(noise, noise_labels)
 
-        # 4-> find false negatives
-        fn = np.logical_xor(noise_labels, tn)
+            # 4-> find false negatives
+            fn = np.logical_xor(noise_labels, tn)
 
-        # 5-> find false positive
-        fp = np.logical_xor(tp, rose.analysed_map)
+            # 5-> find false positive
+            fp = np.logical_xor(tp, rose.analysed_map)
 
-        # compute counts
-        ctp = np.sum(tp)
-        ctn = np.sum(tn)
-        cfn = np.sum(fn)
-        cfp = np.sum(fp)
+            # compute counts
+            ctp = np.sum(tp)
+            ctn = np.sum(tn)
+            cfn = np.sum(fn)
+            cfp = np.sum(fp)
 
-        precision = ctp / (ctp + cfp)
-        recall = ctp / (ctp + cfn)
-        true_negative_rate = ctn / (ctn + cfp)
-        # logging.debug(
-        #     "%s threshold:%.3f precision:%.3f recall:%.3f true_negative_rate:%.3f true_positive:%d true_negative:%d false_positive:%d, false_negative:%d",
-        #     map_set,
-        #     rose.quality_threshold, precision, recall, true_negative_rate, ctp, ctn, cfp, cfn)
-        f.write(
-            "{} threshold:{:.3f} precision:{:.3f} recall:{:.3f} true_negative_rate:{:.3f} true_positive:{:d} true_negative:{:d} false_positive:{:d} false_negative:{:d} \n".format(
-                map_set,
-                rose.quality_threshold, precision, recall, true_negative_rate, ctp, ctn, cfp, cfn))
-        print(
-            "{} threshold:{:.3f} precision:{:.3f} recall:{:.3f} true_negative_rate:{:.3f} true_positive:{:d} true_negative:{:d} false_positive:{:d} false_negative:{:d}".format(
-                map_set,
-                rose.quality_threshold, precision, recall, true_negative_rate, ctp, ctn, cfp, cfn))
-        f.close()
+            precision = ctp / (ctp + cfp)
+            recall = ctp / (ctp + cfn)
+            true_negative_rate = ctn / (ctn + cfp)
+            # logging.debug(
+            #     "%s threshold:%.3f precision:%.3f recall:%.3f true_negative_rate:%.3f true_positive:%d true_negative:%d false_positive:%d, false_negative:%d",
+            #     map_set,
+            #     rose.quality_threshold, precision, recall, true_negative_rate, ctp, ctn, cfp, cfn)
+            f.write(
+                "{} threshold:{:.3f} precision:{:.3f} recall:{:.3f} true_negative_rate:{:.3f} true_positive:{:d} true_negative:{:d} false_positive:{:d} false_negative:{:d} \n".format(
+                    map_set,
+                    rose.quality_threshold, precision, recall, true_negative_rate, ctp, ctn, cfp, cfn))
+            # print(
+            #     "{} threshold:{:.3f} precision:{:.3f} recall:{:.3f} true_negative_rate:{:.3f} true_positive:{:d} true_negative:{:d} false_positive:{:d} false_negative:{:d}".format(
+            #         map_set,
+            #         rose.quality_threshold, precision, recall, true_negative_rate, ctp, ctn, cfp, cfn))
+            f.close()
+    else:
+        print("{}....SKIPPED({:d}/{:d})".format(result_file, len(
+            [name for name in listdir("results") if isfile(join("results", name))]) - 1
+                                                , len(mapfiles)))
 
 
 # for map_set in mapfiles:
-Parallel(n_jobs=5)(delayed(parallel_wrapper)(map_set) for map_set in mapfiles)
+Parallel(n_jobs=4)(delayed(parallel_wrapper)(map_set) for map_set in mapfiles)

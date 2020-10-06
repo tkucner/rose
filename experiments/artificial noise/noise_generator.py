@@ -1,3 +1,4 @@
+import math
 import random
 from enum import Enum
 from os import listdir
@@ -46,13 +47,13 @@ def obstacle_generator(size_limits, noise_type):
     if noise_type == obstacle_shape.RECTANGLE:
         noise = rectangle(size[0], size[1])
     if noise_type == obstacle_shape.DIAMOND:
-        noise = diamond(size[0])
+        noise = diamond(math.ceil(size[0] / 2))
     if noise_type == obstacle_shape.DISK:
-        noise = disk(size[0])
+        noise = disk(math.ceil(size[0] / 2))
     if noise_type == obstacle_shape.OCTAGON:
-        noise = octagon(size[0], size[1])
+        noise = octagon(math.ceil(size[0] / 2), math.ceil(size[1] / 2))
     if noise_type == obstacle_shape.STAR:
-        noise = star(size[0])
+        noise = star(math.ceil(size[0] / 2))
     return noise
 
 
@@ -87,7 +88,7 @@ for m in tqdm(mapfiles, desc="environment"):
         grid_map = img_as_ubyte(io.imread(join(map_dir, m)))
         grid_map = load_map(grid_map)
         for count in tqdm(range(20, 200, 20), desc="obstacle count"):
-            for size in tqdm(range(2, 20), desc="obstacle size"):
+            for size in tqdm(range(2, 40), desc="obstacle size"):
                 for ty in [obstacle_shape.SQUARE, obstacle_shape.RECTANGLE, obstacle_shape.RANDOM]:
                     mask = generate_noise_single_type(grid_map.shape, count, size, ty)
                     noisy_map = add_noise(grid_map, mask)

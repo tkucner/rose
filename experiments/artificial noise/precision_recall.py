@@ -4,13 +4,17 @@ from os.path import isfile, join
 
 import matplotlib.pyplot as plt
 import numpy as np
+from tqdm import tqdm
 
 # 1) list all the files in the directory
 result_dir = "results"
 
 result_files = [f for f in listdir(result_dir) if isfile(join(result_dir, f))]
 
-histogram_result_file = "rose_scoring_histogram_threshold.tex"
+plot_dir = "plots"
+plot_files = [f for f in listdir(plot_dir) if isfile(join(plot_dir, f))]
+
+histogram_result_file = "rose_scoring_histogram_threshold.txt"
 with open(join(result_dir, histogram_result_file)) as f:
     lines = f.read().splitlines()
 
@@ -20,7 +24,12 @@ data_lines_histogram = [ast.literal_eval((("{\"name:\"" + l.strip().split(" ", m
                         for l in lines]
 
 # 2) parse the files
-for rf in result_files:
+for rf in tqdm(result_files):
+    # check if file already processed
+    name = rf.strip().split(".", maxsplit=1)[0]
+    name_plot = name + ".png"
+    if name_plot in plot_files:
+        continue
     # find histogram data
     dl = [d if d['name'].split(".", maxsplit=1)[0] == rf.split(".", maxsplit=1)[0] else None for d in
           data_lines_histogram]
@@ -87,3 +96,4 @@ for rf in result_files:
     f3_ax7.plot(plot_data['threshold'], plot_data['false_negative'], '.')
     fig.suptitle(name)
     fig.savefig(join("plots", name + ".png"))
+    plt.close()

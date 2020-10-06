@@ -8,6 +8,7 @@ import numpy as np
 from skimage import io
 from skimage.filters import threshold_yen
 from skimage.util import img_as_ubyte
+from tqdm import tqdm
 
 import helpers as he
 from extended_validator import ExtendedValidator
@@ -74,8 +75,8 @@ for rmf in reference_map_files:
     ref_map = load_map(grid_map)
     reference_maps[rmf.split(".")[0]] = ref_map
 
-for map_set in mapfiles:
-    f = open(join("results", "rose_scoring_histogram_threshold.tex"), 'a+')
+for map_set in tqdm(mapfiles):
+    f = open(join("results", "rose_scoring_histogram_threshold.txt"), 'a+')
     if evaluate:
         grid_map = img_as_ubyte(io.imread(join(house_expo_dir, map_set)))
 
