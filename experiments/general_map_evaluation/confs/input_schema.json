@@ -170,6 +170,10 @@
         "Map and peaks": {
           "type": "boolean",
           "default": false
+        },
+        "evaluation output": {
+          "type": "boolean",
+          "default": false
         }
       },
       "default": {}

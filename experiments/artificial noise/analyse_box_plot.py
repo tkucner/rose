@@ -3,6 +3,7 @@ import math
 import statistics as stats
 
 import matplotlib.pyplot as plt
+import numpy as np
 from scipy.stats import pearsonr
 
 
@@ -105,6 +106,7 @@ def show_plot(data_precisions, data_recalls, data_av_signals, data_av_peaks, dat
     ax6.set_xticklabels(tick_list)
     fig.suptitle(name)
 
+
     fig1 = plt.figure(constrained_layout=True, figsize=[16, 16], dpi=100)
     # find the closest square
     closest_square = math.ceil(math.sqrt(len(data_ratios)))
@@ -123,6 +125,8 @@ def show_plot(data_precisions, data_recalls, data_av_signals, data_av_peaks, dat
             corr, _ = pearsonr(rv, pv)
             axis[-1].set_title("{} (R={:.3f})".format(str(next(tit)), corr))
             axis[-1].plot(rv, pv, '.')
+            axis[-1].set_xlabel('Normalised orientation score')
+            axis[-1].set_ylabel('Precision')
             counter += 1
             axis[-1].axis(ymin=-0.1, ymax=1.1,
                           xmin=-0.1, xmax=1.1)
@@ -132,29 +136,35 @@ def show_plot(data_precisions, data_recalls, data_av_signals, data_av_peaks, dat
             break
     fig1.suptitle(name)
 
-    # fig1, ax = plt.subplots(1, 5)
-    # ax[0].boxplot(data_precisions)
-    # ax[1].boxplot(data_recalls)
-    # ax[2].boxplot(data_av_signals)
-    # ax[3].boxplot(data_av_peaks)
-    # ax[4].boxplot(data_ratios)
-    # ax[0].set_title("precision")
-    # ax[1].set_title("recall")
-    # ax[2].set_title("avg signal")
-    # ax[3].set_title("avg peak")
-    # ax[4].set_title("signal/peak ratio")
-    # ax[0].set_ylim([0, 1.2])
-    # ax[1].set_ylim([0, 1.2])
-    # ax[2].set_ylim([0, 1.2])
-    # ax[3].set_ylim([0, 1.2])
-    # ax[4].set_ylim([0, 1.2])
-    # ax[0].set_xticklabels(tick_list)
-    # ax[1].set_xticklabels(tick_list)
-    # ax[2].set_xticklabels(tick_list)
-    # ax[3].set_xticklabels(tick_list)
-    # ax[4].set_xticklabels(tick_list)
-    # fig1.suptitle(name)
+    import tikzplotlib
 
+    tikzplotlib.save("/home/tzkr/python_workspace/rose/experiments/artificial noise/plot_tikz/" + name + ".tikz",
+                     figure=fig1)
+
+    c = "red"
+    c1 = "green"
+    fig2, axis2 = plt.subplots(1, 1)
+
+    bpp = axis2.boxplot(data_precisions, patch_artist=True,
+                        boxprops=dict(color=c, facecolor="white"),
+                        capprops=dict(color=c),
+                        whiskerprops=dict(color=c),
+                        flierprops=dict(color=c, markeredgecolor=c),
+                        medianprops=dict(color=c),
+                        positions=list(np.arange(0.75, len(data_precisions), 1)))
+    axis2.axis(ymin=-0.1, ymax=1.1)
+    bpr = axis2.boxplot(data_recalls, patch_artist=True,
+                        boxprops=dict(color=c1, facecolor="white"),
+                        capprops=dict(color=c1),
+                        whiskerprops=dict(color=c1),
+                        flierprops=dict(color=c1, markeredgecolor=c1),
+                        medianprops=dict(color=c1),
+                        positions=list(np.arange(1.25, len(data_recalls) + 1, 1)))
+    axis2.set_xticks(range(1, len(data_recalls) + 1))
+    axis2.set_xticklabels(tick_list)
+    axis2.legend([bpp["boxes"][0], bpr["boxes"][0]], ['Precision', 'Recall'], loc='upper right')
+    tikzplotlib.save("/home/tzkr/python_workspace/rose/experiments/artificial noise/plot_tikz/" + name + "_box.tikz",
+                     figure=fig2)
     plt.show()
 
 

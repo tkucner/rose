@@ -77,10 +77,10 @@ for map_set in mapfiles:
     rose_good.process_map()
 
     plots_bad = visualisation(rose_bad)
-    plots_bad.show(config["visualisation_flags"])
+    plots_bad.show(config["visualisation_flags"], map_set[0])
 
     plots_good = visualisation(rose_good)
-    plots_good.show(config["visualisation_flags"])
+    plots_good.show(config["visualisation_flags"], map_set[1])
 
     grounded_rose_bad = rose_bad.pol_h - min(rose_bad.pol_h)
     streached_rose_bad = grounded_rose_bad / max(grounded_rose_bad)

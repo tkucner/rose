@@ -153,4 +153,4 @@ def parallel_wrapper(map_set):
 
 
 # for map_set in mapfiles:
-Parallel(n_jobs=4)(delayed(parallel_wrapper)(map_set) for map_set in mapfiles)
+Parallel(n_jobs=3)(delayed(parallel_wrapper)(map_set) for map_set in mapfiles)

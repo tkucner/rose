@@ -54,7 +54,7 @@ class visualisation:
                     ax.plot([l_mbb_lines["Y1"], l_mbb_lines["Y2"]], [l_mbb_lines["X1"], l_mbb_lines["X2"]], 'g')
         return ax
 
-    def show(self, visualisation_flags):
+    def show(self, visualisation_flags, name=[]):
         t = time.time()
         if visualisation_flags["Binary map"]:
             fig, ax = plt.subplots(nrows=1, ncols=1)
@@ -256,6 +256,26 @@ class visualisation:
             fig.canvas.set_window_title("Map Quality assessment")
             ax[0].set_title(name1)
             ax[1].set_title(name2)
+
+            fig, ax = plt.subplots(nrows=1, ncols=1)
+            ax.plot(self.structure.angles, streached_rose)
+            ax.plot(self.structure.angles[self.structure.peak_indices],
+                    streached_rose[self.structure.peak_indices], 'r+')
+            for p in self.structure.comp:
+                ax.scatter(self.structure.angles[p], streached_rose[p], marker='^', s=120)
+
+            ax.plot([self.structure.angles[0], self.structure.angles[-1]], [signal_av, signal_av])
+            ax.plot([self.structure.angles[0], self.structure.angles[-1]], [peak_av, peak_av])
+
+            ax.set_ylabel("Normalised orientation score")
+            ax.set_ylim(0.0, 1.0)
+            ax.set_xlabel("Orientation [rad]")
+            import tikzplotlib
+
+            tikzplotlib.save(
+                "/home/tzkr/python_workspace/rose/experiments/general_map_evaluation/tikz_plots/" + name.replace(".png",
+                                                                                                                 ".tex"),
+                figure=fig)
 
             plt.show()
 
