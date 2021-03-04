@@ -62,6 +62,7 @@ list_template = [[i - 1, i] for i in range(2, len(mapfiles) + 2, 2)]
 mapfiles = reshape(list_template, mapfiles)
 
 for map_set in mapfiles:
+    print(map_set)
     grid_map_bad = img_as_ubyte(io.imread(join(house_expo_dir, map_set[0])))
 
     rose_bad = FFT_se(grid_map_bad, peak_height=config["peak_extraction_parameters"]["peak_height"],
