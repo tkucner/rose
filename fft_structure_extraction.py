@@ -783,17 +783,17 @@ class FFTStructureExtraction:
                     local_done_segments.append(local_segment)
                 done_segments.extend(local_done_segments)
 
-        import matplotlib.pyplot as plt
-        plt.imshow(self.binary_map, cmap="gray")
-        for seg in segments:
-            y, x = seg.minimum_rotated_rectangle.exterior.xy
-            plt.plot(x, y, 'b')
-
-        for seg in done_segments:
-            y, x = seg.minimum_rotated_rectangle.exterior.xy
-            plt.plot(x, y, 'r')
-
-        plt.show()
+        # import matplotlib.pyplot as plt
+        # plt.imshow(self.binary_map, cmap="gray")
+        # for seg in segments:
+        #     y, x = seg.minimum_rotated_rectangle.exterior.xy
+        #     plt.plot(x, y, 'b')
+        #
+        # for seg in done_segments:
+        #     y, x = seg.minimum_rotated_rectangle.exterior.xy
+        #     plt.plot(x, y, 'r')
+        #
+        # plt.show()
 
     def find_walls_flood_filing_with_overlaps(self):
         t = time.time()

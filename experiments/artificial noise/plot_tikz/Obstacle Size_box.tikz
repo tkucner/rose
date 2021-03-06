@@ -1,0 +1,3078 @@
+% This file was created by tikzplotlib v0.9.4.
+\begin{tikzpicture}
+
+\begin{axis}[
+legend cell align={left},
+legend style={fill opacity=0.8, draw opacity=1, text opacity=1, draw=white!80!black},
+tick align=outside,
+tick pos=left,
+x grid style={white!69.0196078431373!black},
+xmin=0.25, xmax=38.75,
+xtick style={color=black},
+xtick={1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38},
+xticklabels={2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39},
+y grid style={white!69.0196078431373!black},
+ymin=-0.1, ymax=1.1,
+ytick style={color=black}
+]
+\addplot [red, forget plot]
+table {%
+0.75 1
+0.75 1
+};
+\addplot [red, forget plot]
+table {%
+0.75 1
+0.75 1
+};
+\addplot [red, forget plot]
+table {%
+0.625 1
+0.875 1
+};
+\addplot [red, forget plot]
+table {%
+0.625 1
+0.875 1
+};
+\addplot [red, mark=*, mark size=3, mark options={solid,fill opacity=0}, only marks, forget plot]
+table {%
+0.75 0.999
+0.75 0.999
+0.75 0.999
+0.75 0.999
+0.75 0.998
+0.75 0.999
+0.75 0.998
+0.75 0.999
+0.75 0.998
+0.75 0.999
+0.75 0.999
+0.75 0.999
+0.75 0.999
+0.75 0.999
+0.75 0.999
+0.75 0.998
+0.75 0.999
+0.75 0.999
+0.75 0.999
+0.75 0.999
+0.75 0.999
+0.75 0.999
+0.75 0.999
+0.75 0.999
+0.75 0.999
+0.75 0.999
+0.75 0.999
+0.75 0.999
+0.75 0.999
+0.75 0.999
+0.75 0.999
+0.75 0.999
+0.75 0.999
+0.75 0.999
+};
+\addplot [red, forget plot]
+table {%
+1.75 0.999
+1.75 0.998
+};
+\addplot [red, forget plot]
+table {%
+1.75 1
+1.75 1
+};
+\addplot [red, forget plot]
+table {%
+1.625 0.998
+1.875 0.998
+};
+\addplot [red, forget plot]
+table {%
+1.625 1
+1.875 1
+};
+\addplot [red, mark=*, mark size=3, mark options={solid,fill opacity=0}, only marks, forget plot]
+table {%
+1.75 0.997
+1.75 0.996
+1.75 0.997
+1.75 0.996
+1.75 0.997
+1.75 0.997
+};
+\addplot [red, forget plot]
+table {%
+2.75 0.999
+2.75 0.998
+};
+\addplot [red, forget plot]
+table {%
+2.75 1
+2.75 1
+};
+\addplot [red, forget plot]
+table {%
+2.625 0.998
+2.875 0.998
+};
+\addplot [red, forget plot]
+table {%
+2.625 1
+2.875 1
+};
+\addplot [red, mark=*, mark size=3, mark options={solid,fill opacity=0}, only marks, forget plot]
+table {%
+2.75 0.997
+2.75 0.997
+2.75 0.996
+2.75 0.996
+2.75 0.994
+2.75 0.997
+2.75 0.995
+2.75 0.995
+2.75 0.997
+2.75 0.995
+2.75 0.997
+2.75 0.997
+2.75 0.997
+2.75 0.997
+2.75 0.997
+2.75 0.997
+2.75 0.997
+};
+\addplot [red, forget plot]
+table {%
+3.75 0.997
+3.75 0.993
+};
+\addplot [red, forget plot]
+table {%
+3.75 1
+3.75 1
+};
+\addplot [red, forget plot]
+table {%
+3.625 0.993
+3.875 0.993
+};
+\addplot [red, forget plot]
+table {%
+3.625 1
+3.875 1
+};
+\addplot [red, mark=*, mark size=3, mark options={solid,fill opacity=0}, only marks, forget plot]
+table {%
+3.75 0.992
+3.75 0.992
+};
+\addplot [red, forget plot]
+table {%
+4.75 0.997
+4.75 0.994
+};
+\addplot [red, forget plot]
+table {%
+4.75 1
+4.75 1
+};
+\addplot [red, forget plot]
+table {%
+4.625 0.994
+4.875 0.994
+};
+\addplot [red, forget plot]
+table {%
+4.625 1
+4.875 1
+};
+\addplot [red, mark=*, mark size=3, mark options={solid,fill opacity=0}, only marks, forget plot]
+table {%
+4.75 0.987
+4.75 0.99
+4.75 0.986
+4.75 0.992
+4.75 0.988
+4.75 0.988
+4.75 0.991
+4.75 0.992
+4.75 0.989
+4.75 0.987
+};
+\addplot [red, forget plot]
+table {%
+5.75 0.995
+5.75 0.989
+};
+\addplot [red, forget plot]
+table {%
+5.75 0.999
+5.75 1
+};
+\addplot [red, forget plot]
+table {%
+5.625 0.989
+5.875 0.989
+};
+\addplot [red, forget plot]
+table {%
+5.625 1
+5.875 1
+};
+\addplot [red, mark=*, mark size=3, mark options={solid,fill opacity=0}, only marks, forget plot]
+table {%
+5.75 0.985
+5.75 0.987
+5.75 0.985
+5.75 0.983
+5.75 0.971
+5.75 0.985
+5.75 0.977
+5.75 0.986
+};
+\addplot [red, forget plot]
+table {%
+6.75 0.994
+6.75 0.987
+};
+\addplot [red, forget plot]
+table {%
+6.75 0.999
+6.75 1
+};
+\addplot [red, forget plot]
+table {%
+6.625 0.987
+6.875 0.987
+};
+\addplot [red, forget plot]
+table {%
+6.625 1
+6.875 1
+};
+\addplot [red, mark=*, mark size=3, mark options={solid,fill opacity=0}, only marks, forget plot]
+table {%
+6.75 0.985
+6.75 0.986
+6.75 0.978
+6.75 0.976
+6.75 0.983
+6.75 0.979
+6.75 0.984
+6.75 0.957
+6.75 0.981
+6.75 0.982
+6.75 0.986
+};
+\addplot [red, forget plot]
+table {%
+7.75 0.992
+7.75 0.984
+};
+\addplot [red, forget plot]
+table {%
+7.75 0.998
+7.75 1
+};
+\addplot [red, forget plot]
+table {%
+7.625 0.984
+7.875 0.984
+};
+\addplot [red, forget plot]
+table {%
+7.625 1
+7.875 1
+};
+\addplot [red, mark=*, mark size=3, mark options={solid,fill opacity=0}, only marks, forget plot]
+table {%
+7.75 0.973
+7.75 0.975
+7.75 0.97
+7.75 0.981
+7.75 0.956
+7.75 0.982
+7.75 0.946
+7.75 0.981
+7.75 0.943
+7.75 0.981
+7.75 0.941
+7.75 0.981
+7.75 0.981
+7.75 0.975
+7.75 0.975
+7.75 0.981
+};
+\addplot [red, forget plot]
+table {%
+8.75 0.989
+8.75 0.979
+};
+\addplot [red, forget plot]
+table {%
+8.75 0.998
+8.75 1
+};
+\addplot [red, forget plot]
+table {%
+8.625 0.979
+8.875 0.979
+};
+\addplot [red, forget plot]
+table {%
+8.625 1
+8.875 1
+};
+\addplot [red, mark=*, mark size=3, mark options={solid,fill opacity=0}, only marks, forget plot]
+table {%
+8.75 0.975
+8.75 0.973
+8.75 0.943
+8.75 0.961
+8.75 0.96
+8.75 0.97
+8.75 0.973
+8.75 0.948
+8.75 0.973
+8.75 0.971
+8.75 0.962
+8.75 0.974
+8.75 0.973
+};
+\addplot [red, forget plot]
+table {%
+9.75 0.98525
+9.75 0.968
+};
+\addplot [red, forget plot]
+table {%
+9.75 0.997
+9.75 1
+};
+\addplot [red, forget plot]
+table {%
+9.625 0.968
+9.875 0.968
+};
+\addplot [red, forget plot]
+table {%
+9.625 1
+9.875 1
+};
+\addplot [red, mark=*, mark size=3, mark options={solid,fill opacity=0}, only marks, forget plot]
+table {%
+9.75 0.954
+9.75 0.86
+9.75 0.956
+9.75 0.936
+9.75 0.954
+9.75 0.889
+9.75 0.931
+9.75 0.962
+9.75 0.898
+9.75 0.955
+9.75 0.945
+9.75 0.95
+9.75 0.945
+9.75 0.956
+9.75 0.964
+9.75 0.967
+};
+\addplot [red, forget plot]
+table {%
+10.75 0.98
+10.75 0.956
+};
+\addplot [red, forget plot]
+table {%
+10.75 0.99675
+10.75 1
+};
+\addplot [red, forget plot]
+table {%
+10.625 0.956
+10.875 0.956
+};
+\addplot [red, forget plot]
+table {%
+10.625 1
+10.875 1
+};
+\addplot [red, mark=*, mark size=3, mark options={solid,fill opacity=0}, only marks, forget plot]
+table {%
+10.75 0.937
+10.75 0.894
+10.75 0.906
+10.75 0.92
+10.75 0.952
+10.75 0.925
+10.75 0.945
+10.75 0.914
+10.75 0.907
+10.75 0.931
+10.75 0.945
+10.75 0.858
+};
+\addplot [red, forget plot]
+table {%
+11.75 0.97725
+11.75 0.95
+};
+\addplot [red, forget plot]
+table {%
+11.75 0.996
+11.75 1
+};
+\addplot [red, forget plot]
+table {%
+11.625 0.95
+11.875 0.95
+};
+\addplot [red, forget plot]
+table {%
+11.625 1
+11.875 1
+};
+\addplot [red, mark=*, mark size=3, mark options={solid,fill opacity=0}, only marks, forget plot]
+table {%
+11.75 0.877
+11.75 0.852
+11.75 0.837
+11.75 0.888
+11.75 0.942
+11.75 0.788
+11.75 0.925
+11.75 0.926
+11.75 0.857
+11.75 0.815
+11.75 0.931
+11.75 0.921
+11.75 0.91
+11.75 0.938
+};
+\addplot [red, forget plot]
+table {%
+12.75 0.976
+12.75 0.95
+};
+\addplot [red, forget plot]
+table {%
+12.75 0.995
+12.75 1
+};
+\addplot [red, forget plot]
+table {%
+12.625 0.95
+12.875 0.95
+};
+\addplot [red, forget plot]
+table {%
+12.625 1
+12.875 1
+};
+\addplot [red, mark=*, mark size=3, mark options={solid,fill opacity=0}, only marks, forget plot]
+table {%
+12.75 0.901
+12.75 0.928
+12.75 0.922
+12.75 0.839
+12.75 0.759
+12.75 0.87
+12.75 0.9
+12.75 0.901
+12.75 0.879
+12.75 0.946
+12.75 0.878
+12.75 0.76
+12.75 0.894
+12.75 0.903
+12.75 0.936
+12.75 0.879
+};
+\addplot [red, forget plot]
+table {%
+13.75 0.965
+13.75 0.928
+};
+\addplot [red, forget plot]
+table {%
+13.75 0.99275
+13.75 1
+};
+\addplot [red, forget plot]
+table {%
+13.625 0.928
+13.875 0.928
+};
+\addplot [red, forget plot]
+table {%
+13.625 1
+13.875 1
+};
+\addplot [red, mark=*, mark size=3, mark options={solid,fill opacity=0}, only marks, forget plot]
+table {%
+13.75 0.866
+13.75 0.846
+13.75 0.917
+13.75 0.668
+13.75 0.907
+13.75 0.809
+13.75 0.576
+13.75 0.624
+13.75 0.861
+13.75 0.771
+13.75 0.839
+13.75 0.792
+};
+\addplot [red, forget plot]
+table {%
+14.75 0.961
+14.75 0.922
+};
+\addplot [red, forget plot]
+table {%
+14.75 0.99175
+14.75 1
+};
+\addplot [red, forget plot]
+table {%
+14.625 0.922
+14.875 0.922
+};
+\addplot [red, forget plot]
+table {%
+14.625 1
+14.875 1
+};
+\addplot [red, mark=*, mark size=3, mark options={solid,fill opacity=0}, only marks, forget plot]
+table {%
+14.75 0.84
+14.75 0.86
+14.75 0.578
+14.75 0.788
+14.75 0.879
+14.75 0.764
+14.75 0.502
+14.75 0.418
+14.75 0.887
+14.75 0.602
+14.75 0.59
+14.75 0.863
+14.75 0.898
+14.75 0.913
+14.75 0.912
+14.75 0.871
+14.75 0.877
+14.75 0.911
+14.75 0.803
+};
+\addplot [red, forget plot]
+table {%
+15.75 0.952
+15.75 0.904
+};
+\addplot [red, forget plot]
+table {%
+15.75 0.992
+15.75 1
+};
+\addplot [red, forget plot]
+table {%
+15.625 0.904
+15.875 0.904
+};
+\addplot [red, forget plot]
+table {%
+15.625 1
+15.875 1
+};
+\addplot [red, mark=*, mark size=3, mark options={solid,fill opacity=0}, only marks, forget plot]
+table {%
+15.75 0.844
+15.75 0.59
+15.75 0.786
+15.75 0.84
+15.75 0.587
+15.75 0.615
+15.75 0.888
+15.75 0.812
+15.75 0.397
+15.75 0.671
+15.75 0.384
+15.75 0.618
+15.75 0.876
+15.75 0.879
+15.75 0.845
+15.75 0.755
+15.75 0.751
+15.75 0.741
+};
+\addplot [red, forget plot]
+table {%
+16.75 0.94525
+16.75 0.89
+};
+\addplot [red, forget plot]
+table {%
+16.75 0.989
+16.75 1
+};
+\addplot [red, forget plot]
+table {%
+16.625 0.89
+16.875 0.89
+};
+\addplot [red, forget plot]
+table {%
+16.625 1
+16.875 1
+};
+\addplot [red, mark=*, mark size=3, mark options={solid,fill opacity=0}, only marks, forget plot]
+table {%
+16.75 0.709
+16.75 0.845
+16.75 0.823
+16.75 0.643
+16.75 0.808
+16.75 0.573
+16.75 0.765
+16.75 0.399
+16.75 0.479
+16.75 0.663
+16.75 0.685
+16.75 0.73
+16.75 0.648
+16.75 0.425
+16.75 0.356
+16.75 0.765
+16.75 0.741
+16.75 0.699
+16.75 0.566
+16.75 0.853
+};
+\addplot [red, forget plot]
+table {%
+17.75 0.941
+17.75 0.877
+};
+\addplot [red, forget plot]
+table {%
+17.75 0.986
+17.75 1
+};
+\addplot [red, forget plot]
+table {%
+17.625 0.877
+17.875 0.877
+};
+\addplot [red, forget plot]
+table {%
+17.625 1
+17.875 1
+};
+\addplot [red, mark=*, mark size=3, mark options={solid,fill opacity=0}, only marks, forget plot]
+table {%
+17.75 0.55
+17.75 0.633
+17.75 0.578
+17.75 0.58
+17.75 0.33
+17.75 0.393
+17.75 0.813
+17.75 0.299
+17.75 0.337
+17.75 0.669
+17.75 0.324
+17.75 0.341
+17.75 0.854
+17.75 0.867
+17.75 0.797
+17.75 0.603
+17.75 0.647
+17.75 0.789
+17.75 0.866
+17.75 0.469
+17.75 0.439
+};
+\addplot [red, forget plot]
+table {%
+18.75 0.9315
+18.75 0.857
+};
+\addplot [red, forget plot]
+table {%
+18.75 0.984
+18.75 1
+};
+\addplot [red, forget plot]
+table {%
+18.625 0.857
+18.875 0.857
+};
+\addplot [red, forget plot]
+table {%
+18.625 1
+18.875 1
+};
+\addplot [red, mark=*, mark size=3, mark options={solid,fill opacity=0}, only marks, forget plot]
+table {%
+18.75 0.492
+18.75 0.822
+18.75 0.564
+18.75 0.583
+18.75 0.363
+18.75 0.409
+18.75 0.589
+18.75 0.317
+18.75 0.683
+18.75 0.399
+18.75 0.32
+18.75 0.335
+18.75 0.704
+18.75 0.337
+18.75 0.544
+18.75 0.542
+18.75 0.727
+};
+\addplot [red, forget plot]
+table {%
+19.75 0.9175
+19.75 0.839
+};
+\addplot [red, forget plot]
+table {%
+19.75 0.9815
+19.75 0.999
+};
+\addplot [red, forget plot]
+table {%
+19.625 0.839
+19.875 0.839
+};
+\addplot [red, forget plot]
+table {%
+19.625 0.999
+19.875 0.999
+};
+\addplot [red, mark=*, mark size=3, mark options={solid,fill opacity=0}, only marks, forget plot]
+table {%
+19.75 0.407
+19.75 0.743
+19.75 0.441
+19.75 0.377
+19.75 0.513
+19.75 0.738
+19.75 0.376
+19.75 0.757
+19.75 0.449
+19.75 0.637
+19.75 0.307
+19.75 0.379
+19.75 0.596
+19.75 0.327
+19.75 0.241
+19.75 0.747
+19.75 0.685
+19.75 0.639
+19.75 0.666
+19.75 0.462
+19.75 0.529
+};
+\addplot [red, forget plot]
+table {%
+20.75 0.90925
+20.75 0.821
+};
+\addplot [red, forget plot]
+table {%
+20.75 0.979
+20.75 0.999
+};
+\addplot [red, forget plot]
+table {%
+20.625 0.821
+20.875 0.821
+};
+\addplot [red, forget plot]
+table {%
+20.625 0.999
+20.875 0.999
+};
+\addplot [red, mark=*, mark size=3, mark options={solid,fill opacity=0}, only marks, forget plot]
+table {%
+20.75 0.702
+20.75 0.453
+20.75 0.429
+20.75 0.385
+20.75 0.529
+20.75 0.402
+20.75 0.319
+20.75 0.497
+20.75 0.293
+20.75 0.287
+20.75 0.509
+20.75 0.345
+20.75 0.394
+20.75 0.371
+20.75 0.237
+20.75 0.763
+20.75 0.802
+20.75 0.682
+20.75 0.682
+20.75 0.581
+20.75 0.764
+20.75 0.378
+20.75 0.661
+};
+\addplot [red, forget plot]
+table {%
+21.75 0.87975
+21.75 0.761
+};
+\addplot [red, forget plot]
+table {%
+21.75 0.978
+21.75 1
+};
+\addplot [red, forget plot]
+table {%
+21.625 0.761
+21.875 0.761
+};
+\addplot [red, forget plot]
+table {%
+21.625 1
+21.875 1
+};
+\addplot [red, mark=*, mark size=3, mark options={solid,fill opacity=0}, only marks, forget plot]
+table {%
+21.75 0.361
+21.75 0.585
+21.75 0.364
+21.75 0.387
+21.75 0.3
+21.75 0.443
+21.75 0.256
+21.75 0.292
+21.75 0.224
+21.75 0.444
+21.75 0.284
+21.75 0.276
+21.75 0.36
+21.75 0.253
+21.75 0.493
+21.75 0.7
+21.75 0.673
+21.75 0.505
+21.75 0.727
+21.75 0.604
+21.75 0.731
+};
+\addplot [red, forget plot]
+table {%
+22.75 0.87125
+22.75 0.719
+};
+\addplot [red, forget plot]
+table {%
+22.75 0.97775
+22.75 1
+};
+\addplot [red, forget plot]
+table {%
+22.625 0.719
+22.875 0.719
+};
+\addplot [red, forget plot]
+table {%
+22.625 1
+22.875 1
+};
+\addplot [red, mark=*, mark size=3, mark options={solid,fill opacity=0}, only marks, forget plot]
+table {%
+22.75 0.293
+22.75 0.659
+22.75 0.464
+22.75 0.312
+22.75 0.393
+22.75 0.266
+22.75 0.243
+22.75 0.346
+22.75 0.252
+22.75 0.255
+22.75 0.353
+22.75 0.22
+22.75 0.328
+22.75 0.188
+22.75 0.213
+22.75 0.572
+22.75 0.674
+22.75 0.564
+22.75 0.422
+22.75 0.619
+22.75 0.531
+22.75 0.424
+22.75 0.618
+};
+\addplot [red, forget plot]
+table {%
+23.75 0.86275
+23.75 0.726
+};
+\addplot [red, forget plot]
+table {%
+23.75 0.972
+23.75 1
+};
+\addplot [red, forget plot]
+table {%
+23.625 0.726
+23.875 0.726
+};
+\addplot [red, forget plot]
+table {%
+23.625 1
+23.875 1
+};
+\addplot [red, mark=*, mark size=3, mark options={solid,fill opacity=0}, only marks, forget plot]
+table {%
+23.75 0.571
+23.75 0.362
+23.75 0.52
+23.75 0.256
+23.75 0.432
+23.75 0.326
+23.75 0.349
+23.75 0.244
+23.75 0.181
+23.75 0.575
+23.75 0.207
+23.75 0.265
+23.75 0.298
+23.75 0.187
+23.75 0.199
+23.75 0.657
+23.75 0.635
+23.75 0.613
+23.75 0.559
+23.75 0.542
+23.75 0.484
+23.75 0.599
+23.75 0.607
+23.75 0.367
+23.75 0.366
+};
+\addplot [red, forget plot]
+table {%
+24.75 0.84
+24.75 0.647
+};
+\addplot [red, forget plot]
+table {%
+24.75 0.9695
+24.75 1
+};
+\addplot [red, forget plot]
+table {%
+24.625 0.647
+24.875 0.647
+};
+\addplot [red, forget plot]
+table {%
+24.625 1
+24.875 1
+};
+\addplot [red, mark=*, mark size=3, mark options={solid,fill opacity=0}, only marks, forget plot]
+table {%
+24.75 0.359
+24.75 0.311
+24.75 0.416
+24.75 0.309
+24.75 0.241
+24.75 0.435
+24.75 0.229
+24.75 0.198
+24.75 0.262
+24.75 0.211
+24.75 0.169
+24.75 0.274
+24.75 0.163
+24.75 0.197
+24.75 0.493
+24.75 0.464
+24.75 0.497
+24.75 0.35
+24.75 0.406
+24.75 0.334
+24.75 0.532
+24.75 0.405
+};
+\addplot [red, forget plot]
+table {%
+25.75 0.77625
+25.75 0.582
+};
+\addplot [red, forget plot]
+table {%
+25.75 0.974
+25.75 1
+};
+\addplot [red, forget plot]
+table {%
+25.625 0.582
+25.875 0.582
+};
+\addplot [red, forget plot]
+table {%
+25.625 1
+25.875 1
+};
+\addplot [red, mark=*, mark size=3, mark options={solid,fill opacity=0}, only marks, forget plot]
+table {%
+25.75 0.249
+25.75 0.338
+25.75 0.263
+25.75 0.256
+25.75 0.351
+25.75 0.199
+25.75 0.269
+25.75 0.2
+25.75 0.222
+25.75 0.24
+25.75 0.167
+25.75 0.16
+25.75 0.198
+25.75 0.286
+25.75 0.179
+25.75 0.428
+25.75 0.442
+25.75 0.318
+25.75 0.354
+25.75 0.354
+25.75 0.458
+};
+\addplot [red, forget plot]
+table {%
+26.75 0.7485
+26.75 0.437
+};
+\addplot [red, forget plot]
+table {%
+26.75 0.96375
+26.75 1
+};
+\addplot [red, forget plot]
+table {%
+26.625 0.437
+26.875 0.437
+};
+\addplot [red, forget plot]
+table {%
+26.625 1
+26.875 1
+};
+\addplot [red, mark=*, mark size=3, mark options={solid,fill opacity=0}, only marks, forget plot]
+table {%
+26.75 0.413
+26.75 0.295
+26.75 0.211
+26.75 0.199
+26.75 0.302
+26.75 0.283
+26.75 0.346
+26.75 0.205
+26.75 0.171
+26.75 0.277
+26.75 0.176
+26.75 0.185
+26.75 0.163
+26.75 0.187
+26.75 0.243
+26.75 0.289
+26.75 0.308
+26.75 0.306
+26.75 0.291
+};
+\addplot [red, forget plot]
+table {%
+27.75 0.735
+27.75 0.393
+};
+\addplot [red, forget plot]
+table {%
+27.75 0.964
+27.75 1
+};
+\addplot [red, forget plot]
+table {%
+27.625 0.393
+27.875 0.393
+};
+\addplot [red, forget plot]
+table {%
+27.625 1
+27.875 1
+};
+\addplot [red, mark=*, mark size=3, mark options={solid,fill opacity=0}, only marks, forget plot]
+table {%
+27.75 0.196
+27.75 0.312
+27.75 0.206
+27.75 0.334
+27.75 0.193
+27.75 0.224
+27.75 0.202
+27.75 0.173
+27.75 0.256
+27.75 0.263
+27.75 0.192
+27.75 0.12
+27.75 0.189
+27.75 0.205
+27.75 0.172
+27.75 0.266
+27.75 0.337
+27.75 0.205
+27.75 0.38
+27.75 0.277
+};
+\addplot [red, forget plot]
+table {%
+28.75 0.6815
+28.75 0.26
+};
+\addplot [red, forget plot]
+table {%
+28.75 0.965
+28.75 1
+};
+\addplot [red, forget plot]
+table {%
+28.625 0.26
+28.875 0.26
+};
+\addplot [red, forget plot]
+table {%
+28.625 1
+28.875 1
+};
+\addplot [red, mark=*, mark size=3, mark options={solid,fill opacity=0}, only marks, forget plot]
+table {%
+28.75 0.173
+28.75 0.18
+28.75 0.212
+28.75 0.252
+28.75 0.154
+28.75 0.173
+28.75 0.146
+28.75 0.193
+28.75 0.17
+28.75 0.166
+28.75 0.172
+28.75 0.172
+28.75 0.216
+28.75 0.206
+};
+\addplot [red, forget plot]
+table {%
+29.75 0.6395
+29.75 0.162
+};
+\addplot [red, forget plot]
+table {%
+29.75 0.95875
+29.75 0.999
+};
+\addplot [red, forget plot]
+table {%
+29.625 0.162
+29.875 0.162
+};
+\addplot [red, forget plot]
+table {%
+29.625 0.999
+29.875 0.999
+};
+\addplot [red, mark=*, mark size=3, mark options={solid,fill opacity=0}, only marks, forget plot]
+table {%
+29.75 0.154
+29.75 0.126
+29.75 0.15
+29.75 0.1
+};
+\addplot [red, forget plot]
+table {%
+30.75 0.60275
+30.75 0.116
+};
+\addplot [red, forget plot]
+table {%
+30.75 0.958
+30.75 0.999
+};
+\addplot [red, forget plot]
+table {%
+30.625 0.116
+30.875 0.116
+};
+\addplot [red, forget plot]
+table {%
+30.625 0.999
+30.875 0.999
+};
+\addplot [red, forget plot]
+table {%
+31.75 0.60725
+31.75 0.125
+};
+\addplot [red, forget plot]
+table {%
+31.75 0.95725
+31.75 0.999
+};
+\addplot [red, forget plot]
+table {%
+31.625 0.125
+31.875 0.125
+};
+\addplot [red, forget plot]
+table {%
+31.625 0.999
+31.875 0.999
+};
+\addplot [red, forget plot]
+table {%
+32.75 0.524
+32.75 0.098
+};
+\addplot [red, forget plot]
+table {%
+32.75 0.95675
+32.75 1
+};
+\addplot [red, forget plot]
+table {%
+32.625 0.098
+32.875 0.098
+};
+\addplot [red, forget plot]
+table {%
+32.625 1
+32.875 1
+};
+\addplot [red, forget plot]
+table {%
+33.75 0.5255
+33.75 0.104
+};
+\addplot [red, forget plot]
+table {%
+33.75 0.94975
+33.75 0.999
+};
+\addplot [red, forget plot]
+table {%
+33.625 0.104
+33.875 0.104
+};
+\addplot [red, forget plot]
+table {%
+33.625 0.999
+33.875 0.999
+};
+\addplot [red, forget plot]
+table {%
+34.75 0.4505
+34.75 0.106
+};
+\addplot [red, forget plot]
+table {%
+34.75 0.9455
+34.75 1
+};
+\addplot [red, forget plot]
+table {%
+34.625 0.106
+34.875 0.106
+};
+\addplot [red, forget plot]
+table {%
+34.625 1
+34.875 1
+};
+\addplot [red, forget plot]
+table {%
+35.75 0.411
+35.75 0.075
+};
+\addplot [red, forget plot]
+table {%
+35.75 0.9445
+35.75 1
+};
+\addplot [red, forget plot]
+table {%
+35.625 0.075
+35.875 0.075
+};
+\addplot [red, forget plot]
+table {%
+35.625 1
+35.875 1
+};
+\addplot [red, forget plot]
+table {%
+36.75 0.39825
+36.75 0.084
+};
+\addplot [red, forget plot]
+table {%
+36.75 0.94075
+36.75 0.998
+};
+\addplot [red, forget plot]
+table {%
+36.625 0.084
+36.875 0.084
+};
+\addplot [red, forget plot]
+table {%
+36.625 0.998
+36.875 0.998
+};
+\addplot [red, forget plot]
+table {%
+37.75 0.354
+37.75 0.072
+};
+\addplot [red, forget plot]
+table {%
+37.75 0.93775
+37.75 1
+};
+\addplot [red, forget plot]
+table {%
+37.625 0.072
+37.875 0.072
+};
+\addplot [red, forget plot]
+table {%
+37.625 1
+37.875 1
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+1.25 0.26025
+1.25 0.215
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+1.25 0.41975
+1.25 0.573
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+1.125 0.215
+1.375 0.215
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+1.125 0.573
+1.375 0.573
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+2.25 0.26925
+2.25 0.215
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+2.25 0.42175
+2.25 0.576
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+2.125 0.215
+2.375 0.215
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+2.125 0.576
+2.375 0.576
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+3.25 0.263
+3.25 0.215
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+3.25 0.426
+3.25 0.583
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+3.125 0.215
+3.375 0.215
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+3.125 0.583
+3.375 0.583
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+4.25 0.263
+4.25 0.216
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+4.25 0.43175
+4.25 0.59
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+4.125 0.216
+4.375 0.216
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+4.125 0.59
+4.375 0.59
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+5.25 0.26675
+5.25 0.217
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+5.25 0.4375
+5.25 0.602
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+5.125 0.217
+5.375 0.217
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+5.125 0.602
+5.375 0.602
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+6.25 0.27025
+6.25 0.219
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+6.25 0.445
+6.25 0.616
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+6.125 0.219
+6.375 0.219
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+6.125 0.616
+6.375 0.616
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+7.25 0.27475
+7.25 0.216
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+7.25 0.464
+7.25 0.622
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+7.125 0.216
+7.375 0.216
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+7.125 0.622
+7.375 0.622
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+8.25 0.267
+8.25 0.217
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+8.25 0.47125
+8.25 0.625
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+8.125 0.217
+8.375 0.217
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+8.125 0.625
+8.375 0.625
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+9.25 0.27525
+9.25 0.217
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+9.25 0.46975
+9.25 0.628
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+9.125 0.217
+9.375 0.217
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+9.125 0.628
+9.375 0.628
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+10.25 0.275
+10.25 0.216
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+10.25 0.4825
+10.25 0.63
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+10.125 0.216
+10.375 0.216
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+10.125 0.63
+10.375 0.63
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+11.25 0.2685
+11.25 0.22
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+11.25 0.47275
+11.25 0.627
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+11.125 0.22
+11.375 0.22
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+11.125 0.627
+11.375 0.627
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+12.25 0.27075
+12.25 0.227
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+12.25 0.473
+12.25 0.636
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+12.125 0.227
+12.375 0.227
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+12.125 0.636
+12.375 0.636
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+13.25 0.271
+13.25 0.221
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+13.25 0.4655
+13.25 0.616
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+13.125 0.221
+13.375 0.221
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+13.125 0.616
+13.375 0.616
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+14.25 0.27175
+14.25 0.222
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+14.25 0.46225
+14.25 0.619
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+14.125 0.222
+14.375 0.222
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+14.125 0.619
+14.375 0.619
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+15.25 0.2805
+15.25 0.217
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+15.25 0.45475
+15.25 0.621
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+15.125 0.217
+15.375 0.217
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+15.125 0.621
+15.375 0.621
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+16.25 0.28425
+16.25 0.215
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+16.25 0.44575
+16.25 0.6
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+16.125 0.215
+16.375 0.215
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+16.125 0.6
+16.375 0.6
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+17.25 0.28
+17.25 0.219
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+17.25 0.43275
+17.25 0.59
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+17.125 0.219
+17.375 0.219
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+17.125 0.59
+17.375 0.59
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+18.25 0.279
+18.25 0.211
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+18.25 0.44
+18.25 0.592
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+18.125 0.211
+18.375 0.211
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+18.125 0.592
+18.375 0.592
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+19.25 0.272
+19.25 0.216
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+19.25 0.4065
+19.25 0.586
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+19.125 0.216
+19.375 0.216
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+19.125 0.586
+19.375 0.586
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+20.25 0.282
+20.25 0.228
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+20.25 0.416
+20.25 0.574
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+20.125 0.228
+20.375 0.228
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+20.125 0.574
+20.375 0.574
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+21.25 0.26975
+21.25 0.209
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+21.25 0.406
+21.25 0.573
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+21.125 0.209
+21.375 0.209
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+21.125 0.573
+21.375 0.573
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+22.25 0.26225
+22.25 0.214
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+22.25 0.393
+22.25 0.566
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+22.125 0.214
+22.375 0.214
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+22.125 0.566
+22.375 0.566
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+23.25 0.26925
+23.25 0.21
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+23.25 0.39825
+23.25 0.566
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+23.125 0.21
+23.375 0.21
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+23.125 0.566
+23.375 0.566
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+24.25 0.2635
+24.25 0.209
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+24.25 0.37875
+24.25 0.551
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+24.125 0.209
+24.375 0.209
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+24.125 0.551
+24.375 0.551
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+25.25 0.25525
+25.25 0.211
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+25.25 0.38525
+25.25 0.544
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+25.125 0.211
+25.375 0.211
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+25.125 0.544
+25.375 0.544
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+26.25 0.25725
+26.25 0.195
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+26.25 0.3765
+26.25 0.552
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+26.125 0.195
+26.375 0.195
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+26.125 0.552
+26.375 0.552
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+27.25 0.2555
+27.25 0.18
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+27.25 0.37475
+27.25 0.547
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+27.125 0.18
+27.375 0.18
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+27.125 0.547
+27.375 0.547
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+28.25 0.25425
+28.25 0.191
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+28.25 0.3825
+28.25 0.522
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+28.125 0.191
+28.375 0.191
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+28.125 0.522
+28.375 0.522
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+29.25 0.2595
+29.25 0.153
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+29.25 0.37025
+29.25 0.531
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+29.125 0.153
+29.375 0.153
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+29.125 0.531
+29.375 0.531
+};
+\addplot [green!50.1960784313725!black, mark=*, mark size=3, mark options={solid,fill opacity=0}, only marks, forget plot]
+table {%
+29.25 0.554
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+30.25 0.25125
+30.25 0.171
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+30.25 0.3715
+30.25 0.505
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+30.125 0.171
+30.375 0.171
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+30.125 0.505
+30.375 0.505
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+31.25 0.258
+31.25 0.166
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+31.25 0.3715
+31.25 0.527
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+31.125 0.166
+31.375 0.166
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+31.125 0.527
+31.375 0.527
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+32.25 0.25675
+32.25 0.164
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+32.25 0.36225
+32.25 0.51
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+32.125 0.164
+32.375 0.164
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+32.125 0.51
+32.375 0.51
+};
+\addplot [green!50.1960784313725!black, mark=*, mark size=3, mark options={solid,fill opacity=0}, only marks, forget plot]
+table {%
+32.25 0.521
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+33.25 0.2615
+33.25 0.137
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+33.25 0.35875
+33.25 0.469
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+33.125 0.137
+33.375 0.137
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+33.125 0.469
+33.375 0.469
+};
+\addplot [green!50.1960784313725!black, mark=*, mark size=3, mark options={solid,fill opacity=0}, only marks, forget plot]
+table {%
+33.25 0.507
+33.25 0.517
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+34.25 0.24625
+34.25 0.14
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+34.25 0.3705
+34.25 0.526
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+34.125 0.14
+34.375 0.14
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+34.125 0.526
+34.375 0.526
+};
+\addplot [green!50.1960784313725!black, mark=*, mark size=3, mark options={solid,fill opacity=0}, only marks, forget plot]
+table {%
+34.25 1
+34.25 1
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+35.25 0.26075
+35.25 0.156
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+35.25 0.37375
+35.25 0.505
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+35.125 0.156
+35.375 0.156
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+35.125 0.505
+35.375 0.505
+};
+\addplot [green!50.1960784313725!black, mark=*, mark size=3, mark options={solid,fill opacity=0}, only marks, forget plot]
+table {%
+35.25 0.582
+35.25 1
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+36.25 0.25625
+36.25 0.136
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+36.25 0.35825
+36.25 0.487
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+36.125 0.136
+36.375 0.136
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+36.125 0.487
+36.375 0.487
+};
+\addplot [green!50.1960784313725!black, mark=*, mark size=3, mark options={solid,fill opacity=0}, only marks, forget plot]
+table {%
+36.25 0.536
+36.25 0.517
+36.25 0.543
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+37.25 0.27325
+37.25 0.139
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+37.25 0.376
+37.25 0.476
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+37.125 0.139
+37.375 0.139
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+37.125 0.476
+37.375 0.476
+};
+\addplot [green!50.1960784313725!black, mark=*, mark size=3, mark options={solid,fill opacity=0}, only marks, forget plot]
+table {%
+37.25 0.118
+37.25 0.575
+37.25 1
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+38.25 0.26775
+38.25 0.141
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+38.25 0.363
+38.25 0.503
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+38.125 0.141
+38.375 0.141
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+38.125 0.503
+38.375 0.503
+};
+\addplot [green!50.1960784313725!black, mark=*, mark size=3, mark options={solid,fill opacity=0}, only marks, forget plot]
+table {%
+38.25 0.115
+38.25 0.122
+38.25 0.53
+};
+\path [draw=red, fill=white]
+(axis cs:0.5,1)
+--(axis cs:1,1)
+--(axis cs:1,1)
+--(axis cs:0.5,1)
+--(axis cs:0.5,1)
+--cycle;
+\path [draw=red, fill=white]
+(axis cs:1.5,0.999)
+--(axis cs:2,0.999)
+--(axis cs:2,1)
+--(axis cs:1.5,1)
+--(axis cs:1.5,0.999)
+--cycle;
+\path [draw=red, fill=white]
+(axis cs:2.5,0.999)
+--(axis cs:3,0.999)
+--(axis cs:3,1)
+--(axis cs:2.5,1)
+--(axis cs:2.5,0.999)
+--cycle;
+\path [draw=red, fill=white]
+(axis cs:3.5,0.997)
+--(axis cs:4,0.997)
+--(axis cs:4,1)
+--(axis cs:3.5,1)
+--(axis cs:3.5,0.997)
+--cycle;
+\path [draw=red, fill=white]
+(axis cs:4.5,0.997)
+--(axis cs:5,0.997)
+--(axis cs:5,1)
+--(axis cs:4.5,1)
+--(axis cs:4.5,0.997)
+--cycle;
+\path [draw=red, fill=white]
+(axis cs:5.5,0.995)
+--(axis cs:6,0.995)
+--(axis cs:6,0.999)
+--(axis cs:5.5,0.999)
+--(axis cs:5.5,0.995)
+--cycle;
+\path [draw=red, fill=white]
+(axis cs:6.5,0.994)
+--(axis cs:7,0.994)
+--(axis cs:7,0.999)
+--(axis cs:6.5,0.999)
+--(axis cs:6.5,0.994)
+--cycle;
+\path [draw=red, fill=white]
+(axis cs:7.5,0.992)
+--(axis cs:8,0.992)
+--(axis cs:8,0.998)
+--(axis cs:7.5,0.998)
+--(axis cs:7.5,0.992)
+--cycle;
+\path [draw=red, fill=white]
+(axis cs:8.5,0.989)
+--(axis cs:9,0.989)
+--(axis cs:9,0.998)
+--(axis cs:8.5,0.998)
+--(axis cs:8.5,0.989)
+--cycle;
+\path [draw=red, fill=white]
+(axis cs:9.5,0.98525)
+--(axis cs:10,0.98525)
+--(axis cs:10,0.997)
+--(axis cs:9.5,0.997)
+--(axis cs:9.5,0.98525)
+--cycle;
+\path [draw=red, fill=white]
+(axis cs:10.5,0.98)
+--(axis cs:11,0.98)
+--(axis cs:11,0.99675)
+--(axis cs:10.5,0.99675)
+--(axis cs:10.5,0.98)
+--cycle;
+\path [draw=red, fill=white]
+(axis cs:11.5,0.97725)
+--(axis cs:12,0.97725)
+--(axis cs:12,0.996)
+--(axis cs:11.5,0.996)
+--(axis cs:11.5,0.97725)
+--cycle;
+\path [draw=red, fill=white]
+(axis cs:12.5,0.976)
+--(axis cs:13,0.976)
+--(axis cs:13,0.995)
+--(axis cs:12.5,0.995)
+--(axis cs:12.5,0.976)
+--cycle;
+\path [draw=red, fill=white]
+(axis cs:13.5,0.965)
+--(axis cs:14,0.965)
+--(axis cs:14,0.99275)
+--(axis cs:13.5,0.99275)
+--(axis cs:13.5,0.965)
+--cycle;
+\path [draw=red, fill=white]
+(axis cs:14.5,0.961)
+--(axis cs:15,0.961)
+--(axis cs:15,0.99175)
+--(axis cs:14.5,0.99175)
+--(axis cs:14.5,0.961)
+--cycle;
+\path [draw=red, fill=white]
+(axis cs:15.5,0.952)
+--(axis cs:16,0.952)
+--(axis cs:16,0.992)
+--(axis cs:15.5,0.992)
+--(axis cs:15.5,0.952)
+--cycle;
+\path [draw=red, fill=white]
+(axis cs:16.5,0.94525)
+--(axis cs:17,0.94525)
+--(axis cs:17,0.989)
+--(axis cs:16.5,0.989)
+--(axis cs:16.5,0.94525)
+--cycle;
+\path [draw=red, fill=white]
+(axis cs:17.5,0.941)
+--(axis cs:18,0.941)
+--(axis cs:18,0.986)
+--(axis cs:17.5,0.986)
+--(axis cs:17.5,0.941)
+--cycle;
+\path [draw=red, fill=white]
+(axis cs:18.5,0.9315)
+--(axis cs:19,0.9315)
+--(axis cs:19,0.984)
+--(axis cs:18.5,0.984)
+--(axis cs:18.5,0.9315)
+--cycle;
+\path [draw=red, fill=white]
+(axis cs:19.5,0.9175)
+--(axis cs:20,0.9175)
+--(axis cs:20,0.9815)
+--(axis cs:19.5,0.9815)
+--(axis cs:19.5,0.9175)
+--cycle;
+\path [draw=red, fill=white]
+(axis cs:20.5,0.90925)
+--(axis cs:21,0.90925)
+--(axis cs:21,0.979)
+--(axis cs:20.5,0.979)
+--(axis cs:20.5,0.90925)
+--cycle;
+\path [draw=red, fill=white]
+(axis cs:21.5,0.87975)
+--(axis cs:22,0.87975)
+--(axis cs:22,0.978)
+--(axis cs:21.5,0.978)
+--(axis cs:21.5,0.87975)
+--cycle;
+\path [draw=red, fill=white]
+(axis cs:22.5,0.87125)
+--(axis cs:23,0.87125)
+--(axis cs:23,0.97775)
+--(axis cs:22.5,0.97775)
+--(axis cs:22.5,0.87125)
+--cycle;
+\path [draw=red, fill=white]
+(axis cs:23.5,0.86275)
+--(axis cs:24,0.86275)
+--(axis cs:24,0.972)
+--(axis cs:23.5,0.972)
+--(axis cs:23.5,0.86275)
+--cycle;
+\path [draw=red, fill=white]
+(axis cs:24.5,0.84)
+--(axis cs:25,0.84)
+--(axis cs:25,0.9695)
+--(axis cs:24.5,0.9695)
+--(axis cs:24.5,0.84)
+--cycle;
+\path [draw=red, fill=white]
+(axis cs:25.5,0.77625)
+--(axis cs:26,0.77625)
+--(axis cs:26,0.974)
+--(axis cs:25.5,0.974)
+--(axis cs:25.5,0.77625)
+--cycle;
+\path [draw=red, fill=white]
+(axis cs:26.5,0.7485)
+--(axis cs:27,0.7485)
+--(axis cs:27,0.96375)
+--(axis cs:26.5,0.96375)
+--(axis cs:26.5,0.7485)
+--cycle;
+\path [draw=red, fill=white]
+(axis cs:27.5,0.735)
+--(axis cs:28,0.735)
+--(axis cs:28,0.964)
+--(axis cs:27.5,0.964)
+--(axis cs:27.5,0.735)
+--cycle;
+\path [draw=red, fill=white]
+(axis cs:28.5,0.6815)
+--(axis cs:29,0.6815)
+--(axis cs:29,0.965)
+--(axis cs:28.5,0.965)
+--(axis cs:28.5,0.6815)
+--cycle;
+\path [draw=red, fill=white]
+(axis cs:29.5,0.6395)
+--(axis cs:30,0.6395)
+--(axis cs:30,0.95875)
+--(axis cs:29.5,0.95875)
+--(axis cs:29.5,0.6395)
+--cycle;
+\path [draw=red, fill=white]
+(axis cs:30.5,0.60275)
+--(axis cs:31,0.60275)
+--(axis cs:31,0.958)
+--(axis cs:30.5,0.958)
+--(axis cs:30.5,0.60275)
+--cycle;
+\path [draw=red, fill=white]
+(axis cs:31.5,0.60725)
+--(axis cs:32,0.60725)
+--(axis cs:32,0.95725)
+--(axis cs:31.5,0.95725)
+--(axis cs:31.5,0.60725)
+--cycle;
+\path [draw=red, fill=white]
+(axis cs:32.5,0.524)
+--(axis cs:33,0.524)
+--(axis cs:33,0.95675)
+--(axis cs:32.5,0.95675)
+--(axis cs:32.5,0.524)
+--cycle;
+\path [draw=red, fill=white]
+(axis cs:33.5,0.5255)
+--(axis cs:34,0.5255)
+--(axis cs:34,0.94975)
+--(axis cs:33.5,0.94975)
+--(axis cs:33.5,0.5255)
+--cycle;
+\path [draw=red, fill=white]
+(axis cs:34.5,0.4505)
+--(axis cs:35,0.4505)
+--(axis cs:35,0.9455)
+--(axis cs:34.5,0.9455)
+--(axis cs:34.5,0.4505)
+--cycle;
+\path [draw=red, fill=white]
+(axis cs:35.5,0.411)
+--(axis cs:36,0.411)
+--(axis cs:36,0.9445)
+--(axis cs:35.5,0.9445)
+--(axis cs:35.5,0.411)
+--cycle;
+\path [draw=red, fill=white]
+(axis cs:36.5,0.39825)
+--(axis cs:37,0.39825)
+--(axis cs:37,0.94075)
+--(axis cs:36.5,0.94075)
+--(axis cs:36.5,0.39825)
+--cycle;
+\path [draw=red, fill=white]
+(axis cs:37.5,0.354)
+--(axis cs:38,0.354)
+--(axis cs:38,0.93775)
+--(axis cs:37.5,0.93775)
+--(axis cs:37.5,0.354)
+--cycle;
+\path [draw=green!50.1960784313725!black, fill=white]
+(axis cs:1,0.26025)
+--(axis cs:1.5,0.26025)
+--(axis cs:1.5,0.41975)
+--(axis cs:1,0.41975)
+--(axis cs:1,0.26025)
+--cycle;
+\path [draw=green!50.1960784313725!black, fill=white]
+(axis cs:2,0.26925)
+--(axis cs:2.5,0.26925)
+--(axis cs:2.5,0.42175)
+--(axis cs:2,0.42175)
+--(axis cs:2,0.26925)
+--cycle;
+\path [draw=green!50.1960784313725!black, fill=white]
+(axis cs:3,0.263)
+--(axis cs:3.5,0.263)
+--(axis cs:3.5,0.426)
+--(axis cs:3,0.426)
+--(axis cs:3,0.263)
+--cycle;
+\path [draw=green!50.1960784313725!black, fill=white]
+(axis cs:4,0.263)
+--(axis cs:4.5,0.263)
+--(axis cs:4.5,0.43175)
+--(axis cs:4,0.43175)
+--(axis cs:4,0.263)
+--cycle;
+\path [draw=green!50.1960784313725!black, fill=white]
+(axis cs:5,0.26675)
+--(axis cs:5.5,0.26675)
+--(axis cs:5.5,0.4375)
+--(axis cs:5,0.4375)
+--(axis cs:5,0.26675)
+--cycle;
+\path [draw=green!50.1960784313725!black, fill=white]
+(axis cs:6,0.27025)
+--(axis cs:6.5,0.27025)
+--(axis cs:6.5,0.445)
+--(axis cs:6,0.445)
+--(axis cs:6,0.27025)
+--cycle;
+\path [draw=green!50.1960784313725!black, fill=white]
+(axis cs:7,0.27475)
+--(axis cs:7.5,0.27475)
+--(axis cs:7.5,0.464)
+--(axis cs:7,0.464)
+--(axis cs:7,0.27475)
+--cycle;
+\path [draw=green!50.1960784313725!black, fill=white]
+(axis cs:8,0.267)
+--(axis cs:8.5,0.267)
+--(axis cs:8.5,0.47125)
+--(axis cs:8,0.47125)
+--(axis cs:8,0.267)
+--cycle;
+\path [draw=green!50.1960784313725!black, fill=white]
+(axis cs:9,0.27525)
+--(axis cs:9.5,0.27525)
+--(axis cs:9.5,0.46975)
+--(axis cs:9,0.46975)
+--(axis cs:9,0.27525)
+--cycle;
+\path [draw=green!50.1960784313725!black, fill=white]
+(axis cs:10,0.275)
+--(axis cs:10.5,0.275)
+--(axis cs:10.5,0.4825)
+--(axis cs:10,0.4825)
+--(axis cs:10,0.275)
+--cycle;
+\path [draw=green!50.1960784313725!black, fill=white]
+(axis cs:11,0.2685)
+--(axis cs:11.5,0.2685)
+--(axis cs:11.5,0.47275)
+--(axis cs:11,0.47275)
+--(axis cs:11,0.2685)
+--cycle;
+\path [draw=green!50.1960784313725!black, fill=white]
+(axis cs:12,0.27075)
+--(axis cs:12.5,0.27075)
+--(axis cs:12.5,0.473)
+--(axis cs:12,0.473)
+--(axis cs:12,0.27075)
+--cycle;
+\path [draw=green!50.1960784313725!black, fill=white]
+(axis cs:13,0.271)
+--(axis cs:13.5,0.271)
+--(axis cs:13.5,0.4655)
+--(axis cs:13,0.4655)
+--(axis cs:13,0.271)
+--cycle;
+\path [draw=green!50.1960784313725!black, fill=white]
+(axis cs:14,0.27175)
+--(axis cs:14.5,0.27175)
+--(axis cs:14.5,0.46225)
+--(axis cs:14,0.46225)
+--(axis cs:14,0.27175)
+--cycle;
+\path [draw=green!50.1960784313725!black, fill=white]
+(axis cs:15,0.2805)
+--(axis cs:15.5,0.2805)
+--(axis cs:15.5,0.45475)
+--(axis cs:15,0.45475)
+--(axis cs:15,0.2805)
+--cycle;
+\path [draw=green!50.1960784313725!black, fill=white]
+(axis cs:16,0.28425)
+--(axis cs:16.5,0.28425)
+--(axis cs:16.5,0.44575)
+--(axis cs:16,0.44575)
+--(axis cs:16,0.28425)
+--cycle;
+\path [draw=green!50.1960784313725!black, fill=white]
+(axis cs:17,0.28)
+--(axis cs:17.5,0.28)
+--(axis cs:17.5,0.43275)
+--(axis cs:17,0.43275)
+--(axis cs:17,0.28)
+--cycle;
+\path [draw=green!50.1960784313725!black, fill=white]
+(axis cs:18,0.279)
+--(axis cs:18.5,0.279)
+--(axis cs:18.5,0.44)
+--(axis cs:18,0.44)
+--(axis cs:18,0.279)
+--cycle;
+\path [draw=green!50.1960784313725!black, fill=white]
+(axis cs:19,0.272)
+--(axis cs:19.5,0.272)
+--(axis cs:19.5,0.4065)
+--(axis cs:19,0.4065)
+--(axis cs:19,0.272)
+--cycle;
+\path [draw=green!50.1960784313725!black, fill=white]
+(axis cs:20,0.282)
+--(axis cs:20.5,0.282)
+--(axis cs:20.5,0.416)
+--(axis cs:20,0.416)
+--(axis cs:20,0.282)
+--cycle;
+\path [draw=green!50.1960784313725!black, fill=white]
+(axis cs:21,0.26975)
+--(axis cs:21.5,0.26975)
+--(axis cs:21.5,0.406)
+--(axis cs:21,0.406)
+--(axis cs:21,0.26975)
+--cycle;
+\path [draw=green!50.1960784313725!black, fill=white]
+(axis cs:22,0.26225)
+--(axis cs:22.5,0.26225)
+--(axis cs:22.5,0.393)
+--(axis cs:22,0.393)
+--(axis cs:22,0.26225)
+--cycle;
+\path [draw=green!50.1960784313725!black, fill=white]
+(axis cs:23,0.26925)
+--(axis cs:23.5,0.26925)
+--(axis cs:23.5,0.39825)
+--(axis cs:23,0.39825)
+--(axis cs:23,0.26925)
+--cycle;
+\path [draw=green!50.1960784313725!black, fill=white]
+(axis cs:24,0.2635)
+--(axis cs:24.5,0.2635)
+--(axis cs:24.5,0.37875)
+--(axis cs:24,0.37875)
+--(axis cs:24,0.2635)
+--cycle;
+\path [draw=green!50.1960784313725!black, fill=white]
+(axis cs:25,0.25525)
+--(axis cs:25.5,0.25525)
+--(axis cs:25.5,0.38525)
+--(axis cs:25,0.38525)
+--(axis cs:25,0.25525)
+--cycle;
+\path [draw=green!50.1960784313725!black, fill=white]
+(axis cs:26,0.25725)
+--(axis cs:26.5,0.25725)
+--(axis cs:26.5,0.3765)
+--(axis cs:26,0.3765)
+--(axis cs:26,0.25725)
+--cycle;
+\path [draw=green!50.1960784313725!black, fill=white]
+(axis cs:27,0.2555)
+--(axis cs:27.5,0.2555)
+--(axis cs:27.5,0.37475)
+--(axis cs:27,0.37475)
+--(axis cs:27,0.2555)
+--cycle;
+\path [draw=green!50.1960784313725!black, fill=white]
+(axis cs:28,0.25425)
+--(axis cs:28.5,0.25425)
+--(axis cs:28.5,0.3825)
+--(axis cs:28,0.3825)
+--(axis cs:28,0.25425)
+--cycle;
+\path [draw=green!50.1960784313725!black, fill=white]
+(axis cs:29,0.2595)
+--(axis cs:29.5,0.2595)
+--(axis cs:29.5,0.37025)
+--(axis cs:29,0.37025)
+--(axis cs:29,0.2595)
+--cycle;
+\path [draw=green!50.1960784313725!black, fill=white]
+(axis cs:30,0.25125)
+--(axis cs:30.5,0.25125)
+--(axis cs:30.5,0.3715)
+--(axis cs:30,0.3715)
+--(axis cs:30,0.25125)
+--cycle;
+\path [draw=green!50.1960784313725!black, fill=white]
+(axis cs:31,0.258)
+--(axis cs:31.5,0.258)
+--(axis cs:31.5,0.3715)
+--(axis cs:31,0.3715)
+--(axis cs:31,0.258)
+--cycle;
+\path [draw=green!50.1960784313725!black, fill=white]
+(axis cs:32,0.25675)
+--(axis cs:32.5,0.25675)
+--(axis cs:32.5,0.36225)
+--(axis cs:32,0.36225)
+--(axis cs:32,0.25675)
+--cycle;
+\path [draw=green!50.1960784313725!black, fill=white]
+(axis cs:33,0.2615)
+--(axis cs:33.5,0.2615)
+--(axis cs:33.5,0.35875)
+--(axis cs:33,0.35875)
+--(axis cs:33,0.2615)
+--cycle;
+\path [draw=green!50.1960784313725!black, fill=white]
+(axis cs:34,0.24625)
+--(axis cs:34.5,0.24625)
+--(axis cs:34.5,0.3705)
+--(axis cs:34,0.3705)
+--(axis cs:34,0.24625)
+--cycle;
+\path [draw=green!50.1960784313725!black, fill=white]
+(axis cs:35,0.26075)
+--(axis cs:35.5,0.26075)
+--(axis cs:35.5,0.37375)
+--(axis cs:35,0.37375)
+--(axis cs:35,0.26075)
+--cycle;
+\path [draw=green!50.1960784313725!black, fill=white]
+(axis cs:36,0.25625)
+--(axis cs:36.5,0.25625)
+--(axis cs:36.5,0.35825)
+--(axis cs:36,0.35825)
+--(axis cs:36,0.25625)
+--cycle;
+\path [draw=green!50.1960784313725!black, fill=white]
+(axis cs:37,0.27325)
+--(axis cs:37.5,0.27325)
+--(axis cs:37.5,0.376)
+--(axis cs:37,0.376)
+--(axis cs:37,0.27325)
+--cycle;
+\path [draw=green!50.1960784313725!black, fill=white]
+(axis cs:38,0.26775)
+--(axis cs:38.5,0.26775)
+--(axis cs:38.5,0.363)
+--(axis cs:38,0.363)
+--(axis cs:38,0.26775)
+--cycle;
+\addplot [red, forget plot]
+table {%
+0.5 1
+1 1
+};
+\addplot [red, forget plot]
+table {%
+1.5 1
+2 1
+};
+\addplot [red, forget plot]
+table {%
+2.5 0.999
+3 0.999
+};
+\addplot [red, forget plot]
+table {%
+3.5 0.999
+4 0.999
+};
+\addplot [red, forget plot]
+table {%
+4.5 0.999
+5 0.999
+};
+\addplot [red, forget plot]
+table {%
+5.5 0.998
+6 0.998
+};
+\addplot [red, forget plot]
+table {%
+6.5 0.997
+7 0.997
+};
+\addplot [red, forget plot]
+table {%
+7.5 0.995
+8 0.995
+};
+\addplot [red, forget plot]
+table {%
+8.5 0.995
+9 0.995
+};
+\addplot [red, forget plot]
+table {%
+9.5 0.992
+10 0.992
+};
+\addplot [red, forget plot]
+table {%
+10.5 0.991
+11 0.991
+};
+\addplot [red, forget plot]
+table {%
+11.5 0.988
+12 0.988
+};
+\addplot [red, forget plot]
+table {%
+12.5 0.9865
+13 0.9865
+};
+\addplot [red, forget plot]
+table {%
+13.5 0.982
+14 0.982
+};
+\addplot [red, forget plot]
+table {%
+14.5 0.98
+15 0.98
+};
+\addplot [red, forget plot]
+table {%
+15.5 0.9775
+16 0.9775
+};
+\addplot [red, forget plot]
+table {%
+16.5 0.9725
+17 0.9725
+};
+\addplot [red, forget plot]
+table {%
+17.5 0.969
+18 0.969
+};
+\addplot [red, forget plot]
+table {%
+18.5 0.965
+19 0.965
+};
+\addplot [red, forget plot]
+table {%
+19.5 0.958
+20 0.958
+};
+\addplot [red, forget plot]
+table {%
+20.5 0.957
+21 0.957
+};
+\addplot [red, forget plot]
+table {%
+21.5 0.9505
+22 0.9505
+};
+\addplot [red, forget plot]
+table {%
+22.5 0.9505
+23 0.9505
+};
+\addplot [red, forget plot]
+table {%
+23.5 0.9385
+24 0.9385
+};
+\addplot [red, forget plot]
+table {%
+24.5 0.935
+25 0.935
+};
+\addplot [red, forget plot]
+table {%
+25.5 0.9255
+26 0.9255
+};
+\addplot [red, forget plot]
+table {%
+26.5 0.929
+27 0.929
+};
+\addplot [red, forget plot]
+table {%
+27.5 0.9155
+28 0.9155
+};
+\addplot [red, forget plot]
+table {%
+28.5 0.904
+29 0.904
+};
+\addplot [red, forget plot]
+table {%
+29.5 0.869
+30 0.869
+};
+\addplot [red, forget plot]
+table {%
+30.5 0.8715
+31 0.8715
+};
+\addplot [red, forget plot]
+table {%
+31.5 0.875
+32 0.875
+};
+\addplot [red, forget plot]
+table {%
+32.5 0.854
+33 0.854
+};
+\addplot [red, forget plot]
+table {%
+33.5 0.7915
+34 0.7915
+};
+\addplot [red, forget plot]
+table {%
+34.5 0.803
+35 0.803
+};
+\addplot [red, forget plot]
+table {%
+35.5 0.7465
+36 0.7465
+};
+\addplot [red, forget plot]
+table {%
+36.5 0.6965
+37 0.6965
+};
+\addplot [red, forget plot]
+table {%
+37.5 0.667
+38 0.667
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+1 0.362
+1.5 0.362
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+2 0.3685
+2.5 0.3685
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+3 0.372
+3.5 0.372
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+4 0.3685
+4.5 0.3685
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+5 0.3775
+5.5 0.3775
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+6 0.3665
+6.5 0.3665
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+7 0.367
+7.5 0.367
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+8 0.375
+8.5 0.375
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+9 0.374
+9.5 0.374
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+10 0.363
+10.5 0.363
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+11 0.365
+11.5 0.365
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+12 0.369
+12.5 0.369
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+13 0.36
+13.5 0.36
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+14 0.3545
+14.5 0.3545
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+15 0.359
+15.5 0.359
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+16 0.3495
+16.5 0.3495
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+17 0.3555
+17.5 0.3555
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+18 0.348
+18.5 0.348
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+19 0.345
+19.5 0.345
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+20 0.35
+20.5 0.35
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+21 0.336
+21.5 0.336
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+22 0.336
+22.5 0.336
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+23 0.333
+23.5 0.333
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+24 0.332
+24.5 0.332
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+25 0.3305
+25.5 0.3305
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+26 0.3285
+26.5 0.3285
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+27 0.327
+27.5 0.327
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+28 0.3285
+28.5 0.3285
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+29 0.318
+29.5 0.318
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+30 0.3145
+30.5 0.3145
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+31 0.3195
+31.5 0.3195
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+32 0.316
+32.5 0.316
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+33 0.321
+33.5 0.321
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+34 0.327
+34.5 0.327
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+35 0.3155
+35.5 0.3155
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+36 0.307
+36.5 0.307
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+37 0.3085
+37.5 0.3085
+};
+\addplot [green!50.1960784313725!black, forget plot]
+table {%
+38 0.311
+38.5 0.311
+};
+\end{axis}
+
+\end{tikzpicture}
