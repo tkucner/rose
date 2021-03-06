@@ -17,7 +17,7 @@ now = datetime.now()
 date_time = now.strftime("%Y_%m_%d_%H_%M_%S")
 logging.basicConfig(filename='logs/rose_' + date_time + '.log', level=logging.DEBUG,
                     format='%(levelname)s:%(module)s:%(lineno)d:%(message)s')
-
+logging.disabled = True
 #
 # if __name__ == "__main__":
 # parse input
@@ -51,42 +51,7 @@ rose.simple_filter_map(filter_level)
 
 rose.generate_initial_hypothesis(type='simple', min_wall=5)
 
-# rose.find_walls_with_line_segments()
-# rose.find_walls_flood_filing_with_overlaps()
 rose.find_walls_flood_filing()
 
-# visualisation = {"Binary map": True,
-#                  "FFT Spectrum": False,
-#                  "Unfolded FFT Spectrum": True,
-#                  "FFT Spectrum Signal": False,
-#                  "FFT Spectrum Noise": False,
-#                  "Map Reconstructed Signal": False,
-#                  "Map Reconstructed Noise": False,
-#                  "Map Scored Good": False,
-#                  "Map Scored Bad": False,
-#                  "Map Scored Diff": False,
-#                  "Map Split Good": False,
-#                  "FFT Map Split Good": False,
-#                  "Side by Side": False,
-#                  "Histogram of pixels quality": False,
-#                  "Histogram of scaled pixels quality": False,
-#                  "Simple Filtered Map": False,
-#                  "FFT spectrum with directions": False,
-#                  "Map with directions": False,
-#                  "Partial Scores": False,
-#                  "Partial Reconstructs": False,
-#                  "Threshold Setup with Clusters": False,
-#                  "Cluster Filtered Map": False,
-#                  "Map with walls": False,
-#                  "Map with slices": False,
-#                  "Wall lines from mbb": False,
-#                  "Labels and Raw map": False,
-#                  "Raw line segments": False,
-#                  "Clustered line segments": False,
-#                  "Short wall lines from mbb": True,
-#                  "Short wall lines over original map": True
-#
-#                  }
-# rose.show(visualisation)
 plots = visualisation(rose)
 plots.show(config["visualisation_flags"])
