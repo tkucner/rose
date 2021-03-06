@@ -166,6 +166,14 @@
         "Short wall lines over original map": {
           "type": "boolean",
           "default": false
+        },
+        "Map and peaks": {
+          "type": "boolean",
+          "default": false
+        },
+        "evaluation output": {
+          "type": "boolean",
+          "default": false
         }
       },
       "default": {}

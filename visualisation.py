@@ -1,5 +1,6 @@
 import logging
 import math
+import statistics as stat
 import time
 
 import matplotlib.patches as patches
@@ -53,7 +54,7 @@ class visualisation:
                     ax.plot([l_mbb_lines["Y1"], l_mbb_lines["Y2"]], [l_mbb_lines["X1"], l_mbb_lines["X2"]], 'g')
         return ax
 
-    def show(self, visualisation_flags):
+    def show(self, visualisation_flags, name=[]):
         t = time.time()
         if visualisation_flags["Binary map"]:
             fig, ax = plt.subplots(nrows=1, ncols=1)
@@ -222,6 +223,60 @@ class visualisation:
             ax[1].set_title(name2)
             plt.tight_layout()
             plt.subplots_adjust(left=0.0, right=1.0, top=1.0, bottom=0, wspace=0, hspace=0)
+            plt.show()
+
+        if visualisation_flags["Map and peaks"]:
+            fig, ax = plt.subplots(nrows=1, ncols=2)
+            ax[0].imshow(self.structure.binary_map * 1, cmap="gray")
+            ax[0].axis("off")
+
+            # signal_av=stat.mean((self.structure.pol_h-min(self.structure.pol_h))/max(self.structure.pol_h))
+            # peak_av=stat.mean((self.structure.pol_h[self.structure.peak_indices]-min(self.structure.pol_h))/max(self.structure.pol_h))
+
+            grounded_rose = self.structure.pol_h - min(self.structure.pol_h)
+            streached_rose = grounded_rose / max(grounded_rose)
+            signal_av = stat.mean(streached_rose)
+            peak_av = stat.mean(streached_rose[self.structure.peak_indices])
+
+            ax[1].plot(self.structure.angles, streached_rose)
+            ax[1].plot(self.structure.angles[self.structure.peak_indices],
+                       streached_rose[self.structure.peak_indices], 'r+')
+            for p in self.structure.comp:
+                ax[1].scatter(self.structure.angles[p], streached_rose[p], marker='^', s=120)
+
+            ax[1].plot([self.structure.angles[0], self.structure.angles[-1]], [signal_av, signal_av])
+            ax[1].plot([self.structure.angles[0], self.structure.angles[-1]], [peak_av, peak_av])
+
+            ax[1].set_ylabel("Normalised orientation score")
+            ax[1].set_ylim(0.0, 1.0)
+            ax[1].set_xlabel("Orientation [rad]")
+
+            name1 = "Map"
+            name2 = "Unfolded FFT Spectrum"
+            fig.canvas.set_window_title("Map Quality assessment")
+            ax[0].set_title(name1)
+            ax[1].set_title(name2)
+
+            fig, ax = plt.subplots(nrows=1, ncols=1)
+            ax.plot(self.structure.angles, streached_rose)
+            ax.plot(self.structure.angles[self.structure.peak_indices],
+                    streached_rose[self.structure.peak_indices], 'r+')
+            for p in self.structure.comp:
+                ax.scatter(self.structure.angles[p], streached_rose[p], marker='^', s=120)
+
+            ax.plot([self.structure.angles[0], self.structure.angles[-1]], [signal_av, signal_av])
+            ax.plot([self.structure.angles[0], self.structure.angles[-1]], [peak_av, peak_av])
+
+            ax.set_ylabel("Normalised orientation score")
+            ax.set_ylim(0.0, 1.0)
+            ax.set_xlabel("Orientation [rad]")
+            import tikzplotlib
+
+            tikzplotlib.save(
+                "/home/tzkr/python_workspace/rose/experiments/general_map_evaluation/tikz_plots/" + name.replace(".png",
+                                                                                                                 ".tex"),
+                figure=fig)
+
             plt.show()
 
         if visualisation_flags["Simple Filtered Map"]:
@@ -463,5 +518,72 @@ class visualisation:
             ax.axis("off")
             name = "Short wall lines over original map"
             fig.canvas.set_window_title(name)
+            plt.show()
+
+        if visualisation_flags["evaluation output"]:
+            fig, ax = plt.subplots(nrows=2, ncols=2)
+            ax[0, 0].imshow(self.structure.binary_map, cmap="gray")
+            ax[0, 0].axis("off")
+            ax[0, 0].set_title("input padded map")
+
+            # grounded_rose = self.structure.pol_h - min(self.structure.pol_h)
+            # streached_rose = grounded_rose / max(grounded_rose)
+            # signal_av = stat.mean(streached_rose)
+            # peak_av = stat.mean(streached_rose[self.structure.peak_indices])
+            #
+            # ax[0,1].plot(self.structure.angles, streached_rose)
+            # ax[0,1].plot(self.structure.angles[self.structure.peak_indices],
+            #            streached_rose[self.structure.peak_indices], 'r+')
+            # for p in self.structure.comp:
+            #     ax[0,1].scatter(self.structure.angles[p], streached_rose[p], marker='^', s=120)
+            #
+            # ax[0,1].plot([self.structure.angles[0], self.structure.angles[-1]], [signal_av, signal_av])
+            # ax[0,1].plot([self.structure.angles[0], self.structure.angles[-1]], [peak_av, peak_av])
+            #
+            # ax[0,1].set_ylabel("Normalised orientation score")
+            # ax[0,1].set_ylim(0.0, 1.0)
+            # ax[0,1].set_xlabel("Orientation [rad]")
+            # ax[0,1].set_title("Unfolded FFT Spectrum")
+
+            x = np.arange(np.min(self.structure.pixel_quality_histogram["edges"]),
+                          np.max(self.structure.pixel_quality_histogram["edges"]),
+                          (np.max(self.structure.pixel_quality_histogram["edges"]) - np.min(
+                              self.structure.pixel_quality_histogram["edges"])) / 1000)
+
+            if self.structure.pixel_quality_gmm["means"][0] < self.structure.pixel_quality_gmm["means"][1]:
+                y_b = stats.norm.pdf(x, self.structure.pixel_quality_gmm["means"][0],
+                                     math.sqrt(self.structure.pixel_quality_gmm["covariances"][0])) * \
+                      self.structure.pixel_quality_gmm["weights"][0]
+                y_g = stats.norm.pdf(x, self.structure.pixel_quality_gmm["means"][1],
+                                     math.sqrt(self.structure.pixel_quality_gmm["covariances"][1])) * \
+                      self.structure.pixel_quality_gmm["weights"][1]
+            else:
+                y_g = stats.norm.pdf(x, self.structure.pixel_quality_gmm["means"][0],
+                                     math.sqrt(self.structure.pixel_quality_gmm["covariances"][0])) * \
+                      self.structure.pixel_quality_gmm["weights"][0]
+                y_b = stats.norm.pdf(x, self.structure.pixel_quality_gmm["means"][1],
+                                     math.sqrt(self.structure.pixel_quality_gmm["covariances"][1])) * \
+                      self.structure.pixel_quality_gmm["weights"][1]
+
+            ax[0, 1].bar(self.structure.pixel_quality_histogram["centers"],
+                         self.structure.pixel_quality_histogram["bins"],
+                         width=self.structure.pixel_quality_histogram["width"])
+            ax[0, 1].plot(x, y_b, 'r')
+            ax[0, 1].plot(x, y_g, 'g')
+            # ax.axvline(x=self.structure.cluster_quality_threshold, color='y')
+            ax[0, 1].axvline(x=self.structure.quality_threshold, color='y')
+            ax[0, 1].set_title("Score trehsold estiamtion")
+
+            ax[1, 0].imshow(np.abs(self.structure.map_scored_good), cmap="nipy_spectral")
+            ax[1, 0].axis("off")
+            ax[1, 0].set_title("Scored map")
+
+            ax[1, 1] = self.__show_patches(ax[1, 1])
+            ax[1, 1].set_title("Simple Filtered Map ({:.2f})".format(self.structure.quality_threshold))
+            ax[1, 1].axis("off")
+
+            fig, ax = plt.subplots(nrows=1, ncols=1)
+            ax.imshow(self.structure.analysed_map)
+
             plt.show()
         logging.debug("Visualisation generated in : %.2f s", time.time() - t)

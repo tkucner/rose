@@ -2,15 +2,12 @@ from __future__ import print_function
 
 import math
 import sys
-from statistics import mean
 
 import matplotlib.pyplot as plt
 import numpy as np
-import png
 from scipy.ndimage.interpolation import geometric_transform
 from scipy.signal import fftconvolve
-from shapely.geometry import LineString, Point
-from shapely.ops import nearest_points
+from shapely.geometry import LineString
 from skimage.draw import polygon
 
 
@@ -26,7 +23,6 @@ def is_between(a, b, c):
     if dotproduct > squaredlengthba:
         return False
     return True
-
 
 def cart2pol(x, y):
     rho = np.sqrt(x ** 2 + y ** 2)
@@ -205,7 +201,6 @@ def generate_mask(r, c, s):
 def proper_divs2(n):
     return {x for x in range(1, (n + 1) // 2 + 1) if n % x == 0 and n != x}
 
-
 def dot(v, w):
     x, y = v
     X, Y = w
@@ -278,7 +273,6 @@ def closest_point_on_line(start, end, pnt):
     nearest = add(nearest, start)
     return dist, nearest
 
-
 def segment_interesction(segment1, segment2):
     x, y = line_intersection(segment1, segment2)
     if is_between([segment1[0][0], segment1[0][1]], [segment1[1][0], segment1[1][1]], [x, y]):
@@ -318,10 +312,9 @@ def cetral_line(points):
     edges_1 = [LineString([points[0], points[1]]), LineString([points[2], points[3]])]
     edges_2 = [LineString([points[1], points[2]]), LineString([points[3], points[4]])]
     if edges_1[0].length < edges_2[0].length:
-        return edges_1[0].interpolate(0.5, normalized=True), edges_1[1].interpolate(0.5, normalized=True)
+        return (edges_1[0].interpolate(0.5, normalized=True), edges_1[1].interpolate(0.5, normalized=True))
     else:
-        return edges_2[0].interpolate(0.5, normalized=True), edges_2[1].interpolate(0.5, normalized=True)
-
+        return (edges_2[0].interpolate(0.5, normalized=True), edges_2[1].interpolate(0.5, normalized=True))
 
 def tuple_list_merger(l):
     skip_list = []
@@ -335,79 +328,3 @@ def tuple_list_merger(l):
     for r in remove_list:
         l.remove(r)
     return l
-
-
-def orthogonal_projection(lin, bounds):
-    points = [np.array([bounds[0], bounds[1]]), np.array([bounds[2], bounds[3]])]
-    lin[0] = np.array(lin[0])
-    lin[1] = np.array(lin[1])
-
-    ret = []
-
-    for point in points:
-        point = Point(point[0], point[1])
-        line = LineString([lin[0], lin[1]])
-
-        x = np.array(point.coords[0])
-
-        u = np.array(line.coords[0])
-        v = np.array(line.coords[len(line.coords) - 1])
-
-        n = v - u
-        n /= np.linalg.norm(n, 2)
-
-        P = Point(u + n * np.dot(x - u, n))
-        ret.append(P)
-        P = nearest_points(line, P)[0]
-        ret.append(P)
-
-    origin = [mean([p.x for p in ret]), mean([p.y for p in ret])]
-    refvec = [0, 1]
-
-    def clockwiseangle_and_distance(P):
-        # source: https://stackoverflow.com/a/41856340
-        # Lic: CC BY-SA 3.0
-        point = [P.x, P.y]
-        # Vector between point and the origin: v = p - o
-        vector = [point[0] - origin[0], point[1] - origin[1]]
-        # Length of vector: ||v||
-        lenvector = math.hypot(vector[0], vector[1])
-        # If length is zero there is no angle
-        if lenvector == 0:
-            return -math.pi, 0
-        # Normalize vector: v/||v||
-        normalized = [vector[0] / lenvector, vector[1] / lenvector]
-        dotprod = normalized[0] * refvec[0] + normalized[1] * refvec[1]  # x1*x2 + y1*y2
-        diffprod = refvec[1] * normalized[0] - refvec[0] * normalized[1]  # x1*y2 - y1*x2
-        angle = math.atan2(diffprod, dotprod)
-        # Negative angles represent counter-clockwise angles so we need to subtract them
-        # from 2*pi (360 degrees)
-        if angle < 0:
-            return 2 * math.pi + angle, lenvector
-        # I return first the angle because that's the primary sorting criterium
-        # but if two vectors have the same angle then the shorter distance should come first.
-        return angle, lenvector
-
-    ret = sorted(ret, key=clockwiseangle_and_distance)
-    return LineString(ret)
-
-
-def xy_to_coord(ix, iy):
-    coord = []
-    for x, y, in zip(ix, iy):
-        coord.append((x, y))
-    return coord
-
-
-def save_simple_map(name, map_to_save):
-    with open(name, "wb") as out:
-        png_writer = png.Writer(map_to_save.shape[1], map_to_save.shape[0], greyscale=True, alpha=False, bitdepth=1)
-        png_writer.write(out, map_to_save)
-
-
-def lin_eq(par, var):
-    res = []
-    for v in var:
-        res.append(v)
-        res.append((par['gamma'] - par['alpha'] * v) / par['beta'])
-    return res
