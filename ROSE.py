@@ -17,7 +17,7 @@ now = datetime.now()
 date_time = now.strftime("%Y_%m_%d_%H_%M_%S")
 logging.basicConfig(filename='logs/rose_' + date_time + '.log', level=logging.DEBUG,
                     format='%(levelname)s:%(module)s:%(lineno)d:%(message)s')
-logging.disabled = True
+logging.disable()
 #
 # if __name__ == "__main__":
 # parse input
