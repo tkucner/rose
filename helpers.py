@@ -24,6 +24,7 @@ def is_between(a, b, c):
         return False
     return True
 
+
 def cart2pol(x, y):
     rho = np.sqrt(x ** 2 + y ** 2)
     phi = np.arctan2(y, x)
@@ -126,10 +127,16 @@ def topolar(img, order=1):
     """
     Transform img to its polar coordinate representation.
 
-    order: int, default 1
-        Specify the spline interpolation order.
-        High orders may be slow for large images.
+    Specify the spline interpolation order.
+    High orders may be slow for large images.
+    :param img: input image
+    :type img: ndarray
+    :param order: spline interpolation order
+    :type order: int
+    :return: returns the converted image as well as vector of distances and angles
+    :rtype: ndarray, (ndarray,ndarray)
     """
+
     # max_radius is the length of the diagonal
     # from a corner to the mid-point of img.
     max_radius = 0.5 * np.linalg.norm(img.shape)
@@ -200,6 +207,7 @@ def generate_mask(r, c, s):
 
 def proper_divs2(n):
     return {x for x in range(1, (n + 1) // 2 + 1) if n % x == 0 and n != x}
+
 
 def dot(v, w):
     x, y = v
@@ -273,6 +281,7 @@ def closest_point_on_line(start, end, pnt):
     nearest = add(nearest, start)
     return dist, nearest
 
+
 def segment_interesction(segment1, segment2):
     x, y = line_intersection(segment1, segment2)
     if is_between([segment1[0][0], segment1[0][1]], [segment1[1][0], segment1[1][1]], [x, y]):
@@ -282,6 +291,15 @@ def segment_interesction(segment1, segment2):
 
 
 def shortest_distance_between_segements(s1, s2):
+    """
+
+    :param s1:
+    :type s1:
+    :param s2:
+    :type s2:
+    :return:
+    :rtype:
+    """
     x, y = segment_interesction([[s1[0], s1[1]], [s1[2], s1[3]]], [[s2[0], s2[1]], [s2[2], s2[3]]])
     dist = np.inf
 
@@ -315,6 +333,7 @@ def cetral_line(points):
         return (edges_1[0].interpolate(0.5, normalized=True), edges_1[1].interpolate(0.5, normalized=True))
     else:
         return (edges_2[0].interpolate(0.5, normalized=True), edges_2[1].interpolate(0.5, normalized=True))
+
 
 def tuple_list_merger(l):
     skip_list = []

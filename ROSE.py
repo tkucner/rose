@@ -10,17 +10,12 @@ from extended_validator import ExtendedValidator
 from fft_structure_extraction import FFTStructureExtraction as structure_extraction
 from visualisation import visualisation
 
-# Logging
-
 # time
 now = datetime.now()
 date_time = now.strftime("%Y_%m_%d_%H_%M_%S")
 logging.basicConfig(filename='logs/rose_' + date_time + '.log', level=logging.DEBUG,
                     format='%(levelname)s:%(module)s:%(lineno)d:%(message)s')
-logging.disable()
-#
-# if __name__ == "__main__":
-# parse input
+
 parser = argparse.ArgumentParser()
 parser.add_argument('config_file', help='JSON configuration file')
 parser.add_argument('schema_file', help='JSON schema file')
@@ -48,7 +43,6 @@ rose.process_map()
 filter_level = config["filtering_parameters"]["filter_level"]
 
 rose.simple_filter_map(filter_level)
-# rose.histogram_filtering()
 
 rose.generate_initial_hypothesis(type='simple', min_wall=5)
 

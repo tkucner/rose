@@ -9,9 +9,18 @@ class WallSegment(MultiPoint):
 
     @staticmethod
     def compute_corner(a, corner):
+        """
+        Args:
+            a:
+            corner:
+        """
         return [a[0] + corner[0], a[1] + corner[1]]
 
     def add_cells(self, cells):
+        """
+        Args:
+            cells:
+        """
         corners = np.array([[0.5, 0.5],
                             [-0.5, 0.5],
                             [-0.5, -0.5],

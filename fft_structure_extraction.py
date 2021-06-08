@@ -1,3 +1,4 @@
+import itertools
 import logging
 import math
 import time
@@ -18,12 +19,19 @@ from sklearn.cluster import DBSCAN
 from sklearn.neighbors import KernelDensity
 
 import helpers as he
-from wall_segment import WallSegment as ws
+from wall_segment import WallSegment as WS
 
 logging.getLogger("PIL.PngImagePlugin").setLevel(logging.WARNING)
 
 
 def generate_line_segments_per_direction(slices):
+    """
+
+    :param slices:
+    :type slices:
+    :return:
+    :rtype:
+    """
     slices_lines = []
     for s in slices:
         slices_lines.append([s[0][0][0], s[1][0][0], s[0][0][-1], s[1][0][-1]])
@@ -31,13 +39,23 @@ def generate_line_segments_per_direction(slices):
 
 
 def save_simple_map(name, map_to_save):
+    """
+Function simpy save map into gm format
+    :param name: Name of the file for the map to be saved
+    :type name: string
+    :param map_to_save: internal map representation
+    :type map_to_save: numpy 2d Array
+    """
     with open(name, "wb") as out:
         png_writer = png.Writer(map_to_save.shape[1], map_to_save.shape[0], greyscale=True, alpha=False, bitdepth=1)
         png_writer.write(out, map_to_save)
 
 
 class FFTStructureExtraction:
-    def __init__(self, grid_map, ang_tr=0.1, amp_tr=0.8, peak_height=0.5, par=50, smooth=False, sigma=3):
+    ####################################################################################################################
+    # Constructors
+    def __init__(self, grid_map, ang_tr=0.01, amp_tr=0.8, peak_height=0.5, par=50, smooth=False, sigma=3):
+
         self.clustering_v_labels = []
         self.slice_v_lines = []
         self.slice_h_lines = []
@@ -80,7 +98,6 @@ class FFTStructureExtraction:
         self.grid_map = []
         self.binary_map = None
         self.analysed_map = None
-        self.smooth = smooth
 
         self.pixel_quality_histogram = []
         self.pixel_quality_gmm = []
@@ -107,16 +124,27 @@ class FFTStructureExtraction:
 
         self.__load_map(grid_map)
 
-    ####################################################################################
+    ####################################################################################################################
     # Private methods
 
     def __load_map(self, grid_map):
-        ti = time.time()
-        if len(grid_map.shape) == 3:
+        """
+        Function reads input map and adjust it to requirements of the code. That is pads it to be square and converts it
+        to 2D map.
+        :param grid_map: input map
+        :type grid_map: ndarray
+        """
+        ti = time.time()  # logging time
+
+        if len(grid_map.shape) == 3:  # if map is multilayered keep only one
             grid_map = grid_map[:, :, 1]
+
+        # binarize the mpa
         thresh = threshold_yen(grid_map)
         self.binary_map = grid_map <= thresh
         self.binary_map = self.binary_map
+
+        # pad map to have even number of pixels in each dimension (DFT behaves better)
         if self.binary_map.shape[0] % 2 != 0:
             t = np.zeros((self.binary_map.shape[0] + 1, self.binary_map.shape[1]), dtype=bool)
             t[:-1, :] = self.binary_map
@@ -125,23 +153,114 @@ class FFTStructureExtraction:
             t = np.zeros((self.binary_map.shape[0], self.binary_map.shape[1] + 1), dtype=bool)
             t[:, :-1] = self.binary_map
             self.binary_map = t
-        # pad with zeros to square
+
+        # pad with zeros to square (easier to compute directions)
         square_map = np.zeros((np.max(self.binary_map.shape), np.max(self.binary_map.shape)), dtype=bool)
         square_map[:self.binary_map.shape[0], :self.binary_map.shape[1]] = self.binary_map
+
         self.binary_map = square_map
         self.analysed_map = self.binary_map.copy()
+
+        # logging
         logging.debug("Map loaded in %.2f s", time.time() - ti)
         logging.info("Map Shape: %d x %d", self.binary_map.shape[0], self.binary_map.shape[1])
 
     def __compute_fft(self):
-        ti = time.time()
+        """
+        Computes FFT image of self.binary_map and normalised (scaled 0-255) version of it.
+        """
+        ti = time.time()  # logging time
         self.ft_image = np.fft.fftshift(np.fft.fft2(self.binary_map * 1))
         self.norm_ft_image = (np.abs(self.ft_image) / np.max(np.abs(self.ft_image))) * 255.0
         self.norm_ft_image = self.norm_ft_image.astype(int)
 
+        # logging
         logging.debug("FFT computed in: %.2f s", time.time() - ti)
 
+    def __get_dominant_directions(self):
+        """
+        Detects peaks in unfolded FFT spectrum.
+        """
+        ti = time.time()  # logging time
+
+        # unfold spectrum
+        self.pol, (self.rads, self.angles) = he.topolar(self.norm_ft_image, order=3)
+
+        # concatenate three frequency images to prevent peak distoration on the fringes of the image
+        pol_l = self.pol.shape[1]
+        self.pol = np.concatenate((self.pol, self.pol[:, 1:], self.pol[:, 1:]), axis=1)
+        self.angles = np.concatenate(
+            (self.angles, self.angles[1:] + np.max(self.angles), self.angles[1:] + np.max(self.angles[1:] +
+                                                                                          np.max(self.angles))), axis=0)
+
+        # do not smooth the input image per line but smooth the resulting histogram
+
+        # if self.smooth:
+        #     self.angles = ndimage.gaussian_filter1d(self.angles, self.sigma)
+        #     self.pol = ndimage.gaussian_filter1d(self.pol, self.sigma)
+
+        self.pol_h = np.array([sum(x) for x in zip(*self.pol)])
+
+        # smooth the hisotgram
+        if self.smooth:
+            self.pol_h = ndimage.gaussian_filter1d(self.pol_h, self.sigma)
+
+        # performe peak detection
+        self.peak_indices, _ = signal.find_peaks(self.pol_h,
+                                                 prominence=(np.max(self.pol_h) - np.min(
+                                                     self.pol_h)) * self.peak_height)
+
+        # remove the padding from the frequnecy spectrum
+        self.pol = self.pol[:, 0:pol_l]
+        self.angles = self.angles[0:pol_l]
+        self.pol_h = self.pol_h[0:pol_l]
+        self.peak_indices = self.peak_indices[np.logical_and(self.peak_indices >= pol_l - 1,
+                                                             self.peak_indices < 2 * pol_l - 2)] - pol_l + 1
+
+        # FFT spectrum is symmetric. Thus there will be always two peaks corresponding to one single wall.
+        combinations = itertools.combinations(self.peak_indices, 2)
+        for c in combinations:
+            a = self.angles[c[0]]
+            b = self.angles[c[1]]
+            if math.isclose(np.pi - he.ang_dist(a, b), 0, abs_tol=self.ang_tr):
+                self.comp.append([c[0], c[1]])
+                logging.info("Found direction %.2f, %.2f", self.angles[c[0]] * 180.0 / np.pi,
+                             self.angles[c[1]] * 180.0 / np.pi)
+                self.dom_dirs.append([self.angles[c[0]], self.angles[c[1]]])
+        ###########################################################
+        # pairs = list()
+        # for aind in self.peak_indices:
+        #     for bind in self.peak_indices:
+        #         a = self.angles[aind]
+        #         b = self.angles[bind]
+        #         print(np.abs(np.pi - he.ang_dist(a, b)))
+        #         if math.isclose(np.pi - he.ang_dist(a, b), 0, abs_tol=self.ang_tr):
+        #             print(a,b)
+        #             pairs.append([aind, bind])
+        #
+        # if pairs:
+        #     pairs = np.array(pairs)
+        #     pairs = np.unique(np.sort(pairs), axis=0)
+        #
+        # amp = np.max(self.pol_h) - np.min(self.pol_h)
+        # self.comp = list()
+        # for p in pairs:
+        #     a = self.pol_h[p[0]]
+        #     b = self.pol_h[p[1]]
+        #     if np.abs(a - b) / amp < self.amp_tr:
+        #         self.comp.append(p)
+        logging.info("Number of directions: %d", len(self.comp))
+        logging.debug("Directions computed in : %.2f s", time.time() - ti)
+
+        # for p in self.comp:
+        #     logging.info("Found direction %.2f, %.2f", self.angles[p[0]] * 180.0 / np.pi,
+        #                  self.angles[p[1]] * 180.0 / np.pi)
+        #     self.dom_dirs.append([self.angles[p[0]], self.angles[p[1]]])
+
     def __generate_mask(self, x1_1, y1_1, x2_1, y2_1, x1_2, y1_2, x2_2, y2_2, y_org):
+        """
+
+        """
         mask_1 = np.zeros(self.norm_ft_image.shape, dtype=np.uint8)
         c_1 = np.array([y1_1, y2_1, self.norm_ft_image.shape[0], self.norm_ft_image.shape[0]])
         r_1 = np.array([x1_1, x2_1, self.norm_ft_image.shape[0], 0])
@@ -165,58 +284,13 @@ class FFTStructureExtraction:
         mask_l = np.logical_and(mask_1, mask_2)
         return mask_l
 
-    def __get_dominant_directions(self):
-        ti = time.time()
-        self.pol, (self.rads, self.angles) = he.topolar(self.norm_ft_image, order=3)
-        pol_l = self.pol.shape[1]
-        self.pol = np.concatenate((self.pol, self.pol[:, 1:], self.pol[:, 1:]), axis=1)
-        self.angles = np.concatenate(
-            (self.angles, self.angles[1:] + np.max(self.angles), self.angles[1:] + np.max(self.angles[1:] +
-                                                                                          np.max(self.angles))), axis=0)
-
-        if self.smooth:
-            self.angles = ndimage.gaussian_filter1d(self.angles, self.sigma)
-            self.pol = ndimage.gaussian_filter1d(self.pol, self.sigma)
-
-        self.pol_h = np.array([sum(x) for x in zip(*self.pol)])
-
-        self.peak_indices, _ = signal.find_peaks(self.pol_h,
-                                                 prominence=(np.max(self.pol_h) - np.min(
-                                                     self.pol_h)) * self.peak_height)
-
-        self.pol = self.pol[:, 0:pol_l]
-        self.angles = self.angles[0:pol_l]
-        self.pol_h = self.pol_h[0:pol_l]
-        self.peak_indices = self.peak_indices[np.logical_and(self.peak_indices >= pol_l - 1,
-                                                             self.peak_indices < 2 * pol_l - 2)] - pol_l + 1
-
-        pairs = list()
-        for aind in self.peak_indices:
-            for bind in self.peak_indices:
-                a = self.angles[aind]
-                b = self.angles[bind]
-                if np.abs(np.pi - he.ang_dist(a, b)) < self.ang_tr:
-                    pairs.append([aind, bind])
-
-        if pairs:
-            pairs = np.array(pairs)
-            pairs = np.unique(np.sort(pairs), axis=0)
-
-        amp = np.max(self.pol_h) - np.min(self.pol_h)
-        self.comp = list()
-        for p in pairs:
-            a = self.pol_h[p[0]]
-            b = self.pol_h[p[1]]
-            if np.abs(a - b) / amp < self.amp_tr:
-                self.comp.append(p)
-        logging.debug("Directions computed in : %.2f s", time.time() - ti)
-        logging.info("Number of directions: %d", len(self.comp))
-        for p in self.comp:
-            logging.info("Found direction %.2f, %.2f", self.angles[p[0]] * 180.0 / np.pi,
-                         self.angles[p[1]] * 180.0 / np.pi)
-            self.dom_dirs.append([self.angles[p[0]], self.angles[p[1]]])
+    ####################################################################################################################
+    # Public methods
 
     def process_map(self):
+        """
+
+        """
         self.__compute_fft()
         self.__get_dominant_directions()
 
@@ -347,6 +421,10 @@ class FFTStructureExtraction:
 
     @staticmethod
     def __get_gmm_threshold(values):
+        """
+        Args:
+            values:
+        """
         clf = mixture.GaussianMixture(n_components=2)
         clf.fit(values.ravel().reshape(-1, 1))
         gmm = {"means": clf.means_, "weights": clf.weights_, "covariances": clf.covariances_}
@@ -369,6 +447,10 @@ class FFTStructureExtraction:
 
     @staticmethod
     def __get_histogram(values):
+        """
+        Args:
+            values:
+        """
         bins, edges = np.histogram(values.ravel(), density=True)
         histogram = {"bins": bins, "edges": edges,
                      "centers": [(a + b) / 2 for a, b in zip(edges[:-1], edges[1:])],
@@ -376,6 +458,10 @@ class FFTStructureExtraction:
         return histogram
 
     def simple_filter_map(self, tr):
+        """
+        Args:
+            tr:
+        """
         ti = time.time()
         l_map = np.array(np.abs(self.map_scored_good) / np.max(np.abs(self.map_scored_good)))
         self.quality_threshold = tr
@@ -396,6 +482,15 @@ class FFTStructureExtraction:
 
     def __generate_initial_hypothesis_direction_with_kde(self, lines_long, max_len, bandwidth, cutoff_percent, cell_tr,
                                                          vert):
+        """
+        Args:
+            lines_long:
+            max_len:
+            bandwidth:
+            cutoff_percent:
+            cell_tr:
+            vert:
+        """
         d_row_ret = []
         slices_ids = []
         slices = []
@@ -498,6 +593,12 @@ class FFTStructureExtraction:
         return thickness_threshold
 
     def __get_slices_along_the_line(self, ccf, rrf, padding):
+        """
+        Args:
+            ccf:
+            rrf:
+            padding:
+        """
         row = self.analysed_map[ccf, rrf]
         row.shape = (row.shape[0], 1)
         if padding == 0:
@@ -526,6 +627,13 @@ class FFTStructureExtraction:
         return l_slice_ids, temp_row_full, temp_row_cut
 
     def __estimate_wall_thickness_in_direction(self, lines_long, max_len, padding, V):
+        """
+        Args:
+            lines_long:
+            max_len:
+            padding:
+            V:
+        """
         thickness = []
         for l in lines_long:
             for s in np.arange(-1 * max_len, max_len, 1):
@@ -546,6 +654,14 @@ class FFTStructureExtraction:
         return thickness
 
     def __generate_initial_hypothesis_direction_simple(self, lines_long, max_len, padding, cell_tr, vert):
+        """
+        Args:
+            lines_long:
+            max_len:
+            padding:
+            cell_tr:
+            vert:
+        """
         d_row_ret = []
         slices_ids = []
         slices = []
@@ -612,6 +728,10 @@ class FFTStructureExtraction:
                lines_hypothesis, kde_hypothesis, kde_hypothesis_cut, slices_dir
 
     def generate_initial_hypothesis(self, **kwargs):
+        """
+        Args:
+            **kwargs:
+        """
         if 'type' in kwargs:
             gen_type = kwargs["type"]
         else:
@@ -690,7 +810,7 @@ class FFTStructureExtraction:
 
         for dir in segments_in_directions:
             for c in dir:
-                local_segment = ws()
+                local_segment = WS()
                 local_segment.add_cells(c['cells'])
                 local_segment.id = c['id']
                 segments.append(local_segment)
@@ -729,14 +849,14 @@ class FFTStructureExtraction:
                 logging.debug("overlap to segment two ratio: %.2f", over.area / l[1].minimum_rotated_rectangle.area)
 
                 if over.area / l[0].minimum_rotated_rectangle.area > overlap_ratio:
-                    local_segment = ws()
+                    local_segment = WS()
                     local_segment.add_cells(l[0].cells + l[1].cells)
                     local_segment.id = l[1].id
                     done_segments.append(local_segment)
                     remove_list.append(l[0])
 
                 if over.area / l[1].minimum_rotated_rectangle.area > overlap_ratio:
-                    local_segment = ws()
+                    local_segment = WS()
                     local_segment.add_cells(l[0].cells + l[1].cells)
                     local_segment.id = l[0].id
                     done_segments.append(local_segment)
@@ -777,7 +897,7 @@ class FFTStructureExtraction:
                     for f in list(full_overlap):
                         cells_cumulative.extend(l[f].cells)
                         remove_list.append(l[f])
-                    local_segment = ws()
+                    local_segment = WS()
                     local_segment.id = l[list(full_overlap)[0]].id
                     local_segment.add_cells(cells_cumulative)
                     local_done_segments.append(local_segment)

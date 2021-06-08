@@ -1,5 +1,5 @@
 {
-  "input_map": "Maps/test_map.png",
+  "input_map": "test_map.png",
   "map_description": "map of real building from Freiburg",
   "peak_extraction_parameters": {
     "peak_height": 0.05,
@@ -10,12 +10,12 @@
     "filter_level": 0.18
   },
   "visualisation_flags": {
-    "Binary map": true,
+    "Binary map": false,
     "Unfolded FFT Spectrum": true,
-    "Map with directions": true,
-    "Map with walls": true,
-    "Wall lines from mbb": true,
-    "Map with slices": true,
-    "Map Scored Good": true
+    "Map with directions": false,
+    "Map with walls": false,
+    "Wall lines from mbb": false,
+    "Map with slices": false,
+    "Map Scored Good": false
   }
 }

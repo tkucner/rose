@@ -16,9 +16,17 @@ logging.getLogger('matplotlib.font_manager').setLevel(logging.WARNING)
 ###########################
 class visualisation:
     def __init__(self, structure):
+        """
+        Args:
+            structure:
+        """
         self.structure = structure
 
     def __show_patches(self, ax):
+        """
+        Args:
+            ax:
+        """
         ax.imshow(self.structure.binary_map, cmap="gray")
         non_zero_ind = np.nonzero(self.structure.analysed_map)
         for ind in zip(non_zero_ind[0], non_zero_ind[1]):
@@ -36,6 +44,12 @@ class visualisation:
 
     @staticmethod
     def __show_short_segments(ax, segments, segments_mbb_lines):
+        """
+        Args:
+            ax:
+            segments:
+            segments_mbb_lines:
+        """
         for local_segments, local_mbb_lines in zip(segments, segments_mbb_lines):
             for l_segment, l_mbb_lines in zip(local_segments, local_mbb_lines):
                 ax.plot(l_segment.minimal_bounding_box[:, 1], l_segment.minimal_bounding_box[:, 0], 'r')
@@ -47,6 +61,12 @@ class visualisation:
 
     @staticmethod
     def __show_long_segments(ax, segments, segments_mbb_lines):
+        """
+        Args:
+            ax:
+            segments:
+            segments_mbb_lines:
+        """
         for local_segments, local_mbb_lines in zip(segments, segments_mbb_lines):
             for l_segment, l_mbb_lines in zip(local_segments, local_mbb_lines):
                 ax.plot(l_segment.minimal_bounding_box[:, 1], l_segment.minimal_bounding_box[:, 0], 'r')
@@ -55,6 +75,11 @@ class visualisation:
         return ax
 
     def show(self, visualisation_flags, name=[]):
+        """
+        Args:
+            visualisation_flags:
+            name:
+        """
         t = time.time()
         if visualisation_flags["Binary map"]:
             fig, ax = plt.subplots(nrows=1, ncols=1)

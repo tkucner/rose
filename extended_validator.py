@@ -5,6 +5,11 @@ from jsonschema import Draft7Validator, validators, exceptions
 
 class ExtendedValidator:
     def __init__(self, jason_path, schema_path):
+        """
+        Args:
+            jason_path:
+            schema_path:
+        """
         self.my_schema = self.__load_json(schema_path)
         self.my_json = self.__load_json(jason_path)
 
@@ -21,6 +26,10 @@ class ExtendedValidator:
 
     @staticmethod
     def __extend_with_default(validator_class):
+        """
+        Args:
+            validator_class:
+        """
         validate_properties = validator_class.VALIDATORS["properties"]
 
         def set_defaults(validator, properties, instance, schema):
@@ -39,6 +48,10 @@ class ExtendedValidator:
 
     @staticmethod
     def __load_json(path):
+        """
+        Args:
+            path:
+        """
         with open(path, 'r') as f:
             my_json_file = json.load(f)
             return my_json_file
