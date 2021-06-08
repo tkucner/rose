@@ -48,6 +48,7 @@ rose.process_map()
 filter_level = config["filtering_parameters"]["filter_level"]
 
 rose.simple_filter_map(filter_level)
+# rose.histogram_filtering()
 
 rose.generate_initial_hypothesis(type='simple', min_wall=5)
 
