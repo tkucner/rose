@@ -192,13 +192,6 @@ class FFTStructureExtraction:
         self.angles = np.concatenate(
             (self.angles, self.angles[1:] + np.max(self.angles), self.angles[1:] + np.max(self.angles[1:] +
                                                                                           np.max(self.angles))), axis=0)
-
-        # do not smooth the input image per line but smooth the resulting histogram
-
-        # if self.smooth:
-        #     self.angles = ndimage.gaussian_filter1d(self.angles, self.sigma)
-        #     self.pol = ndimage.gaussian_filter1d(self.pol, self.sigma)
-
         self.pol_h = np.array([sum(x) for x in zip(*self.pol)])
 
         # smooth the hisotgram
@@ -227,35 +220,8 @@ class FFTStructureExtraction:
                 logging.info("Found direction %.2f, %.2f", self.angles[c[0]] * 180.0 / np.pi,
                              self.angles[c[1]] * 180.0 / np.pi)
                 self.dom_dirs.append([self.angles[c[0]], self.angles[c[1]]])
-        ###########################################################
-        # pairs = list()
-        # for aind in self.peak_indices:
-        #     for bind in self.peak_indices:
-        #         a = self.angles[aind]
-        #         b = self.angles[bind]
-        #         print(np.abs(np.pi - he.ang_dist(a, b)))
-        #         if math.isclose(np.pi - he.ang_dist(a, b), 0, abs_tol=self.ang_tr):
-        #             print(a,b)
-        #             pairs.append([aind, bind])
-        #
-        # if pairs:
-        #     pairs = np.array(pairs)
-        #     pairs = np.unique(np.sort(pairs), axis=0)
-        #
-        # amp = np.max(self.pol_h) - np.min(self.pol_h)
-        # self.comp = list()
-        # for p in pairs:
-        #     a = self.pol_h[p[0]]
-        #     b = self.pol_h[p[1]]
-        #     if np.abs(a - b) / amp < self.amp_tr:
-        #         self.comp.append(p)
         logging.info("Number of directions: %d", len(self.comp))
         logging.debug("Directions computed in : %.2f s", time.time() - ti)
-
-        # for p in self.comp:
-        #     logging.info("Found direction %.2f, %.2f", self.angles[p[0]] * 180.0 / np.pi,
-        #                  self.angles[p[1]] * 180.0 / np.pi)
-        #     self.dom_dirs.append([self.angles[p[0]], self.angles[p[1]]])
 
     def __generate_mask(self, x1_1, y1_1, x2_1, y2_1, x1_2, y1_2, x2_2, y2_2, y_org):
         """
