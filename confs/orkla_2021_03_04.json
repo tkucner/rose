@@ -10,15 +10,16 @@
     "filter_level": 0.18
   },
   "visualisation_flags": {
-    "Binary map": false,
+    "Binary map": true,
     "Unfolded FFT Spectrum": false,
-    "Map with directions": false,
-    "Map with walls": false,
-    "Wall lines from mbb": false,
-    "Short wall lines from mbb": false,
-    "Short wall lines over original map": false,
-    "Map with slices": false,
+    "Map with directions": true,
+    "Map with walls": true,
+    "Wall lines from mbb": true,
+    "Short wall lines from mbb": true,
+    "Short wall lines over original map": true,
+    "Map with slices": true,
     "Map Scored Good": false,
-    "evaluation output": false
+    "evaluation output": false,
+    "Raw line segments": true
   }
 }
