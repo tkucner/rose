@@ -8,6 +8,8 @@ import png
 # from scipy.signal import find_peaks
 import scipy.signal as signal
 import scipy.stats as stats
+import shapely.affinity as af
+import shapely.geometry as sg
 import skimage.draw as sk_draw
 from GridMapDecompose import segment_handling as sh
 from scipy import ndimage
@@ -49,6 +51,44 @@ Function simpy save map into gm format
     with open(name, "wb") as out:
         png_writer = png.Writer(map_to_save.shape[1], map_to_save.shape[0], greyscale=True, alpha=False, bitdepth=1)
         png_writer.write(out, map_to_save)
+
+
+class SimpleMask:
+    def __init__(self, orientations=None, size=None, factor=None):
+        if factor is None:
+            factor = []
+        if size is None:
+            size = []
+        if orientations is None:
+            orientations = []
+
+        self.orientations = orientations
+        self.size = size
+        self.factor = factor
+
+    def __generate_line(self, orientation):
+        line = sg.LineString([(0, 0), (0, 2 * self.size)])
+        central_lne = af.translate(af.rotate(line, orientation, use_radians=True), self.size / 2, -self.size / 2)
+        return central_lne
+
+    def __raster_line(self, line):
+        cells = []
+        for v in range(0, self.size + 1):
+            inter = line.intersection(sg.asLineString([(0, v), (self.size, v)]))
+            if not inter.is_empty:
+                cells.append([int(inter.coords[0][0]), int(inter.coords[0][1])])
+                cells.append([int(inter.coords[0][0]), int(inter.coords[0][1]) - 1])
+
+        for h in range(0, self.size + 1):
+            inter = line.intersection(sg.asLineString([(h, 0), (h, self.size)]))
+            if not inter.is_empty:
+                cells.append([int(inter.coords[0][0]), int(inter.coords[0][1])])
+                cells.append([int(inter.coords[0][0]) - 1, int(inter.coords[0][1])])
+
+        cells.sort()
+        cells = list(num for num, _ in itertools.groupby(cells))
+
+        return cells
 
 
 class FFTStructureExtraction:
