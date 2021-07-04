@@ -53,48 +53,47 @@ Function simpy save map into gm format
         png_writer.write(out, map_to_save)
 
 
-class SimpleMask:
-    def __init__(self, orientations=None, size=None, factor=None):
-        if factor is None:
-            factor = []
-        if size is None:
-            size = []
-        if orientations is None:
-            orientations = []
+def get_mask(orientations, size, factor):
+    intersections = []
+    cells = []
+    lines = []
+    lines_vis = []
+    base_line = sg.LineString([(0, 0), (0, 2 * size)])
 
-        self.orientations = orientations
-        self.size = size
-        self.factor = factor
-
-    def __generate_line(self, orientation):
-        line = sg.LineString([(0, 0), (0, 2 * self.size)])
-        central_lne = af.translate(af.rotate(line, orientation, use_radians=True), self.size / 2, -self.size / 2)
-        return central_lne
-
-    def __raster_line(self, line):
-        cells = []
-        for v in range(0, self.size + 1):
-            inter = line.intersection(sg.asLineString([(0, v), (self.size, v)]))
+    for orientation in orientations:
+        line = af.translate(af.rotate(base_line, orientation, use_radians=True), size / 2, -size / 2)
+        lines.append(line)
+        lines_vis.append([line.coords[0][0], line.coords[0][1], line.coords[1][0], line.coords[1][1]])
+        for v in range(0, size + 1):
+            inter = line.intersection(sg.asLineString([(0, v), (size, v)]))
             if not inter.is_empty:
+                intersections.append(inter)
                 cells.append([int(inter.coords[0][0]), int(inter.coords[0][1])])
                 cells.append([int(inter.coords[0][0]), int(inter.coords[0][1]) - 1])
-
-        for h in range(0, self.size + 1):
-            inter = line.intersection(sg.asLineString([(h, 0), (h, self.size)]))
+        for h in range(0, size + 1):
+            inter = line.intersection(sg.asLineString([(h, 0), (h, size)]))
             if not inter.is_empty:
+                intersections.append(inter)
                 cells.append([int(inter.coords[0][0]), int(inter.coords[0][1])])
                 cells.append([int(inter.coords[0][0]) - 1, int(inter.coords[0][1])])
 
-        cells.sort()
-        cells = list(num for num, _ in itertools.groupby(cells))
+    cells.sort()
+    cells = list(num for num, _ in itertools.groupby(cells))
 
-        return cells
+    mask = np.zeros((size, size))
+    for c in cells:
+        if 0 <= c[0] < size and 0 <= c[1] < size:
+            mask[c[1], c[0]] = 1
+    for _ in range(factor):
+        mask = ndimage.binary_dilation(mask).astype(mask.dtype)
+
+    return np.flipud(mask), lines_vis
 
 
 class FFTStructureExtraction:
     ####################################################################################################################
     # Constructors
-    def __init__(self, grid_map, ang_tr=0.01, amp_tr=0.8, peak_height=0.5, par=50, smooth=False, sigma=3):
+    def __init__(self, grid_map, ang_tr=0.01, amp_tr=0.8, peak_height=0.5, par=1, smooth=False, sigma=3):
 
         self.clustering_v_labels = []
         self.slice_v_lines = []
@@ -263,32 +262,32 @@ class FFTStructureExtraction:
         logging.info("Number of directions: %d", len(self.comp))
         logging.debug("Directions computed in : %.2f s", time.time() - ti)
 
-    def __generate_mask(self, x1_1, y1_1, x2_1, y2_1, x1_2, y1_2, x2_2, y2_2, y_org):
-        """
-
-        """
-        mask_1 = np.zeros(self.norm_ft_image.shape, dtype=np.uint8)
-        c_1 = np.array([y1_1, y2_1, self.norm_ft_image.shape[0], self.norm_ft_image.shape[0]])
-        r_1 = np.array([x1_1, x2_1, self.norm_ft_image.shape[0], 0])
-        if np.abs(y_org) > 3 * np.max(self.binary_map.shape):
-            c_1 = np.array([y1_1, y2_1, self.norm_ft_image.shape[0], 0])
-            r_1 = np.array([x1_1, x2_1, 0, 0])
-        rr, cc = he.generate_mask(r_1, c_1, self.norm_ft_image.shape)
-        mask_1[rr, cc] = 1
-        mask_1 = np.flipud(mask_1)
-
-        mask_2 = np.zeros(self.norm_ft_image.shape, dtype=np.uint8)
-        c_2 = np.array([y1_2, y2_2, 0, 0])
-        r_2 = np.array([x1_2, x2_2, self.norm_ft_image.shape[0], 0])
-        if np.abs(y_org) > 3 * np.max(self.binary_map.shape):
-            c_2 = np.array([y1_2, y2_2, self.norm_ft_image.shape[0], 0])
-            r_2 = np.array([x1_2, x2_2, self.norm_ft_image.shape[0], self.norm_ft_image.shape[0]])
-        rr, cc = he.generate_mask(r_2, c_2, self.norm_ft_image.shape)
-        mask_2[rr, cc] = 1
-        mask_2 = np.flipud(mask_2)
-
-        mask_l = np.logical_and(mask_1, mask_2)
-        return mask_l
+    # def __generate_mask(self, x1_1, y1_1, x2_1, y2_1, x1_2, y1_2, x2_2, y2_2, y_org):
+    #     """
+    #
+    #     """
+    #     mask_1 = np.zeros(self.norm_ft_image.shape, dtype=np.uint8)
+    #     c_1 = np.array([y1_1, y2_1, self.norm_ft_image.shape[0], self.norm_ft_image.shape[0]])
+    #     r_1 = np.array([x1_1, x2_1, self.norm_ft_image.shape[0], 0])
+    #     if np.abs(y_org) > 3 * np.max(self.binary_map.shape):
+    #         c_1 = np.array([y1_1, y2_1, self.norm_ft_image.shape[0], 0])
+    #         r_1 = np.array([x1_1, x2_1, 0, 0])
+    #     rr, cc = he.generate_mask(r_1, c_1, self.norm_ft_image.shape)
+    #     mask_1[rr, cc] = 1
+    #     mask_1 = np.flipud(mask_1)
+    #
+    #     mask_2 = np.zeros(self.norm_ft_image.shape, dtype=np.uint8)
+    #     c_2 = np.array([y1_2, y2_2, 0, 0])
+    #     r_2 = np.array([x1_2, x2_2, self.norm_ft_image.shape[0], 0])
+    #     if np.abs(y_org) > 3 * np.max(self.binary_map.shape):
+    #         c_2 = np.array([y1_2, y2_2, self.norm_ft_image.shape[0], 0])
+    #         r_2 = np.array([x1_2, x2_2, self.norm_ft_image.shape[0], self.norm_ft_image.shape[0]])
+    #     rr, cc = he.generate_mask(r_2, c_2, self.norm_ft_image.shape)
+    #     mask_2[rr, cc] = 1
+    #     mask_2 = np.flipud(mask_2)
+    #
+    #     mask_l = np.logical_and(mask_1, mask_2)
+    #     return mask_l
 
     ####################################################################################################################
     # Public methods
@@ -304,126 +303,137 @@ class FFTStructureExtraction:
         if not self.comp:
             pass
         else:
-            diag = 10
-            mask_all = np.zeros(self.norm_ft_image.shape)
-
-            min_l = (self.binary_map.shape[0] if self.binary_map.shape[0] < self.binary_map.shape[1] else
-                     self.binary_map.shape[1]) / 2 - (self.binary_map.shape[0] if self.binary_map.shape[0] >
-                                                                                  self.binary_map.shape[1] else
-                                                      self.binary_map.shape[1])
-            max_l = (self.binary_map.shape[0] if self.binary_map.shape[0] > self.binary_map.shape[1] else
-                     self.binary_map.shape[1]) / 2 + (self.binary_map.shape[0] if self.binary_map.shape[0] >
-                                                                                  self.binary_map.shape[1] else
-                                                      self.binary_map.shape[1])
+            angles = []
             for p in self.comp:
-                x1, y1 = he.pol2cart(diag, self.angles[p[0]] + np.pi / 2.0)
-                x2, y2 = he.pol2cart(diag, self.angles[p[1]] + np.pi / 2.0)
-
-                x1 = x1 + self.binary_map.shape[0] / 2.0
-                x2 = x2 + self.binary_map.shape[0] / 2.0
-
-                y1 = y1 + self.binary_map.shape[1] / 2.0
-                y2 = y2 + self.binary_map.shape[1] / 2.0
-
-                a = y2 - y1
-                b = x1 - x2
-                c = a * x1 + b * y1
-                c1 = c + self.par
-                c2 = c - self.par
-
-                ######
-                X1_l = min_l
-                Y1_l = (c - a * X1_l) / b
-                X2_l = max_l
-                Y2_l = (c - a * X2_l) / b
-                ######
-                X1 = 0
-                Y1 = (c - a * X1) / b
-                X2 = self.binary_map.shape[0]
-                Y2 = (c - a * X2) / b
-                ###
-                X1_1 = 0
-                Y1_1 = (c1 - a * X1_1) / b
-                X2_1 = self.binary_map.shape[0]
-                Y2_1 = (c1 - a * X2_1) / b
-                ###
-                X1_2 = 0
-                Y1_2 = (c2 - a * X1_2) / b
-                X2_2 = self.binary_map.shape[0]
-                Y2_2 = (c2 - a * X2_2) / b
-                ###
-                Y_org = Y1
-                if np.abs(Y_org) > 3 * np.max(self.binary_map.shape):
-                    ###
-                    Y1_l = min_l
-                    X1_l = (c - b * Y1_l) / a
-                    Y2_l = max_l
-                    X2_l = (c - b * Y2_l) / a
-                    ###
-                    Y1 = 0
-                    X1 = (c - b * Y1) / a
-                    Y2 = self.binary_map.shape[1]
-                    X2 = (c - b * Y2) / a
-                    ###
-                    Y1_1 = 0
-                    X1_1 = (c1 - b * Y1_1) / a
-                    Y2_1 = self.binary_map.shape[1]
-                    X2_1 = (c1 - b * Y2_1) / a
-                    ###
-                    Y1_2 = 0
-                    X1_2 = (c2 - b * Y1_2) / a
-                    Y2_2 = self.binary_map.shape[1]
-                    X2_2 = (c2 - b * Y2_2) / a
-                    ###
-                if max(X1_l, X2_l) < max(Y1_l, Y2_l):
-                    self.lines_long_v.append([X1_l, Y1_l, X2_l, Y2_l])
-                else:
-                    self.lines_long_h.append([X1_l, Y1_l, X2_l, Y2_l])
-
-                self.lines.append([X1, Y1, X2, Y2])
-                mask_l = self.__generate_mask(X1_1, Y1_1, X2_1, Y2_1, X1_2, Y1_2, X2_2, Y2_2, Y_org)
-                if not np.any(mask_l == 1):
-                    mask_l = self.__generate_mask(X1_2, Y1_2, X2_2, Y2_2, X1_1, Y1_1, X2_1, Y2_1, Y_org)
-
-                self.part_mask.append(mask_l)
-                l_mask_ftimage = self.ft_image * mask_l
-                l_mask_iftimage = np.fft.ifft2(l_mask_ftimage)
-                self.part_reconstruction.append(np.abs(l_mask_iftimage))
-                l_map_scored_good = np.abs(l_mask_iftimage) * (self.binary_map * 1)
-                self.part_score.append(l_map_scored_good)
-
-                mask_all = np.logical_or(mask_all, mask_l)
-                # mask_ftimage_l = self.ft_image * mask_l
-                # mask_iftimage_l = np.fft.ifft2(mask_ftimage_l)
-                # sm_l = np.abs(mask_iftimage_l) * (self.binary_map * 1)
-                # sm_l = sm_l / np.max(sm_l)
-
-            mask_all = np.flipud(mask_all)
-            mask_all_inv = np.ones(mask_all.shape)
-            mask_all_inv[mask_all == 1] = 0
-            logging.debug("Map scored in : %.2f s", time.time() - ti)
-
-            #################
-            # legacy experiemntation stuff let us see what we need to keep
-            #################
-
+                angles.append((self.angles[p[0]] + self.angles[p[1]] - np.pi) / 2)
+            mask_all, self.lines = get_mask(angles, self.binary_map.shape[0], self.par)
             self.mask_ft_image = self.ft_image * mask_all
             mask_iftimage = np.fft.ifft2(self.mask_ft_image)
-
-            # self.mask_inv_ft_image = self.ft_image * mask_all_inv
-            # mask_inv_iftimage = np.fft.ifft2(self.mask_inv_ft_image)
-
             self.map_scored_good = np.abs(mask_iftimage) * (self.binary_map * 1)
-            # self.map_scored_bad = np.abs(mask_inv_iftimage) * (self.binary_map * 1)
-            #
-            # self.map_scored_diff = self.map_scored_good - self.map_scored_bad
-            #
-            # self.map_split_good_t = np.zeros(self.binary_map.shape)
-            # self.map_split_good_t[self.map_scored_good > self.map_scored_bad] = 1
-            # self.map_split_good = np.zeros(self.binary_map.shape)
-            # self.map_split_good[self.binary_map] = self.map_split_good_t[self.binary_map]
-            #
-            # self.ft_image_split = np.fft.fftshift(np.fft.fft2(self.map_split_good))
+
+            # if not self.comp:
+        #     pass
+        # else:
+        #     diag = 10
+        #     mask_all = np.zeros(self.norm_ft_image.shape)
+        #
+        #     min_l = (self.binary_map.shape[0] if self.binary_map.shape[0] < self.binary_map.shape[1] else
+        #              self.binary_map.shape[1]) / 2 - (self.binary_map.shape[0] if self.binary_map.shape[0] >
+        #                                                                           self.binary_map.shape[1] else
+        #                                               self.binary_map.shape[1])
+        #     max_l = (self.binary_map.shape[0] if self.binary_map.shape[0] > self.binary_map.shape[1] else
+        #              self.binary_map.shape[1]) / 2 + (self.binary_map.shape[0] if self.binary_map.shape[0] >
+        #                                                                           self.binary_map.shape[1] else
+        #                                               self.binary_map.shape[1])
+        #     for p in self.comp:
+        #         x1, y1 = he.pol2cart(diag, self.angles[p[0]] + np.pi / 2.0)
+        #         x2, y2 = he.pol2cart(diag, self.angles[p[1]] + np.pi / 2.0)
+        #
+        #         x1 = x1 + self.binary_map.shape[0] / 2.0
+        #         x2 = x2 + self.binary_map.shape[0] / 2.0
+        #
+        #         y1 = y1 + self.binary_map.shape[1] / 2.0
+        #         y2 = y2 + self.binary_map.shape[1] / 2.0
+        #
+        #         a = y2 - y1
+        #         b = x1 - x2
+        #         c = a * x1 + b * y1
+        #         c1 = c + self.par
+        #         c2 = c - self.par
+        #
+        #         ######
+        #         X1_l = min_l
+        #         Y1_l = (c - a * X1_l) / b
+        #         X2_l = max_l
+        #         Y2_l = (c - a * X2_l) / b
+        #         ######
+        #         X1 = 0
+        #         Y1 = (c - a * X1) / b
+        #         X2 = self.binary_map.shape[0]
+        #         Y2 = (c - a * X2) / b
+        #         ###
+        #         X1_1 = 0
+        #         Y1_1 = (c1 - a * X1_1) / b
+        #         X2_1 = self.binary_map.shape[0]
+        #         Y2_1 = (c1 - a * X2_1) / b
+        #         ###
+        #         X1_2 = 0
+        #         Y1_2 = (c2 - a * X1_2) / b
+        #         X2_2 = self.binary_map.shape[0]
+        #         Y2_2 = (c2 - a * X2_2) / b
+        #         ###
+        #         Y_org = Y1
+        #         if np.abs(Y_org) > 3 * np.max(self.binary_map.shape):
+        #             ###
+        #             Y1_l = min_l
+        #             X1_l = (c - b * Y1_l) / a
+        #             Y2_l = max_l
+        #             X2_l = (c - b * Y2_l) / a
+        #             ###
+        #             Y1 = 0
+        #             X1 = (c - b * Y1) / a
+        #             Y2 = self.binary_map.shape[1]
+        #             X2 = (c - b * Y2) / a
+        #             ###
+        #             Y1_1 = 0
+        #             X1_1 = (c1 - b * Y1_1) / a
+        #             Y2_1 = self.binary_map.shape[1]
+        #             X2_1 = (c1 - b * Y2_1) / a
+        #             ###
+        #             Y1_2 = 0
+        #             X1_2 = (c2 - b * Y1_2) / a
+        #             Y2_2 = self.binary_map.shape[1]
+        #             X2_2 = (c2 - b * Y2_2) / a
+        #             ###
+        #         if max(X1_l, X2_l) < max(Y1_l, Y2_l):
+        #             self.lines_long_v.append([X1_l, Y1_l, X2_l, Y2_l])
+        #         else:
+        #             self.lines_long_h.append([X1_l, Y1_l, X2_l, Y2_l])
+        #
+        #         self.lines.append([X1, Y1, X2, Y2])
+        #         mask_l = self.__generate_mask(X1_1, Y1_1, X2_1, Y2_1, X1_2, Y1_2, X2_2, Y2_2, Y_org)
+        #         if not np.any(mask_l == 1):
+        #             mask_l = self.__generate_mask(X1_2, Y1_2, X2_2, Y2_2, X1_1, Y1_1, X2_1, Y2_1, Y_org)
+        #
+        #         self.part_mask.append(mask_l)
+        #         l_mask_ftimage = self.ft_image * mask_l
+        #         l_mask_iftimage = np.fft.ifft2(l_mask_ftimage)
+        #         self.part_reconstruction.append(np.abs(l_mask_iftimage))
+        #         l_map_scored_good = np.abs(l_mask_iftimage) * (self.binary_map * 1)
+        #         self.part_score.append(l_map_scored_good)
+        #
+        #         mask_all = np.logical_or(mask_all, mask_l)
+        #         # mask_ftimage_l = self.ft_image * mask_l
+        #         # mask_iftimage_l = np.fft.ifft2(mask_ftimage_l)
+        #         # sm_l = np.abs(mask_iftimage_l) * (self.binary_map * 1)
+        #         # sm_l = sm_l / np.max(sm_l)
+        #
+        #     mask_all = np.flipud(mask_all)
+        #     mask_all_inv = np.ones(mask_all.shape)
+        #     mask_all_inv[mask_all == 1] = 0
+        #     logging.debug("Map scored in : %.2f s", time.time() - ti)
+        #
+        #     #################
+        #     # legacy experiemntation stuff let us see what we need to keep
+        #     #################
+        #
+        #     self.mask_ft_image = self.ft_image * mask_all
+        #     mask_iftimage = np.fft.ifft2(self.mask_ft_image)
+        #
+        #     # self.mask_inv_ft_image = self.ft_image * mask_all_inv
+        #     # mask_inv_iftimage = np.fft.ifft2(self.mask_inv_ft_image)
+        #
+        #     self.map_scored_good = np.abs(mask_iftimage) * (self.binary_map * 1)
+        #     # self.map_scored_bad = np.abs(mask_inv_iftimage) * (self.binary_map * 1)
+        #     #
+        #     # self.map_scored_diff = self.map_scored_good - self.map_scored_bad
+        #     #
+        #     # self.map_split_good_t = np.zeros(self.binary_map.shape)
+        #     # self.map_split_good_t[self.map_scored_good > self.map_scored_bad] = 1
+        #     # self.map_split_good = np.zeros(self.binary_map.shape)
+        #     # self.map_split_good[self.binary_map] = self.map_split_good_t[self.binary_map]
+        #     #
+        #     # self.ft_image_split = np.fft.fftshift(np.fft.fft2(self.map_split_good))
 
     @staticmethod
     def __get_gmm_threshold(values):

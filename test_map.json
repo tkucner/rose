@@ -12,10 +12,12 @@
   "visualisation_flags": {
     "Binary map": false,
     "Unfolded FFT Spectrum": true,
-    "Map with directions": false,
+    "Map with directions": true,
     "Map with walls": false,
     "Wall lines from mbb": false,
     "Map with slices": false,
-    "Map Scored Good": false
+    "Map Scored Good": true,
+    "FFT spectrum with directions": true,
+    "FFT Spectrum Signal": true
   }
 }
