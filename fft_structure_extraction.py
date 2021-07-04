@@ -225,7 +225,7 @@ class FFTStructureExtraction:
         # unfold spectrum
         self.pol, (self.rads, self.angles) = he.topolar(self.norm_ft_image, order=3)
 
-        # concatenate three frequency images to prevent peak distoration on the fringes of the image
+        # concatenate three frequency images to prevent peak distortion on the fringes of the image
         pol_l = self.pol.shape[1]
         self.pol = np.concatenate((self.pol, self.pol[:, 1:], self.pol[:, 1:]), axis=1)
         self.angles = np.concatenate(
