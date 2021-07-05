@@ -150,49 +150,49 @@ class FFTFiltering:
     # def __init__(self, grid_map, ang_tr=0.01, peak_height=0.5, par=1, smooth=False, sigma=3):
     def __init__(self, grid_map, **kwargs):
 
+        self.grid_map = grid_map
         self.lines = []
-        self.quality_threshold = []
+        self.quality_threshold = kwargs["quality_threshold"]
         self.ang_tr = kwargs["angle_threshold"]
         self.peak_height = kwargs["peak_height"]
         self.par = kwargs["window_width"]
         self.smooth = kwargs["smooth_histogram"]
         self.sigma = kwargs["sigma"]
-        self.grid_map = []
         self.binary_map = None
         self.analysed_map = None
 
         self.pixel_quality_histogram = []
         self.pixel_quality_gmm = []
 
-        self.norm_ft_image = None
-        self.pol = []
+        self.normalised_frequency_image = None
+        self.polar_frequency_image = []
         self.angles = []
-        self.pol_h = []
+        self.polar_amplitude_histogram = []
         self.peak_indices = []
-        self.rads = []
-        self.comp = []
-        self.mask_ft_image = []
+        self.discretised_radius = []
+        self.peak_pairs = []
+        self.filtered_frequency_image = None
         self.map_scored_good = []
+        self.filter = []
 
-        self.ft_image = []
-        self.dom_dirs = []
+        self.frequency_image = []
+        self.dominant_directions = []
 
-        self.__load_map(grid_map)
+        self.__load_map()
 
-    def __load_map(self, grid_map):
+    def __load_map(self):
         """
         Function reads input map and adjust it to requirements of the code. That is pads it to be square and converts it
         to 2D map.
-        :param grid_map: input map
-        :type grid_map: ndarray
+
         """
         ti = time.time()  # logging time
 
-        if len(grid_map.shape) == 3:  # if map is multilayered keep only one
-            grid_map = grid_map[:, :, 1]
-
-        # binarize the mpa
-        self.binary_map = binaryze_map(grid_map)
+        if len(self.grid_map.shape) == 3:  # if map is multilayered keep only one
+            # binarize the map
+            self.binary_map = binaryze_map(self.grid_map[:, :, 1])
+        else:
+            self.binary_map = binaryze_map(self.grid_map)
 
         # thresh = threshold_yen(grid_map)
         # self.binary_map = grid_map <= thresh
@@ -224,9 +224,9 @@ class FFTFiltering:
         Computes FFT image of self.binary_map and normalised (scaled 0-255) version of it.
         """
         ti = time.time()  # logging time
-        self.ft_image = np.fft.fftshift(np.fft.fft2(self.binary_map * 1))
-        self.norm_ft_image = (np.abs(self.ft_image) / np.max(np.abs(self.ft_image))) * 255.0
-        self.norm_ft_image = self.norm_ft_image.astype(int)
+        self.frequency_image = np.fft.fftshift(np.fft.fft2(self.binary_map * 1))
+        self.normalised_frequency_image = (np.abs(self.frequency_image) / np.max(np.abs(self.frequency_image))) * 255.0
+        self.normalised_frequency_image = self.normalised_frequency_image.astype(int)
 
         # logging
         logging.debug("FFT computed in: %.2f s", time.time() - ti)
@@ -238,29 +238,31 @@ class FFTFiltering:
         ti = time.time()  # logging time
 
         # unfold spectrum
-        self.pol, (self.rads, self.angles) = topolar(self.norm_ft_image, order=3)
+        self.polar_frequency_image, (self.discretised_radius, self.angles) = topolar(self.normalised_frequency_image,
+                                                                                     order=3)
 
         # concatenate three frequency images to prevent peak distortion on the fringes of the image
-        pol_l = self.pol.shape[1]
-        self.pol = np.concatenate((self.pol, self.pol[:, 1:], self.pol[:, 1:]), axis=1)
+        pol_l = self.polar_frequency_image.shape[1]
+        self.polar_frequency_image = np.concatenate(
+            (self.polar_frequency_image, self.polar_frequency_image[:, 1:], self.polar_frequency_image[:, 1:]), axis=1)
         self.angles = np.concatenate(
             (self.angles, self.angles[1:] + np.max(self.angles), self.angles[1:] + np.max(self.angles[1:] +
                                                                                           np.max(self.angles))), axis=0)
-        self.pol_h = np.array([sum(x) for x in zip(*self.pol)])
+        self.polar_amplitude_histogram = np.array([sum(x) for x in zip(*self.polar_frequency_image)])
 
         # smooth the hisotgram
         if self.smooth:
-            self.pol_h = ndimage.gaussian_filter1d(self.pol_h, self.sigma)
+            self.polar_amplitude_histogram = ndimage.gaussian_filter1d(self.polar_amplitude_histogram, self.sigma)
 
         # perform peak detection
-        self.peak_indices, _ = signal.find_peaks(self.pol_h,
-                                                 prominence=(np.max(self.pol_h) - np.min(
-                                                     self.pol_h)) * self.peak_height)
+        self.peak_indices, _ = signal.find_peaks(self.polar_amplitude_histogram,
+                                                 prominence=(np.max(self.polar_amplitude_histogram) - np.min(
+                                                     self.polar_amplitude_histogram)) * self.peak_height)
 
         # remove the padding from the frequnecy spectrum
-        self.pol = self.pol[:, 0:pol_l]
+        self.polar_frequency_image = self.polar_frequency_image[:, 0:pol_l]
         self.angles = self.angles[0:pol_l]
-        self.pol_h = self.pol_h[0:pol_l]
+        self.polar_amplitude_histogram = self.polar_amplitude_histogram[0:pol_l]
         self.peak_indices = self.peak_indices[np.logical_and(self.peak_indices >= pol_l - 1,
                                                              self.peak_indices < 2 * pol_l - 2)] - pol_l + 1
 
@@ -270,11 +272,11 @@ class FFTFiltering:
             a = self.angles[c[0]]
             b = self.angles[c[1]]
             if math.isclose(np.pi - ang_dist(a, b), 0, abs_tol=self.ang_tr):
-                self.comp.append([c[0], c[1]])
+                self.peak_pairs.append([c[0], c[1]])
                 logging.info("Found direction %.2f, %.2f", self.angles[c[0]] * 180.0 / np.pi,
                              self.angles[c[1]] * 180.0 / np.pi)
-                self.dom_dirs.append([self.angles[c[0]], self.angles[c[1]]])
-        logging.info("Number of directions: %d", len(self.comp))
+                self.dominant_directions.append([self.angles[c[0]], self.angles[c[1]]])
+        logging.info("Number of directions: %d", len(self.peak_pairs))
         logging.debug("Directions computed in : %.2f s", time.time() - ti)
 
     def process_map(self):
@@ -285,27 +287,26 @@ class FFTFiltering:
         self.__get_dominant_directions()
 
         ti = time.time()
-        if not self.comp:
+        if not self.peak_pairs:
             pass
         else:
             angles = []
-            for p in self.comp:
+            for p in self.peak_pairs:
                 angles.append((self.angles[p[0]] + self.angles[p[1]] - np.pi) / 2)
-            mask_all, self.lines = get_mask(angles, self.binary_map.shape[0], self.par)
-            self.mask_ft_image = self.ft_image * mask_all
-            mask_iftimage = np.fft.ifft2(self.mask_ft_image)
+            self.filter, self.lines = get_mask(angles, self.binary_map.shape[0], self.par)
+            self.filtered_frequency_image = self.frequency_image * self.filter
+            mask_iftimage = np.fft.ifft2(self.filtered_frequency_image)
             self.map_scored_good = np.abs(mask_iftimage) * (self.binary_map * 1)
 
         logging.debug("Map filtered in: %.2f s", time.time() - ti)
 
-    def simple_filter_map(self, tr):
+    def simple_filter_map(self):
         """
         Args:
             tr:
         """
         ti = time.time()
         l_map = np.array(np.abs(self.map_scored_good) / np.max(np.abs(self.map_scored_good)))
-        self.quality_threshold = tr
         self.analysed_map = self.binary_map.copy()
         self.analysed_map[l_map < self.quality_threshold] = 0.0
         logging.debug("Map filtered simple in : %.2f s", time.time() - ti)

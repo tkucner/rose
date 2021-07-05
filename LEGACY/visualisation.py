@@ -92,7 +92,7 @@ class visualisation:
 
         if visualisation_flags["FFT Spectrum"]:
             fig, ax = plt.subplots(nrows=1, ncols=1)
-            ax.imshow((np.abs(self.structure.ft_image)), cmap="nipy_spectral")
+            ax.imshow((np.abs(self.structure.frequency_image)), cmap="nipy_spectral")
             ax.axis("off")
             name = "FFT Spectrum"
             ax.set_title(name)
@@ -101,15 +101,15 @@ class visualisation:
 
         if visualisation_flags["FFT spectrum with directions"]:
             fig, ax = plt.subplots(nrows=1, ncols=1)
-            ax.imshow((np.abs(self.structure.ft_image)), cmap="nipy_spectral")
+            ax.imshow((np.abs(self.structure.frequency_image)), cmap="nipy_spectral")
             for l in self.structure.lines:
                 ax.plot([l[1], l[3]], [l[0], l[2]])
             ax.axis("off")
             name = "FFT Spectrum with directions"
             ax.set_title(name)
             fig.canvas.set_window_title(name)
-            ax.set_xlim(0, self.structure.ft_image.shape[1])
-            ax.set_ylim(0, self.structure.ft_image.shape[0])
+            ax.set_xlim(0, self.structure.frequency_image.shape[1])
+            ax.set_ylim(0, self.structure.frequency_image.shape[0])
             plt.show()
 
         if visualisation_flags["Map with walls"]:
@@ -154,18 +154,19 @@ class visualisation:
 
         if visualisation_flags["Unfolded FFT Spectrum"]:
             fig, ax = plt.subplots(1, 1)
-            ax.imshow(np.flipud(self.structure.pol), cmap="nipy_spectral", aspect='auto',
+            ax.imshow(np.flipud(self.structure.polar_frequency_image), cmap="nipy_spectral", aspect='auto',
                       extent=(
-                          np.min(self.structure.angles), np.max(self.structure.angles), 0, np.max(self.structure.rads)))
+                          np.min(self.structure.angles), np.max(self.structure.angles), 0,
+                          np.max(self.structure.discretised_radius)))
             ax.set_xlim([np.min(self.structure.angles), np.max(self.structure.angles)])
             ax.set_xlabel("Orientation [rad]")
             ax.set_ylabel("Radius in pixel")
             ax2 = ax.twinx()
-            ax2.plot(self.structure.angles, self.structure.pol_h)
+            ax2.plot(self.structure.angles, self.structure.polar_amplitude_histogram)
             ax2.plot(self.structure.angles[self.structure.peak_indices],
-                     self.structure.pol_h[self.structure.peak_indices], 'r+')
-            for p in self.structure.comp:
-                ax2.scatter(self.structure.angles[p], self.structure.pol_h[p], marker='^', s=120)
+                     self.structure.polar_amplitude_histogram[self.structure.peak_indices], 'r+')
+            for p in self.structure.peak_pairs:
+                ax2.scatter(self.structure.angles[p], self.structure.polar_amplitude_histogram[p], marker='^', s=120)
             ax2.set_ylabel("Orientation score")
             name = "Unfolded FFT Spectrum"
             ax.set_title(name)
@@ -174,7 +175,7 @@ class visualisation:
 
         if visualisation_flags["FFT Spectrum Signal"]:
             fig, ax = plt.subplots(nrows=1, ncols=1)
-            ax.imshow((np.abs(self.structure.mask_ft_image)), cmap="nipy_spectral")
+            ax.imshow((np.abs(self.structure.filtered_frequency_image)), cmap="nipy_spectral")
             ax.axis("off")
             name = "FFT Spectrum Signal"
             fig.canvas.set_window_title(name)
@@ -258,7 +259,7 @@ class visualisation:
             # signal_av=stat.mean((self.structure.pol_h-min(self.structure.pol_h))/max(self.structure.pol_h))
             # peak_av=stat.mean((self.structure.pol_h[self.structure.peak_indices]-min(self.structure.pol_h))/max(self.structure.pol_h))
 
-            grounded_rose = self.structure.pol_h - min(self.structure.pol_h)
+            grounded_rose = self.structure.polar_amplitude_histogram - min(self.structure.polar_amplitude_histogram)
             streached_rose = grounded_rose / max(grounded_rose)
             signal_av = stat.mean(streached_rose)
             peak_av = stat.mean(streached_rose[self.structure.peak_indices])
@@ -266,7 +267,7 @@ class visualisation:
             ax[1].plot(self.structure.angles, streached_rose)
             ax[1].plot(self.structure.angles[self.structure.peak_indices],
                        streached_rose[self.structure.peak_indices], 'r+')
-            for p in self.structure.comp:
+            for p in self.structure.peak_pairs:
                 ax[1].scatter(self.structure.angles[p], streached_rose[p], marker='^', s=120)
 
             ax[1].plot([self.structure.angles[0], self.structure.angles[-1]], [signal_av, signal_av])
@@ -286,7 +287,7 @@ class visualisation:
             ax.plot(self.structure.angles, streached_rose)
             ax.plot(self.structure.angles[self.structure.peak_indices],
                     streached_rose[self.structure.peak_indices], 'r+')
-            for p in self.structure.comp:
+            for p in self.structure.peak_pairs:
                 ax.scatter(self.structure.angles[p], streached_rose[p], marker='^', s=120)
 
             ax.plot([self.structure.angles[0], self.structure.angles[-1]], [signal_av, signal_av])

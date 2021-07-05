@@ -8,6 +8,7 @@ from skimage.util import img_as_ubyte
 import helpers as he
 from fft_filtering import FFTFiltering as filter
 from helpers import extended_validator
+from visualisation import visualisation
 
 # time
 now = datetime.now()
@@ -32,3 +33,6 @@ if not success:
 grid_map = img_as_ubyte(io.imread(config["input_map"]))
 rose = filter(grid_map, **config["fft_filtering"])
 rose.process_map()
+
+plots = visualisation(rose, config["visualisation"])
+plots.show()

@@ -6,18 +6,12 @@
     "smooth_histogram": true,
     "sigma": 0.5
   },
-  "filtering_parameters": {
-    "filter_level": 0.18
-  },
-  "visualisation_flags": {
-    "Binary map": false,
-    "Unfolded FFT Spectrum": true,
-    "Map with directions": true,
-    "Map with walls": false,
-    "Wall lines from mbb": false,
-    "Map with slices": false,
-    "Map Scored Good": true,
-    "FFT spectrum with directions": true,
-    "FFT Spectrum Signal": true
+  "visualisation": {
+    "Input map": true,
+    "Binary map": true,
+    "Frequency image": true,
+    "Frequency image with dominant directions": true,
+    "Filter": true,
+    "Polar frequency image": true
   }
 }
