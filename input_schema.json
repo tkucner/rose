@@ -15,7 +15,7 @@
       "description": "Free text for describing used map",
       "default": {}
     },
-    "peak_extraction_parameters": {
+    "fft_filtering": {
       "type": "object",
       "description": "parameters used for extraction of strucutre from a mpa",
       "properties": {
@@ -25,11 +25,19 @@
         },
         "smooth_histogram": {
           "type": "boolean",
-          "default": {}
+          "default": true
         },
         "sigma": {
           "type": "number",
-          "default": {}
+          "default": 3
+        },
+        "angle_threshold": {
+          "type": "number",
+          "default": 0.01
+        },
+        "window_width": {
+          "type": "integer",
+          "default": 1
         }
       }
     },
