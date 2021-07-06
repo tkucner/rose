@@ -147,7 +147,6 @@ def get_histogram(values):
 
 
 class FFTFiltering:
-    # def __init__(self, grid_map, ang_tr=0.01, peak_height=0.5, par=1, smooth=False, sigma=3):
     def __init__(self, grid_map, **kwargs):
 
         self.grid_map = grid_map
@@ -193,24 +192,6 @@ class FFTFiltering:
             self.binary_map = binaryze_map(self.grid_map[:, :, 1])
         else:
             self.binary_map = binaryze_map(self.grid_map)
-
-        # thresh = threshold_yen(grid_map)
-        # self.binary_map = grid_map <= thresh
-        # self.binary_map = self.binary_map
-
-        # # pad map to have even number of pixels in each dimension (DFT behaves better)
-        # if self.binary_map.shape[0] % 2 != 0:
-        #     t = np.zeros((self.binary_map.shape[0] + 1, self.binary_map.shape[1]), dtype=bool)
-        #     t[:-1, :] = self.binary_map
-        #     self.binary_map = t
-        # if self.binary_map.shape[1] % 2 != 0:
-        #     t = np.zeros((self.binary_map.shape[0], self.binary_map.shape[1] + 1), dtype=bool)
-        #     t[:, :-1] = self.binary_map
-        #     self.binary_map = t
-        #
-        # # pad with zeros to square (easier to compute directions)
-        # square_map = np.zeros((np.max(self.binary_map.shape), np.max(self.binary_map.shape)), dtype=bool)
-        # square_map[:self.binary_map.shape[0], :self.binary_map.shape[1]] = self.binary_map
 
         self.binary_map = pad_map(self.binary_map)
         self.analysed_map = self.binary_map.copy()
