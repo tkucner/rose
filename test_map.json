@@ -7,11 +7,16 @@
     "sigma": 0.5
   },
   "visualisation": {
+    "Save path": "/home/tzkr/Experiments/ROSE/2021/testing",
     "Input map": true,
     "Binary map": true,
     "Frequency image": true,
     "Frequency image with dominant directions": true,
+    "Frequency image with filter": true,
     "Filter": true,
-    "Polar frequency image": true
+    "Filtered frequency image": true,
+    "Polar frequency image": true,
+    "Polar frequency histogram": true,
+    "Polar frequency image and histogram": true
   }
 }

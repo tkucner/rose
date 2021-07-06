@@ -2,11 +2,11 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "http://example.com/product.schema.json",
   "title": "Configuration",
-  "description": "Configuration of ros running file",
+  "description": "Configuration of rose running file",
   "type": "object",
   "properties": {
     "input_map": {
-      "description": "path to a png file contianing map to be evaluated",
+      "description": "path to a png file containing map to be evaluated",
       "type": "string",
       "default": {}
     },
@@ -49,6 +49,10 @@
       "type": "object",
       "description": "flags deciding what is going to be shown",
       "properties": {
+        "Save path": {
+          "type": "string",
+          "default": ""
+        },
         "Input map": {
           "type": "boolean",
           "default": false
@@ -65,11 +69,27 @@
           "type": "boolean",
           "default": false
         },
+        "Frequency image with filter": {
+          "type": "boolean",
+          "default": false
+        },
         "Filter": {
           "type": "boolean",
           "default": false
         },
+        "Filtered frequency image": {
+          "type": "boolean",
+          "default": false
+        },
         "Polar frequency image": {
+          "type": "boolean",
+          "default": false
+        },
+        "Polar frequency histogram": {
+          "type": "boolean",
+          "default": false
+        },
+        "Polar frequency image and histogram": {
           "type": "boolean",
           "default": false
         }
