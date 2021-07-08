@@ -34,7 +34,7 @@ grid_map = img_as_ubyte(io.imread(config["input_map"]))
 rose = filter(grid_map, **config["fft_filtering"])
 rose.process_map()
 # rose.histogram_filtering()
-rose.simple_filter_map()
+rose.map_filter()
 
 plots = Visualisation(rose, config["visualisation"], config["input_map"])
 plots.show()

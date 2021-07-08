@@ -53,6 +53,10 @@
           "type": "string",
           "default": ""
         },
+        "Show plots": {
+          "type": "boolean",
+          "default": false
+        },
         "Input map": {
           "type": "boolean",
           "default": false
@@ -106,6 +110,10 @@
           "default": false
         },
         "Filtered map final": {
+          "type": "boolean",
+          "default": false
+        },
+        "Cell histogram": {
           "type": "boolean",
           "default": false
         }

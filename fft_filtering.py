@@ -152,7 +152,7 @@ class FFTFiltering:
         self.quality_threshold = kwargs["quality_threshold"]
         self.ang_tr = kwargs["angle_threshold"]
         self.peak_height = kwargs["peak_height"]
-        self.par = kwargs["window_width"]
+        self.mask_width = kwargs["window_width"]
         self.smooth = kwargs["smooth_histogram"]
         self.sigma = kwargs["sigma"]
         self.binary_map = None
@@ -185,16 +185,13 @@ class FFTFiltering:
 
         """
         ti = time.time()  # logging time
-
         if len(self.grid_map.shape) == 3:  # if map is multilayered keep only one
             # binarize the map
             self.binary_map = binaryze_map(self.grid_map[:, :, 1])
         else:
             self.binary_map = binaryze_map(self.grid_map)
-
         self.binary_map = pad_map(self.binary_map)
         self.analysed_map = self.binary_map.copy()
-
         # logging
         logging.debug("Map loaded in %.2f s", time.time() - ti)
         logging.info("Map Shape: %d x %d", self.binary_map.shape[0], self.binary_map.shape[1])
@@ -207,7 +204,6 @@ class FFTFiltering:
         self.frequency_image = np.fft.fftshift(np.fft.fft2(self.binary_map * 1))
         self.normalised_frequency_image = (np.abs(self.frequency_image) / np.max(np.abs(self.frequency_image))) * 255.0
         self.normalised_frequency_image = self.normalised_frequency_image.astype(int)
-
         # logging
         logging.debug("FFT computed in: %.2f s", time.time() - ti)
 
@@ -216,11 +212,9 @@ class FFTFiltering:
         Detects peaks in unfolded FFT spectrum.
         """
         ti = time.time()  # logging time
-
         # unfold spectrum
         self.polar_frequency_image, (self.discretised_radius, self.angles) = topolar(self.normalised_frequency_image,
                                                                                      order=3)
-
         # concatenate three frequency images to prevent peak distortion on the fringes of the image
         pol_l = self.polar_frequency_image.shape[1]
         self.polar_frequency_image = np.concatenate(
@@ -239,7 +233,7 @@ class FFTFiltering:
                                                  prominence=(np.max(self.polar_amplitude_histogram) - np.min(
                                                      self.polar_amplitude_histogram)) * self.peak_height)
 
-        # remove the padding from the frequnecy spectrum
+        # remove the padding from the frequency spectrum
         self.polar_frequency_image = self.polar_frequency_image[:, 0:pol_l]
         self.angles = self.angles[0:pol_l]
         self.polar_amplitude_histogram = self.polar_amplitude_histogram[0:pol_l]
@@ -273,7 +267,7 @@ class FFTFiltering:
             angles = []
             for p in self.peak_pairs:
                 angles.append((self.angles[p[0]] + self.angles[p[1]] - np.pi) / 2)
-            self.filter, self.lines = get_mask(angles, self.binary_map.shape[0], self.par)
+            self.filter, self.lines = get_mask(angles, self.binary_map.shape[0], self.mask_width)
             self.filtered_frequency_image = self.frequency_image * self.filter
             self.reconstructed_map = np.fft.ifft2(self.filtered_frequency_image)
             self.map_scored = np.abs(self.reconstructed_map) * (self.binary_map * 1)
@@ -281,9 +275,8 @@ class FFTFiltering:
 
         logging.debug("Map filtered in: %.2f s", time.time() - ti)
 
-    def simple_filter_map(self):
+    def map_filter(self):
         ti = time.time()
-        # l_map = np.array(np.abs(self.map_scored) / np.max(np.abs(self.map_scored)))
         self.analysed_map = self.binary_map.copy()
         # to retain the consistency with the input threshold map
         # we first filter the map and discard the noise and then flip it
@@ -294,18 +287,4 @@ class FFTFiltering:
 
         self.analysed_map[self.map_scored < self.quality_threshold] = 0.0
         self.analysed_map = np.logical_not(self.analysed_map) * 1.0
-        logging.debug("Map filtered simple in : %.2f s", time.time() - ti)
-
-    def histogram_filtering(self):
-        ti = time.time()
-        pixels = np.abs(self.map_scored[self.binary_map > 0])
-
-        self.quality_threshold, self.pixel_quality_gmm = get_gmm_threshold(pixels)
-        self.pixel_quality_histogram = get_histogram(pixels)
-
-        self.analysed_map = self.binary_map.copy()
-        # to retain the consistency with the input threshold map
-        # we first filter the map and discard the noise and then flip it
-        self.analysed_map[np.abs(self.map_scored) < self.quality_threshold] = 0.0
-        self.analysed_map = np.logical_not(self.analysed_map) * 1.0
-        logging.debug("Map filtered with histogram in : %.2f s", time.time() - ti)
+        logging.debug("Map filtered in : %.2f s", time.time() - ti)
