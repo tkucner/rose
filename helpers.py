@@ -1,7 +1,21 @@
 import json
+import os
 import sys
+from datetime import datetime
 
 from jsonschema import Draft7Validator, validators, exceptions
+
+
+def file_path_formatter(directory, file):
+    now = datetime.now()
+    dt_string = now.strftime("%Y_%m_%d_%H_%M_%S")
+    map_file_name_directory = os.path.splitext(os.path.basename(file))[0] + "_" + dt_string
+    save_directory = os.path.join(directory, map_file_name_directory)
+    if os.path.isdir(save_directory):
+        print("Directory exits, data will be over written")
+    else:
+        os.makedirs(save_directory)
+    return save_directory
 
 
 def extended_validator(json_path, schema_path):

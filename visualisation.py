@@ -1,25 +1,14 @@
 import logging
 import math
 import os
-from datetime import datetime
 
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.stats as stats
 
+import helpers
+
 logging.getLogger('matplotlib.font_manager').setLevel(logging.WARNING)
-
-
-def file_path_formatter(directory, file):
-    now = datetime.now()
-    dt_string = now.strftime("%Y_%m_%d_%H_%M_%S")
-    map_file_name_directory = os.path.splitext(os.path.basename(file))[0] + "_" + dt_string
-    save_directory = os.path.join(directory, map_file_name_directory)
-    if os.path.isdir(save_directory):
-        print("Directory exits, data will be over written")
-    else:
-        os.makedirs(save_directory)
-    return save_directory
 
 
 class Visualisation:
@@ -29,7 +18,7 @@ class Visualisation:
         self.flags = flags
         self.save_dir = None
         if not self.flags["Save path"] == "" and source_file is not None:
-            self.save_dir = file_path_formatter(self.flags["Save path"], source_file)
+            self.save_dir = helpers.file_path_formatter(self.flags["Save path"], source_file)
 
     def __save_plot(self, name):
         if self.save_dir is not None:

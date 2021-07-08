@@ -1,5 +1,7 @@
 import argparse
 import logging
+import os
+import pickle
 from datetime import datetime
 
 from skimage import io
@@ -33,8 +35,10 @@ if not success:
 grid_map = img_as_ubyte(io.imread(config["input_map"]))
 rose = filter(grid_map, **config["fft_filtering"])
 rose.process_map()
-# rose.histogram_filtering()
 rose.map_filter()
 
 plots = Visualisation(rose, config["visualisation"], config["input_map"])
 plots.show()
+
+save_path = os.path.join(plots.save_dir, "rose.p")
+pickle.dump(rose, open(save_path, "wb"))
