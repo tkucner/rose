@@ -130,4 +130,36 @@ class Visualisation:
             plt.title(name)
             self.__save_plot(name)
 
+            if self.flags["Reconstructed map"]:
+                name = "Reconstructed map"
+                plt.figure()
+                plt.imshow(np.abs(self.structure.reconstructed_map), cmap="nipy_spectral")
+                plt.title(name)
+                self.__save_plot(name)
+
+            if self.flags["Scored map"]:
+                name = "Scored map"
+                plt.figure()
+                plt.imshow(np.abs(self.structure.map_scored), cmap="nipy_spectral")
+                plt.colorbar()
+                plt.title(name)
+                self.__save_plot(name)
+
+            if self.flags["Filtered map overlay"]:
+                name = "Filtered map overlay (" + str(self.structure.quality_threshold) + ")"
+                plt.figure()
+                plt.imshow(np.abs(self.structure.binary_map), cmap="gray")
+                plt.imshow(np.logical_not(self.structure.analysed_map) * 1, cmap='gray', alpha=0.75)
+
+                plt.title(name)
+                self.__save_plot(name)
+
+            if self.flags["Filtered map final"]:
+                name = "Filtered map final (" + str(self.structure.quality_threshold) + ")"
+                plt.figure()
+                plt.imshow(np.logical_not(self.structure.analysed_map) * 1, cmap='gray')
+
+                plt.title(name)
+                self.__save_plot(name)
+
     plt.show()

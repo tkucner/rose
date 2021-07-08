@@ -17,6 +17,10 @@
     "Filtered frequency image": true,
     "Polar frequency image": true,
     "Polar frequency histogram": true,
-    "Polar frequency image and histogram": true
+    "Polar frequency image and histogram": true,
+    "Reconstructed map": true,
+    "Scored map": true,
+    "Filtered map overlay": true,
+    "Filtered map final": true
   }
 }

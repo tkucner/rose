@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "http://example.com/product.schema.json",
+  "$id": "https://example.com/product.schema.json",
   "title": "Configuration",
   "description": "Configuration of rose running file",
   "type": "object",
@@ -90,6 +90,22 @@
           "default": false
         },
         "Polar frequency image and histogram": {
+          "type": "boolean",
+          "default": false
+        },
+        "Reconstructed map": {
+          "type": "boolean",
+          "default": false
+        },
+        "Scored map": {
+          "type": "boolean",
+          "default": false
+        },
+        "Filtered map overlay": {
+          "type": "boolean",
+          "default": false
+        },
+        "Filtered map final": {
           "type": "boolean",
           "default": false
         }

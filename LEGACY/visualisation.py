@@ -193,7 +193,7 @@ class visualisation:
 
         if visualisation_flags["Map Scored Good"]:
             fig, ax = plt.subplots(nrows=1, ncols=1)
-            ax.imshow(np.abs(self.structure.map_scored_good), cmap="plasma")
+            ax.imshow(np.abs(self.structure.map_scored), cmap="plasma")
             ax.axis("off")
             name = "Map Scored Good"
             fig.canvas.set_window_title(name)
@@ -240,7 +240,7 @@ class visualisation:
             fig, ax = plt.subplots(nrows=1, ncols=2, sharex=True, sharey=True)
             ax[0].imshow(self.structure.binary_map * 1, cmap="gray")
             ax[0].axis("off")
-            ax[1].imshow(np.abs(self.structure.map_scored_good), cmap="nipy_spectral")
+            ax[1].imshow(np.abs(self.structure.map_scored), cmap="nipy_spectral")
             ax[1].axis("off")
             name1 = "Map"
             name2 = "Score"
@@ -600,7 +600,7 @@ class visualisation:
             ax[0, 1].axvline(x=self.structure.quality_threshold, color='y')
             ax[0, 1].set_title("Score trehsold estiamtion")
 
-            ax[1, 0].imshow(np.abs(self.structure.map_scored_good), cmap="nipy_spectral")
+            ax[1, 0].imshow(np.abs(self.structure.map_scored), cmap="nipy_spectral")
             ax[1, 0].axis("off")
             ax[1, 0].set_title("Scored map")
 
