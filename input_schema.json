@@ -41,7 +41,7 @@
         },
         "quality_threshold": {
           "type": "number",
-          "default": 0.18
+          "default": -1
         }
       }
     },

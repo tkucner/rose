@@ -287,6 +287,11 @@ class FFTFiltering:
         self.analysed_map = self.binary_map.copy()
         # to retain the consistency with the input threshold map
         # we first filter the map and discard the noise and then flip it
+        if self.quality_threshold == -1:
+            pixels = np.abs(self.map_scored[self.binary_map > 0])
+            self.quality_threshold, self.pixel_quality_gmm = get_gmm_threshold(pixels)
+            self.pixel_quality_histogram = get_histogram(pixels)
+
         self.analysed_map[self.map_scored < self.quality_threshold] = 0.0
         self.analysed_map = np.logical_not(self.analysed_map) * 1.0
         logging.debug("Map filtered simple in : %.2f s", time.time() - ti)
