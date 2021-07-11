@@ -6,7 +6,7 @@
     "smooth_histogram": true,
     "sigma": 0.5,
     "window_width": 5,
-    "quality_threshold": 0.7
+    "quality_threshold": 0.18
   },
   "visualisation": {
     "Save path": "/home/tzkr/Experiments/ROSE/2021/testing",
@@ -24,6 +24,7 @@
     "Scored map": true,
     "Filtered map overlay": true,
     "Filtered map final": true,
-    "Cell histogram": true
+    "Cell histogram": true,
+    "Map with directions": true
   }
 }

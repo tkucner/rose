@@ -10,7 +10,8 @@ from skimage.util import img_as_ubyte
 import helpers as he
 from fft_filtering import FFTFiltering as filter
 from helpers import extended_validator
-from visualisation import Visualisation
+from strucutre_extraction import StructureExtraction as extractor
+from visualisation import VisualisationFFT, VisualisationStructure
 
 # time
 now = datetime.now()
@@ -37,8 +38,13 @@ rose = filter(grid_map, **config["fft_filtering"])
 rose.process_map()
 rose.map_filter()
 
-plots = Visualisation(rose, config["visualisation"], config["input_map"])
-plots.show()
+structure = extractor(rose)
 
-save_path = os.path.join(plots.save_dir, "rose.p")
+plots_fft = VisualisationFFT(rose, config["visualisation"], config["input_map"])
+plots_fft.show()
+
+plots_structure = VisualisationStructure(structure, config["visualisation"], config["input_map"])
+plots_structure.show()
+
+save_path = os.path.join(plots_fft.save_dir, "rose.p")
 pickle.dump(rose, open(save_path, "wb"))

@@ -102,7 +102,7 @@ class visualisation:
         if visualisation_flags["FFT spectrum with directions"]:
             fig, ax = plt.subplots(nrows=1, ncols=1)
             ax.imshow((np.abs(self.structure.frequency_image)), cmap="nipy_spectral")
-            for l in self.structure.lines:
+            for l in self.structure.dominant_lines:
                 ax.plot([l[1], l[3]], [l[0], l[2]])
             ax.axis("off")
             name = "FFT Spectrum with directions"

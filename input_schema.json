@@ -116,6 +116,10 @@
         "Cell histogram": {
           "type": "boolean",
           "default": false
+        },
+        "Map with directions": {
+          "type": "boolean",
+          "default": false
         }
       },
       "default": {}
