@@ -64,13 +64,13 @@ def get_mask(orientations, size, factor):
     intersections = []
     cells = []
     lines = []
-    lines_vis = []
+    # lines_vis = []
     base_line = sg.LineString([(0, 0), (0, 2 * size)])
 
     for orientation in orientations:
         line = af.translate(af.rotate(base_line, orientation, use_radians=True), size / 2, -size / 2)
         lines.append(line)
-        lines_vis.append([line.coords[0][0], line.coords[0][1], line.coords[1][0], line.coords[1][1]])
+        # lines_vis.append([line.coords[0][0], line.coords[0][1], line.coords[1][0], line.coords[1][1]])
         for v in range(0, size + 1):
             inter = line.intersection(sg.asLineString([(0, v), (size, v)]))
             if not inter.is_empty:
@@ -94,7 +94,7 @@ def get_mask(orientations, size, factor):
     for _ in range(factor):
         mask = ndimage.binary_dilation(mask).astype(mask.dtype)
 
-    return np.flipud(mask), lines_vis
+    return np.flipud(mask), lines
 
 
 def get_gmm_threshold(values):
@@ -224,7 +224,7 @@ class FFTFiltering:
                                                                                           np.max(self.angles))), axis=0)
         self.polar_amplitude_histogram = np.array([sum(x) for x in zip(*self.polar_frequency_image)])
 
-        # smooth the hisotgram
+        # smooth the histogram
         if self.smooth:
             self.polar_amplitude_histogram = ndimage.gaussian_filter1d(self.polar_amplitude_histogram, self.sigma)
 

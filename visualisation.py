@@ -64,7 +64,7 @@ class Visualisation:
             plt.figure()
             plt.imshow(np.abs(self.structure.frequency_image), cmap="nipy_spectral")
             for l in self.structure.lines:
-                plt.plot([l[1], l[3]], [l[0], l[2]])
+                plt.plot([l.coords[0][1], l.coords[1][1]], [l.coords[0][0], l.coords[1][0]])
             plt.xlim(0, self.structure.frequency_image.shape[1])
             plt.ylim(0, self.structure.frequency_image.shape[0])
             plt.title(name)
