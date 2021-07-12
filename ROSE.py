@@ -9,7 +9,7 @@ import helpers as he
 from fft_filtering import FFTFiltering as filter
 from helpers import extended_validator
 from strucutre_extraction import StructureExtraction as extractor
-from visualisation import VisualisationFFT, VisualisationStructure
+from visualisation import VisualisationStructure
 
 # time
 now = datetime.now()
@@ -39,8 +39,8 @@ rose.map_filter()
 structure = extractor(rose)
 structure.scan_for_walls()
 
-plots_fft = VisualisationFFT(rose, config["visualisation"], config["input_map"])
-plots_fft.show()
+# plots_fft = VisualisationFFT(rose, config["visualisation"], config["input_map"])
+# plots_fft.show()
 
 plots_structure = VisualisationStructure(structure, config["visualisation"], config["input_map"])
 plots_structure.show()

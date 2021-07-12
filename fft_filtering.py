@@ -64,48 +64,30 @@ def get_mask(orientations, size, factor):
     intersections = []
     cells = []
     lines = []
-    # lines_vis = []
     base_line = sg.LineString([(0, 0), (0, 2 * size)])
-
     for orientation in orientations:
         line = af.translate(af.rotate(base_line, orientation, use_radians=True), size / 2, -size / 2)
         lines.append(line)
-        # lines_vis.append([line.coords[0][0], line.coords[0][1], line.coords[1][0], line.coords[1][1]])
         for v in range(0, size + 1):
-
             inter = line.intersection(sg.asLineString([(0, v), (size, v)]))
-
             if not inter.is_empty:
                 intersections.append(inter)
-                # cells.append([int(inter.coords[0][0]), int(inter.coords[0][1])])
-                # cells.append([int(inter.coords[0][0]), int(inter.coords[0][1]) - 1])
-
                 cells.append([int(inter.coords[0][1]), int(inter.coords[0][0])])
                 cells.append([int(inter.coords[0][1]) - 1, int(inter.coords[0][0])])
-
         for h in range(0, size + 1):
-
             inter = line.intersection(sg.asLineString([(h, 0), (h, size)]))
-
             if not inter.is_empty:
                 intersections.append(inter)
-                # cells.append([int(inter.coords[0][0]), int(inter.coords[0][1])])
-                # cells.append([int(inter.coords[0][0]) - 1, int(inter.coords[0][1])])
-
                 cells.append([int(inter.coords[0][1]), int(inter.coords[0][0])])
                 cells.append([int(inter.coords[0][1]), int(inter.coords[0][0]) - 1])
-
     cells.sort()
     cells = list(num for num, _ in itertools.groupby(cells))
-
     mask = np.zeros((size, size))
     for c in cells:
         if 0 <= c[0] < size and 0 <= c[1] < size:
             mask[c[1], c[0]] = 1
     for _ in range(factor):
         mask = ndimage.binary_dilation(mask).astype(mask.dtype)
-
-    # return np.flipud(mask), lines
     return mask, lines
 
 
