@@ -1,5 +1,5 @@
 {
-  "input_map": "test_map.png",
+  "input_map": "Maps/fr079.good.png",
   "map_description": "map of real building from Freiburg",
   "fft_filtering": {
     "peak_height": 0.05,
@@ -25,7 +25,6 @@
     "Filtered map overlay": true,
     "Filtered map final": true,
     "Cell histogram": true,
-    "Map with directions": true,
-    "Map with long wall lines": true
+    "Map with directions": true
   }
 }

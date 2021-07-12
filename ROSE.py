@@ -1,7 +1,5 @@
 import argparse
 import logging
-import os
-import pickle
 from datetime import datetime
 
 from skimage import io
@@ -39,6 +37,7 @@ rose.process_map()
 rose.map_filter()
 
 structure = extractor(rose)
+structure.scan_for_walls()
 
 plots_fft = VisualisationFFT(rose, config["visualisation"], config["input_map"])
 plots_fft.show()
@@ -46,5 +45,5 @@ plots_fft.show()
 plots_structure = VisualisationStructure(structure, config["visualisation"], config["input_map"])
 plots_structure.show()
 
-save_path = os.path.join(plots_fft.save_dir, "rose.p")
-pickle.dump(rose, open(save_path, "wb"))
+# save_path = os.path.join(plots_fft.save_dir, "rose.p")
+# pickle.dump(rose, open(save_path, "wb"))

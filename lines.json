@@ -1,12 +1,13 @@
 {
-  "input_map": "test_map.png",
-  "map_description": "map of real building from Freiburg",
+  "input_map": "lines.png",
+  "map_description": "three simple lines",
   "fft_filtering": {
     "peak_height": 0.05,
     "smooth_histogram": true,
     "sigma": 0.5,
     "window_width": 5,
-    "quality_threshold": 0.18
+    "quality_threshold": 0.18,
+    "angle_threshold": 0.5
   },
   "visualisation": {
     "Save path": "/home/tzkr/Experiments/ROSE/2021/testing",

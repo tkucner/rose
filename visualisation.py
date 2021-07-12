@@ -31,6 +31,8 @@ class VisualisationFFT:
             name = "Input map"
             plt.figure()
             plt.imshow(self.fft_filtered.grid_map, cmap="gray")
+            plt.xlim(0, self.fft_filtered.grid_map.shape[1])
+            plt.ylim(0, self.fft_filtered.grid_map.shape[0])
             plt.title(name)
             if self.flags["Save path"] != "":
                 save_plot(self.save_dir, name)
@@ -39,6 +41,8 @@ class VisualisationFFT:
             name = "Binary map"
             plt.figure()
             plt.imshow(self.fft_filtered.binary_map, cmap="gray")
+            plt.xlim(0, self.fft_filtered.binary_map.shape[1])
+            plt.ylim(0, self.fft_filtered.binary_map.shape[0])
             plt.title(name)
             if self.flags["Save path"] != "":
                 save_plot(self.save_dir, name)
@@ -47,6 +51,8 @@ class VisualisationFFT:
             name = "Frequency image"
             plt.figure()
             plt.imshow(np.abs(self.fft_filtered.frequency_image), cmap="nipy_spectral")
+            plt.xlim(0, self.fft_filtered.frequency_image.shape[1])
+            plt.ylim(0, self.fft_filtered.frequency_image.shape[0])
             plt.title(name)
             if self.flags["Save path"] != "":
                 save_plot(self.save_dir, name)
@@ -56,6 +62,8 @@ class VisualisationFFT:
             plt.figure()
             plt.imshow(np.abs(self.fft_filtered.frequency_image), cmap="nipy_spectral")
             plt.imshow(np.logical_not(self.fft_filtered.filter) * 1, cmap='gray', alpha=0.25)
+            plt.xlim(0, self.fft_filtered.frequency_image.shape[1])
+            plt.ylim(0, self.fft_filtered.frequency_image.shape[0])
             plt.title(name)
             if self.flags["Save path"] != "":
                 save_plot(self.save_dir, name)
@@ -76,6 +84,8 @@ class VisualisationFFT:
             name = "Filter"
             plt.figure()
             plt.imshow(np.abs(self.fft_filtered.filter), cmap="gray")
+            plt.xlim(0, self.fft_filtered.filter.shape[1])
+            plt.ylim(0, self.fft_filtered.filter.shape[0])
             plt.title(name)
             if self.flags["Save path"] != "":
                 save_plot(self.save_dir, name)
@@ -84,6 +94,8 @@ class VisualisationFFT:
             name = "Filtered frequency image"
             plt.figure()
             plt.imshow(np.abs(self.fft_filtered.filtered_frequency_image), cmap="nipy_spectral")
+            plt.xlim(0, self.fft_filtered.filtered_frequency_image.shape[1])
+            plt.ylim(0, self.fft_filtered.filtered_frequency_image.shape[0])
             plt.title(name)
             if self.flags["Save path"] != "":
                 save_plot(self.save_dir, name)
@@ -95,6 +107,7 @@ class VisualisationFFT:
                 np.min(self.fft_filtered.angles), np.max(self.fft_filtered.angles), 0,
                 np.max(self.fft_filtered.discretised_radius)), cmap="nipy_spectral")
             plt.xlim([np.min(self.fft_filtered.angles), np.max(self.fft_filtered.angles)])
+
             plt.title(name)
             if self.flags["Save path"] != "":
                 save_plot(self.save_dir, name)
@@ -134,75 +147,79 @@ class VisualisationFFT:
             if self.flags["Save path"] != "":
                 save_plot(self.save_dir, name)
 
-            if self.flags["Reconstructed map"]:
-                name = "Reconstructed map"
-                plt.figure()
-                plt.imshow(np.abs(self.fft_filtered.reconstructed_map), cmap="nipy_spectral")
-                plt.title(name)
-                if self.flags["Save path"] != "":
-                    save_plot(self.save_dir, name)
+        if self.flags["Reconstructed map"]:
+            name = "Reconstructed map"
+            plt.figure()
+            plt.imshow(np.abs(self.fft_filtered.reconstructed_map), cmap="nipy_spectral")
+            plt.xlim(0, self.fft_filtered.reconstructed_map.shape[1])
+            plt.ylim(0, self.fft_filtered.reconstructed_map.shape[0])
+            plt.title(name)
+            if self.flags["Save path"] != "":
+                save_plot(self.save_dir, name)
 
-            if self.flags["Scored map"]:
-                name = "Scored map"
-                plt.figure()
-                plt.imshow(np.abs(self.fft_filtered.map_scored), cmap="nipy_spectral")
-                plt.colorbar()
-                plt.title(name)
-                if self.flags["Save path"] != "":
-                    save_plot(self.save_dir, name)
+        if self.flags["Scored map"]:
+            name = "Scored map"
+            plt.figure()
+            plt.imshow(np.abs(self.fft_filtered.map_scored), cmap="nipy_spectral")
+            plt.xlim(0, self.fft_filtered.map_scored.shape[1])
+            plt.ylim(0, self.fft_filtered.map_scored.shape[0])
+            plt.colorbar()
+            plt.title(name)
+            if self.flags["Save path"] != "":
+                save_plot(self.save_dir, name)
 
-            if self.flags["Filtered map overlay"]:
-                name = "Filtered map overlay (" + str(self.fft_filtered.quality_threshold) + ")"
-                plt.figure()
-                plt.imshow(np.abs(self.fft_filtered.binary_map), cmap="gray")
-                plt.imshow(np.logical_not(self.fft_filtered.analysed_map) * 1, cmap='gray', alpha=0.75)
+        if self.flags["Filtered map overlay"]:
+            name = "Filtered map overlay (" + str(self.fft_filtered.quality_threshold) + ")"
+            plt.figure()
+            plt.imshow(np.flipud(np.abs(self.fft_filtered.binary_map)), cmap="gray")
+            plt.imshow(np.flipud(np.logical_not(self.fft_filtered.analysed_map)) * 1, cmap='gray', alpha=0.75)
 
-                plt.title(name)
-                if self.flags["Save path"] != "":
-                    save_plot(self.save_dir, name)
+            plt.title(name)
+            if self.flags["Save path"] != "":
+                save_plot(self.save_dir, name)
 
-            if self.flags["Filtered map final"]:
-                name = "Filtered map final (" + str(self.fft_filtered.quality_threshold) + ")"
-                plt.figure()
-                plt.imshow(np.logical_not(self.fft_filtered.analysed_map) * 1, cmap='gray')
+        if self.flags["Filtered map final"]:
+            name = "Filtered map final (" + str(self.fft_filtered.quality_threshold) + ")"
+            plt.figure()
+            plt.imshow(np.flipud(np.logical_not(self.fft_filtered.analysed_map)) * 1, cmap='gray')
 
-                plt.title(name)
-                if self.flags["Save path"] != "":
-                    save_plot(self.save_dir, name)
+            plt.title(name)
+            if self.flags["Save path"] != "":
+                save_plot(self.save_dir, name)
 
-            if self.flags["Cell histogram"] and not self.fft_filtered.pixel_quality_histogram == []:
-                print(self.fft_filtered.pixel_quality_histogram == [])
-                name = "Cell histogram"
-                plt.figure()
-                x = np.arange(np.min(self.fft_filtered.pixel_quality_histogram["edges"]),
-                              np.max(self.fft_filtered.pixel_quality_histogram["edges"]),
-                              (np.max(self.fft_filtered.pixel_quality_histogram["edges"]) - np.min(
-                                  self.fft_filtered.pixel_quality_histogram["edges"])) / 1000)
+        if self.flags["Cell histogram"] and not self.fft_filtered.pixel_quality_histogram == []:
+            print(self.fft_filtered.pixel_quality_histogram == [])
+            name = "Cell histogram"
+            plt.figure()
+            x = np.arange(np.min(self.fft_filtered.pixel_quality_histogram["edges"]),
+                          np.max(self.fft_filtered.pixel_quality_histogram["edges"]),
+                          (np.max(self.fft_filtered.pixel_quality_histogram["edges"]) - np.min(
+                              self.fft_filtered.pixel_quality_histogram["edges"])) / 1000)
 
-                if self.fft_filtered.pixel_quality_gmm["means"][0] < self.fft_filtered.pixel_quality_gmm["means"][1]:
-                    y_b = stats.norm.pdf(x, self.fft_filtered.pixel_quality_gmm["means"][0],
-                                         math.sqrt(self.fft_filtered.pixel_quality_gmm["covariances"][0])) * \
-                          self.fft_filtered.pixel_quality_gmm["weights"][0]
-                    y_g = stats.norm.pdf(x, self.fft_filtered.pixel_quality_gmm["means"][1],
-                                         math.sqrt(self.fft_filtered.pixel_quality_gmm["covariances"][1])) * \
-                          self.fft_filtered.pixel_quality_gmm["weights"][1]
-                else:
-                    y_g = stats.norm.pdf(x, self.fft_filtered.pixel_quality_gmm["means"][0],
-                                         math.sqrt(self.fft_filtered.pixel_quality_gmm["covariances"][0])) * \
-                          self.fft_filtered.pixel_quality_gmm["weights"][0]
-                    y_b = stats.norm.pdf(x, self.fft_filtered.pixel_quality_gmm["means"][1],
-                                         math.sqrt(self.fft_filtered.pixel_quality_gmm["covariances"][1])) * \
-                          self.fft_filtered.pixel_quality_gmm["weights"][1]
+            if self.fft_filtered.pixel_quality_gmm["means"][0] < self.fft_filtered.pixel_quality_gmm["means"][1]:
+                y_b = stats.norm.pdf(x, self.fft_filtered.pixel_quality_gmm["means"][0],
+                                     math.sqrt(self.fft_filtered.pixel_quality_gmm["covariances"][0])) * \
+                      self.fft_filtered.pixel_quality_gmm["weights"][0]
+                y_g = stats.norm.pdf(x, self.fft_filtered.pixel_quality_gmm["means"][1],
+                                     math.sqrt(self.fft_filtered.pixel_quality_gmm["covariances"][1])) * \
+                      self.fft_filtered.pixel_quality_gmm["weights"][1]
+            else:
+                y_g = stats.norm.pdf(x, self.fft_filtered.pixel_quality_gmm["means"][0],
+                                     math.sqrt(self.fft_filtered.pixel_quality_gmm["covariances"][0])) * \
+                      self.fft_filtered.pixel_quality_gmm["weights"][0]
+                y_b = stats.norm.pdf(x, self.fft_filtered.pixel_quality_gmm["means"][1],
+                                     math.sqrt(self.fft_filtered.pixel_quality_gmm["covariances"][1])) * \
+                      self.fft_filtered.pixel_quality_gmm["weights"][1]
 
-                plt.bar(self.fft_filtered.pixel_quality_histogram["centers"],
-                        self.fft_filtered.pixel_quality_histogram["bins"],
-                        width=self.fft_filtered.pixel_quality_histogram["width"])
-                plt.plot(x, y_b, 'r')
-                plt.plot(x, y_g, 'g')
-                plt.axvline(x=self.fft_filtered.quality_threshold, color='y')
-                plt.title(name)
-                if self.flags["Save path"] != "":
-                    save_plot(self.save_dir, name)
+            plt.bar(self.fft_filtered.pixel_quality_histogram["centers"],
+                    self.fft_filtered.pixel_quality_histogram["bins"],
+                    width=self.fft_filtered.pixel_quality_histogram["width"])
+            plt.plot(x, y_b, 'r')
+            plt.plot(x, y_g, 'g')
+            plt.axvline(x=self.fft_filtered.quality_threshold, color='y')
+            plt.title(name)
+            if self.flags["Save path"] != "":
+                save_plot(self.save_dir, name)
 
         if self.flags["Show plots"]:
             plt.show()
@@ -224,6 +241,21 @@ class VisualisationStructure:
             plt.imshow(self.structured_map.fft_map.binary_map, cmap="gray")
             for l in self.structured_map.dominant_lines:
                 plt.plot([l.coords[0][1], l.coords[1][1]], [l.coords[0][0], l.coords[1][0]])
+            plt.xlim(0, self.structured_map.fft_map.binary_map.shape[1])
+            plt.ylim(0, self.structured_map.fft_map.binary_map.shape[0])
+            plt.title(name)
+            if self.flags["Save path"] != "":
+                save_plot(self.save_dir, name)
+
+        if self.flags["Map with long wall lines"]:
+            name = "Map with long wall lines"
+            plt.figure()
+            # plt.imshow(np.flipud(self.structured_map.fft_map.binary_map), cmap="gray")
+            plt.imshow(self.structured_map.fft_map.binary_map, cmap="gray")
+            for l in self.structured_map.wall_lines:
+                if len(l["wall_cells"]) > 10:
+                    plt.plot([l["wall_line"].coords[0][1], l["wall_line"].coords[1][1]],
+                             [l["wall_line"].coords[0][0], l["wall_line"].coords[1][0]])
             plt.xlim(0, self.structured_map.fft_map.binary_map.shape[1])
             plt.ylim(0, self.structured_map.fft_map.binary_map.shape[0])
             plt.title(name)

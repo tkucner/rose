@@ -120,6 +120,10 @@
         "Map with directions": {
           "type": "boolean",
           "default": false
+        },
+        "Map with long wall lines": {
+          "type": "boolean",
+          "default": false
         }
       },
       "default": {}

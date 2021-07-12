@@ -72,17 +72,28 @@ def get_mask(orientations, size, factor):
         lines.append(line)
         # lines_vis.append([line.coords[0][0], line.coords[0][1], line.coords[1][0], line.coords[1][1]])
         for v in range(0, size + 1):
+
             inter = line.intersection(sg.asLineString([(0, v), (size, v)]))
+
             if not inter.is_empty:
                 intersections.append(inter)
-                cells.append([int(inter.coords[0][0]), int(inter.coords[0][1])])
-                cells.append([int(inter.coords[0][0]), int(inter.coords[0][1]) - 1])
+                # cells.append([int(inter.coords[0][0]), int(inter.coords[0][1])])
+                # cells.append([int(inter.coords[0][0]), int(inter.coords[0][1]) - 1])
+
+                cells.append([int(inter.coords[0][1]), int(inter.coords[0][0])])
+                cells.append([int(inter.coords[0][1]) - 1, int(inter.coords[0][0])])
+
         for h in range(0, size + 1):
+
             inter = line.intersection(sg.asLineString([(h, 0), (h, size)]))
+
             if not inter.is_empty:
                 intersections.append(inter)
-                cells.append([int(inter.coords[0][0]), int(inter.coords[0][1])])
-                cells.append([int(inter.coords[0][0]) - 1, int(inter.coords[0][1])])
+                # cells.append([int(inter.coords[0][0]), int(inter.coords[0][1])])
+                # cells.append([int(inter.coords[0][0]) - 1, int(inter.coords[0][1])])
+
+                cells.append([int(inter.coords[0][1]), int(inter.coords[0][0])])
+                cells.append([int(inter.coords[0][1]), int(inter.coords[0][0]) - 1])
 
     cells.sort()
     cells = list(num for num, _ in itertools.groupby(cells))
@@ -94,7 +105,8 @@ def get_mask(orientations, size, factor):
     for _ in range(factor):
         mask = ndimage.binary_dilation(mask).astype(mask.dtype)
 
-    return np.flipud(mask), lines
+    # return np.flipud(mask), lines
+    return mask, lines
 
 
 def get_gmm_threshold(values):
@@ -185,6 +197,7 @@ class FFTFiltering:
 
         """
         ti = time.time()  # logging time
+        self.grid_map = np.flipud(self.grid_map)
         if len(self.grid_map.shape) == 3:  # if map is multilayered keep only one
             # binarize the map
             self.binary_map = binaryze_map(self.grid_map[:, :, 1])
