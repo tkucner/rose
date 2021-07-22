@@ -124,6 +124,10 @@
         "Map with long wall lines": {
           "type": "boolean",
           "default": false
+        },
+        "Separated wall directions": {
+          "type": "boolean",
+          "default": false
         }
       },
       "default": {}

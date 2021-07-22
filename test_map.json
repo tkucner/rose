@@ -26,6 +26,7 @@
     "Filtered map final": true,
     "Cell histogram": true,
     "Map with directions": true,
-    "Map with long wall lines": true
+    "Map with long wall lines": true,
+    "Separated wall directions": true
   }
 }

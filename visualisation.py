@@ -250,17 +250,41 @@ class VisualisationStructure:
         if self.flags["Map with long wall lines"]:
             name = "Map with long wall lines"
             plt.figure()
-            # plt.imshow(np.flipud(self.structured_map.fft_map.binary_map), cmap="gray")
             plt.imshow(self.structured_map.fft_map.binary_map, cmap="gray")
+            plot = True
             for l in self.structured_map.wall_lines:
-                if len(l["wall_cells"]) > 10:
-                    plt.plot([l["wall_line"].coords[0][1], l["wall_line"].coords[1][1]],
-                             [l["wall_line"].coords[0][0], l["wall_line"].coords[1][0]])
+
+                if len(l["wall_cells"]) > 25:
+                    plot = False
+                    plt.plot([l["wall_line"].coords[1][0] - 0.5, l["wall_line"].coords[0][0] - 0.5],
+                             [l["wall_line"].coords[1][1] - 0.5, l["wall_line"].coords[0][1] - 0.5])
+                    for c in l["all_cells"]:
+                        plt.plot(c[1], c[0], 'rx')
+                    for c in l["wall_cells"]:
+                        plt.plot(c[1], c[0], 'g.')
+
             plt.xlim(0, self.structured_map.fft_map.binary_map.shape[1])
             plt.ylim(0, self.structured_map.fft_map.binary_map.shape[0])
             plt.title(name)
+
             if self.flags["Save path"] != "":
                 save_plot(self.save_dir, name)
+
+        if self.flags["Separated wall directions"]:
+            name = "Separated wall directions"
+
+            for ew in self.structured_map.extracted_walls:
+                local_map = np.zeros(self.structured_map.fft_map.binary_map.shape)
+                plt.figure()
+                for c in ew["cells"]:
+                    local_map[c[0], c[1]] = 255
+                plt.imshow(local_map)
+                plt.xlim(0, self.structured_map.fft_map.binary_map.shape[1])
+                plt.ylim(0, self.structured_map.fft_map.binary_map.shape[0])
+                plt.title(name)
+
+                if self.flags["Save path"] != "":
+                    save_plot(self.save_dir, name)
 
         if self.flags["Show plots"]:
             plt.show()
