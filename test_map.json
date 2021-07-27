@@ -27,6 +27,9 @@
     "Cell histogram": true,
     "Map with directions": true,
     "Map with long wall lines": true,
-    "Separated wall directions": true
+    "Map with short wall lines": true,
+    "Separated wall directions": true,
+    "Wall pixels": true,
+    "Wall bounding boxes": true
   }
 }

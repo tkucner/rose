@@ -25,6 +25,11 @@
     "Filtered map overlay": true,
     "Filtered map final": true,
     "Cell histogram": true,
-    "Map with directions": true
+    "Map with directions": true,
+    "Map with long wall lines": true,
+    "Map with short wall lines": true,
+    "Separated wall directions": true,
+    "Wall pixels": true,
+    "Wall bounding boxes": true
   }
 }

@@ -125,7 +125,19 @@
           "type": "boolean",
           "default": false
         },
+        "Map with short wall lines": {
+          "type": "boolean",
+          "default": false
+        },
         "Separated wall directions": {
+          "type": "boolean",
+          "default": false
+        },
+        "Wall pixels": {
+          "type": "boolean",
+          "default": false
+        },
+        "Wall bounding boxes": {
           "type": "boolean",
           "default": false
         }
