@@ -462,7 +462,7 @@ class VisualisationStructure:
                         counter = 0
                     colour = next(colors)
 
-                    patch = PolygonPatch(wc["minimal_bounding_box"], facecolor=colour, edgecolor="w", alpha=0.5,
+                    patch = PolygonPatch(wc["minimal_bounding_box"], facecolor=colour, edgecolor="w", alpha=0.75,
                                          zorder=2)
                     plt.gca().add_patch(patch)
 
